@@ -71,19 +71,17 @@ void Hamiltonian<Tnum, Tlabel>::BuildIntraHoppingHamiltonian(
 }
 
 template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::eigh( const bool FullDiagonalization )
+void Hamiltonian<Tnum, Tlabel>::eigh( RealType &Val, VectorType &Vec,
+  const bool FullDiagonalization)
 {
-  RealType Val;
+  Vec = VectorType::Random(getTotalHilbertSpace());
   size_t max_iter = 200;
   RealType err_tol = 1.0e-9;
-  VectorType Vec = RealVectorType::Random(getTotalHilbertSpace());
   if( !(FullDiagonalization) ){
     bool converge = LanczosEV(getTotalHilbertSpace(), H_total,
       Vec, Val, max_iter, err_tol);
     if ( !(converge) ) INFO("Lanczos is not converged!");
   }
-  INFO(Val);
-  // INFO(Vec);
 }
 
 template class Hamiltonian<RealType, int>;

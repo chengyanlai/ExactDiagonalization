@@ -51,7 +51,12 @@ int main(int argc, char const *argv[]) {
   ham.BuildIntraLocalHamiltonian(Vloc, Uloc, Bases);
   ham.BuildIntraHoppingHamiltonian(Bases, lattice);
   ham.BuildTotalHamiltonian();
-  ham.eigh();
+  INFO("DONE!");
+  INFO_NONEWLINE("Diagonalize Hamiltonian - ");
+  RealType Val = 0.0;
+  Hamiltonian<RealType,int>::VectorType Vec;
+  ham.eigh(Val, Vec);
+  INFO("GS energy = " << Val);
   INFO("DONE!");
   return 0;
 }

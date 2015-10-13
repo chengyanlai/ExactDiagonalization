@@ -37,7 +37,7 @@ public:
   void BosonIntraHoppingPart( const size_t species_id,
     const std::vector< Node<Tnum, Tlabel>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
-  void eigh( const bool FullDiagonalization = false );
+  void eigh( RealType &Val, VectorType &Vec, const bool FullDiagonalization = false );
   // void exp( const bool FullDiagonalization = false );
   // inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
 private:
