@@ -35,6 +35,8 @@ public:
       return BStates.size();
     }
   }
+  inline std::vector<int> getFStates()const{return FStates;};//for Boson
+  inline std::vector<size_t> getFTags()const{return FTags;};//for Boson
   inline std::vector< std::vector<int> > getBStates()const{return BStates;};//for Boson
   inline std::vector<RealType> getBTags()const{return BTags;};//for Boson
   inline size_t getIndexFromTag( const RealType tg )const{
@@ -49,7 +51,7 @@ private:
   std::vector< std::vector<int> > BStates;//for Boson
   std::vector<RealType> BTags;//for Boson
   std::vector<int> FStates;//for Fermion
-  std::vector<int> FTags;//for Fermion
+  std::vector<size_t> FTags;//for Fermion
 };
 
 RealType BosonBasisTag( const std::vector<int> vec );

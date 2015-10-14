@@ -73,10 +73,13 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/test.boson build/test.lattice build/test.node
+all: checkdirs build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
+
+build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK)
 
 build/test.boson: build/test_boson_hamiltonian.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK)
