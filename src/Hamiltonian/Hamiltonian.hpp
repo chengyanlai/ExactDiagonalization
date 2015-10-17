@@ -25,38 +25,46 @@ public:
     return tmp;
   };
   inline void BuildTotalHamiltonian(){H_total = H_hop + H_local;};
-  void BuildIntraLocalHamiltonian(
+  void BuildLocalHamiltonian(
     const std::vector< std::vector<Tnum> > &Vloc,
     const std::vector< std::vector<Tnum> > &Uloc,
     const std::vector<Basis> &bs );
-  void BuildIntraHoppingHamiltonian(
+  void BuildHoppingHamiltonian(
     const std::vector<Basis> &bs, const std::vector< Node<Tnum, Tlabel>* > &lt );
+  /* vvvvvvv Boson Functions vvvvvvv */
   void BosonIntraLocalPart( const size_t species_id,
     const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
     const Basis &bs, std::vector<Triplet> &hloc );
   void BosonIntraHoppingPart( const size_t species_id,
     const std::vector< Node<Tnum, Tlabel>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
+  /* ^^^^^^^ Boson Functions ^^^^^^^ */
+  /* vvvvvvv Fermion Functions vvvvvvv */
+  void FermionIntraLocalPart( const size_t species_id,
+    const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc );
+  void FermionInterLocalPart( const std::vector<int> species_id, const Tnum &Uloc,
+      const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
+  void FermionIntraHoppingPart( const size_t species_id,
+    const std::vector< Node<Tnum, Tlabel>* > &lt,
+    const Basis &bs, std::vector<Triplet> &hhop );
+  /* ^^^^^^^ Fermion Functions ^^^^^^^ */
   void eigh( RealType &Val, VectorType &Vec, const bool FullDiagonalization = false );
   // void exp( const bool FullDiagonalization = false );
   // inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
+  inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
+    assert( ids.size() == HilbertSpaces.size() );
+    size_t tidx = 0;
+    size_t factor = 1;
+    for (size_t cnt = 0; cnt < ids.size(); cnt++) {
+      tidx += ids.at(cnt) * factor;
+      factor *= HilbertSpaces.at(cnt);
+    }
+    return tidx;
+  };
 private:
   std::vector<size_t> HilbertSpaces;
   SparseMatrixType H_hop;
   SparseMatrixType H_local;
   SparseMatrixType H_total;
-  inline size_t DetermineTotalIndex( size_t species_idx, size_t state_idx){
-    size_t tidx = 0;
-    for (size_t cnt = 0; cnt < HilbertSpaces.size(); cnt++) {
-      if ( species_idx > cnt ){
-        tidx += (species_idx + 1) * HilbertSpaces.at(cnt);
-      }else{
-        assert( state_idx < HilbertSpaces.at(cnt) );
-        tidx += state_idx;
-        break;
-      }
-    }
-    return tidx;
-  };
 };
 #endif//__HAMILTONIAN_HPP__

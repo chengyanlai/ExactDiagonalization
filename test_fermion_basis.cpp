@@ -11,7 +11,9 @@ int main(int argc, char const *argv[]) {
   std::vector<int> st = F1.getFStates();
   std::vector<size_t> tg = F1.getFTags();
   for (size_t cnt = 0; cnt < st.size(); cnt++) {
-    INFO(cnt << " " << st.at(cnt) << " " << tg.at(st.at(cnt)));
+    INFO_NONEWLINE(tg.at(st.at(cnt)) << " " << st.at(cnt) << " - ");
+    F1.printFermionBasis(st.at(cnt));
+    INFO(" - ");
   }
   return 0;
 }

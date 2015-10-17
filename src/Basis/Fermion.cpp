@@ -30,3 +30,9 @@ void Basis::Fermion()
   }
   FTags = windex;
 }
+
+void Basis::printFermionBasis( const int state )const{
+  for (size_t cnt = 0; cnt < L; cnt++) {
+    INFO_NONEWLINE( btest(state, cnt) << ", " );
+  }
+}

@@ -17,7 +17,16 @@ void Hamiltonian<Tnum, Tlabel>::BosonIntraLocalPart( const size_t species_id,
         (Tnum)0.50e0 * Uloc.at(loc) * (Tnum)(p * (p - 1));
       loc++;
     }
-    size_t idx = DetermineTotalIndex(species_id, state_id);
+    //FIXME: Need to loop over all species_id!
+    //use while
+    // std::vector<size_t> idrun(HilbertSpaces.size(), 0);
+    // idrun.at(species_id) = HilbertSpaces.at(HilbertSpaces);
+    // bool DONE = false;
+    // while ( !DONE ){
+    //   for (size_t cnt = 0; cnt < HilbertSpaces.size(); cnt++) {
+    //   }
+    // }
+    size_t idx = DetermineTotalIndex( std::vector<size_t>(1, state_id) );
     hloc.push_back(Triplet(idx, idx, val));
     state_id++;
   }
@@ -43,8 +52,11 @@ const Basis &bs, std::vector<Triplet> &hhop )
           b_copy.at(site_j) = b.at(site_j) + 1;
           b_copy.at(site_i) = b.at(site_i) - 1;
           size_t state_id2 = bs.getIndexFromTag( BosonBasisTag(b_copy) );
-          size_t idx1 = DetermineTotalIndex(species_id, state_id1);
-          size_t idx2 = DetermineTotalIndex(species_id, state_id2);
+          //FIXME: Need to loop over all species_id!
+          // size_t idx1 = DetermineTotalIndex(species_id, state_id1);
+          size_t idx1 = DetermineTotalIndex(std::vector<size_t>(1, state_id1));
+          // size_t idx2 = DetermineTotalIndex(species_id, state_id2);
+          size_t idx2 = DetermineTotalIndex(std::vector<size_t>(1, state_id2));
           hhop.push_back(Triplet(idx2, idx1, val));
         }
       }
@@ -54,6 +66,4 @@ const Basis &bs, std::vector<Triplet> &hhop )
 }
 
 template class Hamiltonian<RealType, int>;
-template class Hamiltonian<RealType, char>;
 template class Hamiltonian<ComplexType, int>;
-template class Hamiltonian<ComplexType, char>;

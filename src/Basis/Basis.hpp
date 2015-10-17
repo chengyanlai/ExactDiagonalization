@@ -28,6 +28,7 @@ public:
   void Fermion();
   inline bool getType()const{return isFermion;};
   inline size_t getL()const{return L;};
+  inline size_t getN()const{return N;};
   inline size_t getHilbertSpace()const{
     if (isFermion) {
       return FStates.size();
@@ -35,8 +36,9 @@ public:
       return BStates.size();
     }
   }
-  inline std::vector<int> getFStates()const{return FStates;};//for Boson
-  inline std::vector<size_t> getFTags()const{return FTags;};//for Boson
+  inline std::vector<int> getFStates()const{return FStates;};//for Fermion
+  inline std::vector<size_t> getFTags()const{return FTags;};//for Fermion
+  void printFermionBasis( const int state )const;
   inline std::vector< std::vector<int> > getBStates()const{return BStates;};//for Boson
   inline std::vector<RealType> getBTags()const{return BTags;};//for Boson
   inline size_t getIndexFromTag( const RealType tg )const{

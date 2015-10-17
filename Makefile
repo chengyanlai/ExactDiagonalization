@@ -96,6 +96,6 @@ $(BUILD_DIR):
 	@mkdir -p $@
 
 clean:
-	@rm -rf $(BUILD_DIR)
+	@rm -rf $(BUILD_DIR) build/*.o
 
 $(foreach bdir,$(BUILD_DIR),$(eval $(call make-goal,$(bdir))))
