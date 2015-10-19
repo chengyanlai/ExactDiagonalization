@@ -6,6 +6,8 @@
 
 std::vector< Node<RealType, int>* > NN_1D_Chain(const int &L,
   const std::vector<RealType> J, const bool OBC = true);
+std::vector< Node<ComplexType, int>* > NN_1D_Chain(const int &L,
+  const std::vector<ComplexType> J, const bool OBC = true);
 std::vector< Node<RealType, int>* > SawTooth(const int &L,
   const std::vector<RealType> J1, const std::vector<RealType> J2,
   const bool OBC = true);

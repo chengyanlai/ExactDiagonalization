@@ -42,3 +42,4 @@ void Node<Tnum, T>::LinkTo(Node<Tnum, T>* p, Tnum J)
 }
 
 template class Node<RealType, int>;
+template class Node<ComplexType, int>;

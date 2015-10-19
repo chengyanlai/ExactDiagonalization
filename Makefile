@@ -78,7 +78,8 @@ all: checkdirs build/test.fermion build/test.boson build/test.lattice build/test
 build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
-build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)
+# build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)
+build/test.fermion: build/test_fermion_complex.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK)
 
 build/test.boson: build/test_boson_hamiltonian.o $(OBJ)
