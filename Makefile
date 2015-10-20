@@ -73,12 +73,15 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/SSH.app build/test.fermion build/test.boson build/test.lattice build/test.node
+all: checkdirs build/SSH.f build/SSH.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
-build/SSH.app: build/SSH.o $(OBJ)
+build/SSH.b: build/SSH_boson.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/SSH.f: build/SSH_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 # build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)

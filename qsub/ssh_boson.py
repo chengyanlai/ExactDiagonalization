@@ -45,21 +45,20 @@ def SetV(L, type="Box"):
 L = 3
 J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
 OBC = 0#1:True
-N1 = np.int((L + 1) / 2)
-N2 = np.int((L - 1) / 2)
+N = np.int((L + 1) / 2)
 Uin = [0.0, ]#0.5, 1.0, 5.0, 10.0]
 Phils = [1, ]#np.linspace(0, L, 10)
 Vtype = "Box"
 Vin = SetV(L, type=Vtype)
 
 APPs = []
-APPs.append(os.path.join(SRC_DIR, "build", "SSH.app"))
+APPs.append(os.path.join(SRC_DIR, "build", "SSH.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:
-  LN1N2 = "-".join(["SSHO", "".join(["L", str(L)]), str(N1), str(N2)])
+  LN1N2 = "-".join(["SSHO", "".join(["L", str(L)]), str(N)])
 else:
-  LN1N2 = "-".join(["SSHP", "".join(["L", str(L)]), str(N1), str(N2)])
+  LN1N2 = "-".join(["SSHP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
 for nphi in Phils:
@@ -81,8 +80,7 @@ for nphi in Phils:
           dset = para.create_dataset("L", data=L)
           dset = para.create_dataset("J12", data=J12)
           dset = para.create_dataset("OBC", data=OBC)
-          dset = para.create_dataset("N1", data=N1)
-          dset = para.create_dataset("N2", data=N2)
+          dset = para.create_dataset("N", data=N)
           dset = para.create_dataset("U", data=U)
           dset = para.create_dataset("phi", data=phi)
           dset = para.create_dataset("V", data=Vin)
