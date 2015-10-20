@@ -1,2 +1,5 @@
 build/
-apps/
+data/
+
+__pycache__
+*.pyc

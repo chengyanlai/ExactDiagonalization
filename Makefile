@@ -56,7 +56,7 @@ else ifeq ("$(OS)", "Linux")
 	CC = icpc $(OPENMP) -O3 -Wall -std=c++11 -I./ -I$(HDF5ROOT)/include -I$(EIGENINC) -DMKL
 endif
 
-MODULES   := Node Lattice Basis Hamiltonian Lanczos
+MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io
 SRC_DIR   := $(addprefix src/,$(MODULES))
 BUILD_DIR := $(addprefix build/,$(MODULES))
 
@@ -73,23 +73,26 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/test.fermion build/test.boson build/test.lattice build/test.node
+all: checkdirs build/SSH.app build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
+build/SSH.app: build/SSH.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
 # build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)
 build/test.fermion: build/test_fermion_complex.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/test.boson: build/test_boson_hamiltonian.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/test.lattice: build/test_lattice.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/test.node: build/test_node.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
 

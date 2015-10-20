@@ -16,7 +16,14 @@ public:
   inline int NumNeighbors()const{return this->NumLinks;};
   inline std::vector< Tnum > getJval()const{return this->Jval;};
   inline std::vector< Node<Tnum, T>* > getNeighbors()const{return this->Neighbor;};
-  inline bool VerifySite()const{return this->Neighbor.size() == this->Jval.size();};
+  inline bool VerifySite()const{
+    INFO("Site - " << this->data << " has " << this->NumLinks << " neighbors.");
+    for (size_t cnt = 0; cnt < Neighbor.size(); cnt++) {
+      INFO("\t Linked to " << Neighbor.at(cnt)->data <<
+        " with hopping coefficient " << Jval.at(cnt) );
+    }
+    return this->Neighbor.size() == this->Jval.size();
+  };
   inline void Label(const T &la){this->data = la;};
 private:
   // static int NumNodes;

@@ -84,7 +84,7 @@ void Hamiltonian<Tnum, Tlabel>::BuildHoppingHamiltonian(
     cnt++;
   }
   H_hop.setFromTriplets(hhop.begin(), hhop.end());
-  // INFO(H_hop);
+  INFO(H_hop);
 }
 
 template<typename Tnum, typename Tlabel>

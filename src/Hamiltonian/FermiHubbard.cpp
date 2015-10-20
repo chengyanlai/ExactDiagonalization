@@ -154,7 +154,7 @@ void Hamiltonian<Tnum, Tlabel>::FermionIntraHoppingPart( const size_t species_id
       std::vector< Node<Tnum, Tlabel>* > nn = l->getNeighbors();
       std::vector< Tnum > nnJ = l->getJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
-        Tlabel site_j = nn.at(cnt)->data;// hopping between site-j - site-i
+        Tlabel site_j = nn.at(cnt)->data;// hopping from site-j to site-i
         /* see if hopping exist */
         if ( btest(b, site_j) && !(btest(b, site_i)) ) {
           /* if yes, no particle in i and one particle in j. */
@@ -183,8 +183,8 @@ void Hamiltonian<Tnum, Tlabel>::FermionIntraHoppingPart( const size_t species_id
             cid = DetermineTotalIndex( cids );
             Tnum value = (Tnum)(-1.0e0) * nnJ.at(cnt);
             hhop.push_back(Triplet(rid, cid, value));
-            hhop.push_back(Triplet(cid, rid, value));
-            // INFO(rid << " " << cid << " " << value);
+            // hhop.push_back(Triplet(cid, rid, value));
+            // INFO( rid << " " <<  cid << " " <<  value );
           }
         }
       }

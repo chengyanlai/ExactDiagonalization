@@ -12,11 +12,6 @@ int main(int argc, char const *argv[]) {
   // std::vector<double> J(L, 1.0);
   // std::vector< Node<double, int>* > lattice = NN_1D_Chain(L, J, false);
   for ( auto &j : lattice ){
-    INFO_NONEWLINE(j->data << " " << j->VerifySite() << " " << j->NumNeighbors());
-    INFO_NONEWLINE(" Neighbors: ");
-    for ( auto &p : j->getNeighbors() ){
-      INFO_NONEWLINE( p->data << " ");
-    }
-    INFO(" ");
+    INFO(j->VerifySite());
   }
 }

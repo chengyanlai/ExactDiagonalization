@@ -1,15 +1,19 @@
 #include <iostream>
 #include <iomanip>
+#include <string>
 #include <vector>
+#include <cmath>
 #include "src/EDType.hpp"
 #include "src/bitwise.h"
 #include "src/Node/Node.hpp"
 #include "src/Lattice/preset.hpp"
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/hdf5io/hdf5io.hpp"
 
-std::vector<ComplexType> HarmonicPotential( const int L, const ComplexType alpha );
-std::vector< std::vector<ComplexType> > Ni( const std::vector<Basis> &Bases,
+void LoadParameters( const std::string filename, int &L, RealType &J12ratio, int &OBC,
+  int &N1, int &N2, RealType &Uloc, std::vector<RealType> &Vloc, RealType &phi);
+std::vector< ComplexVectorType > Ni( const std::vector<Basis> &Bases,
   const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
 ComplexMatrixType NupNdn( const std::vector<Basis> &Bases,
   const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
@@ -19,48 +23,73 @@ ComplexMatrixType NdnNdn( const std::vector<Basis> &Bases,
   const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
 
 int main(int argc, char const *argv[]) {
-  const int L = 5;
+  int L;
+  RealType J12ratio;
+  int OBC;
+  int N1;
+  int N2;
+  RealType Uin, phi;
+  std::vector<RealType> Vin;
+  LoadParameters( "SSHconf.h5", L, J12ratio, OBC, N1, N2, Uin, Vin, phi);
+  HDF5IO file("SSH.h5");
+  // const int L = 5;
+  // const bool OBC = true;
+  // const RealType J12ratio = 0.010e0;
   INFO("Build Lattice - ");
-  const bool OBC = true;
-  std::vector<ComplexType> J(L-1, ComplexType(1.0, 0.0));
-  for (size_t cnt = 0; cnt < L-1; cnt+=2) {
-    J.at(cnt) *= 0.10e0;
+  std::vector<ComplexType> J;
+  if ( OBC ){
+    J = std::vector<ComplexType>(L - 1, ComplexType(1.0, 0.0));
+    for (size_t cnt = 0; cnt < L-1; cnt+=2) {
+      J.at(cnt) *= J12ratio;
+    }
+  } else{
+    J = std::vector<ComplexType>(L, ComplexType(1.0, 0.0));
+    for (size_t cnt = 0; cnt < L; cnt+=2) {
+      J.at(cnt) *= J12ratio;
+    }
+    if ( std::abs(phi) > 1.0e-10 ){
+      J.at(L-1) *= exp( ComplexType(0.0e0, 1.0e0) * phi );
+      // INFO(exp( ComplexType(0.0e0, 1.0e0) * phi ));
+    }
   }
-  // const bool OBC = false;
-  // const std::vector<double> J(L, 1.0);
+  for ( auto &val : J ){
+    INFO_NONEWLINE(val << " ");
+  }
+  INFO("");
   const std::vector< Node<ComplexType, int>* > lattice = NN_1D_Chain(L, J, OBC);
-  // for ( auto &j : lattice ){
-  //   INFO_NONEWLINE(j->data << " " << j->VerifySite() << " " << j->NumNeighbors());
-  //   INFO_NONEWLINE(" Neighbors: ");
-  //   for ( auto &p : j->getNeighbors() ){
-  //     INFO_NONEWLINE( p->data << " ");
-  //   }
-  //   INFO(" ");
-  // }
+  file.saveNumber("1DChain", "L", L);
+  file.saveStdVector("1DChain", "J", J);
+  for ( auto &lt : lattice ){
+    if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
+  }
   INFO("DONE!");
   INFO("Build Basis - ");
-  int N1 = (L+1)/2;
+  // int N1 = (L+1)/2;
   Basis F1(L, N1, true);
   F1.Fermion();
   std::vector<int> st1 = F1.getFStates();
   std::vector<size_t> tg1 = F1.getFTags();
-  INFO("Species - 1");
-  // for (size_t cnt = 0; cnt < st1.size(); cnt++) {
-  //   INFO_NONEWLINE( std::setw(3) << st1.at(cnt) << " - ");
-  //   F1.printFermionBasis(st1.at(cnt));
-  //   INFO("- " << tg1.at(st1.at(cnt)));
-  // }
-  int N2 = (L-1)/2;
+  for (size_t cnt = 0; cnt < st1.size(); cnt++) {
+    INFO_NONEWLINE( std::setw(3) << st1.at(cnt) << " - ");
+    F1.printFermionBasis(st1.at(cnt));
+    INFO("- " << tg1.at(st1.at(cnt)));
+  }
+  // int N2 = (L-1)/2;
   Basis F2(L, N2, true);
   F2.Fermion();
   std::vector<int> st2 = F2.getFStates();
   std::vector<size_t> tg2 = F2.getFTags();
-  INFO("Species - 2");
-  // for (size_t cnt = 0; cnt < st2.size(); cnt++) {
-  //   INFO_NONEWLINE( std::setw(3) << st2.at(cnt) << " - ");
-  //   F2.printFermionBasis(st2.at(cnt));
-  //   INFO("- " << tg2.at(st2.at(cnt)));
-  // }
+  for (size_t cnt = 0; cnt < st2.size(); cnt++) {
+    INFO_NONEWLINE( std::setw(3) << st2.at(cnt) << " - ");
+    F2.printFermionBasis(st2.at(cnt));
+    INFO("- " << tg2.at(st2.at(cnt)));
+  }
+  file.saveNumber("Basis", "N1", N1);
+  file.saveStdVector("Basis", "F1States", st1);
+  file.saveStdVector("Basis", "F1Tags", tg1);
+  file.saveNumber("Basis", "N2", N2);
+  file.saveStdVector("Basis", "F2States", st2);
+  file.saveStdVector("Basis", "F2Tags", tg2);
   INFO("DONE!");
   INFO_NONEWLINE("Build Hamiltonian - ");
   std::vector<Basis> Bases;
@@ -68,12 +97,15 @@ int main(int argc, char const *argv[]) {
   Bases.push_back(F2);
   Hamiltonian<ComplexType,int> ham( Bases );
   std::vector< std::vector<ComplexType> > Vloc;
-  std::vector<ComplexType> Vtmp = HarmonicPotential( L, ComplexType(0.0e0, 0.0e0) );
-  // std::vector<ComplexType> Vtmp(L, 1.0);
+  std::vector<ComplexType> Vtmp;//(L, 1.0);
+  for ( RealType &val : Vin ){
+    Vtmp.push_back((ComplexType)val);
+  }
   Vloc.push_back(Vtmp);
   Vloc.push_back(Vtmp);
   std::vector< std::vector<ComplexType> > Uloc;
-  std::vector<ComplexType> Utmp(L, ComplexType(10.0e0, 0.0e0) );
+  // std::vector<ComplexType> Utmp(L, ComplexType(10.0e0, 0.0e0) );
+  std::vector<ComplexType> Utmp(L, (ComplexType)Uin);
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
   ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
@@ -85,16 +117,14 @@ int main(int argc, char const *argv[]) {
   Hamiltonian<ComplexType,int>::VectorType Vec;
   ham.eigh(Val, Vec);
   INFO("GS energy = " << Val);
+  file.saveVector("GS", "EVec", Vec);
+  file.saveNumber("GS", "EVal", Val);
   INFO("DONE!");
-  std::vector< std::vector<ComplexType> > Nfi = Ni( Bases, Vec, ham );
+  std::vector< ComplexVectorType > Nfi = Ni( Bases, Vec, ham );
   INFO(" Up Spin - ");
-  for ( auto &b : Nfi.at(0) ){
-    INFO( b << " ");
-  }
+  INFO(Nfi.at(0));
   INFO(" Down Spin - ");
-  for ( auto &b : Nfi.at(1) ){
-    INFO( b << " ");
-  }
+  INFO(Nfi.at(1));
   ComplexMatrixType Nud = NupNdn( Bases, Vec, ham );
   INFO(" Correlation NupNdn");
   INFO(Nud);
@@ -104,27 +134,33 @@ int main(int argc, char const *argv[]) {
   ComplexMatrixType Ndd = NdnNdn( Bases, Vec, ham );
   INFO(" Correlation NdnNdn");
   INFO(Ndd);
+  file.saveVector("Obs", "Nup", Nfi.at(0));
+  file.saveVector("Obs", "Ndn", Nfi.at(0));
+  file.saveMatrix("Obs", "NupNdn", Nud);
+  file.saveMatrix("Obs", "NupNup", Nuu);
+  file.saveMatrix("Obs", "NdnNdn", Ndd);
   return 0;
 }
 
-std::vector<ComplexType> HarmonicPotential( const int L, const ComplexType alpha ){
-  RealType center;
-  center = (RealType)(L - 1) / 2.0e0;
-  std::vector<ComplexType> v(L, ComplexType(0.0e0, 0.0e0));
-  for (size_t l = 0; l < L; l++) {
-    v.at(l) = 0.50e0 * alpha *
-      pow( std::abs(center - (ComplexType)l), 2 ) *
-      pow( 1.0e0/(RealType)L, 2);
-    // INFO(v.at(l));
-  }
-  return v;
+void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
+  int &OBC, int &N1, int &N2, RealType &Uloc,
+  std::vector<RealType> &Vloc, RealType &phi){
+    HDF5IO file(filename);
+    L = file.loadInt("Parameters", "L");
+    J12ratio = file.loadReal("Parameters", "J12");
+    OBC = file.loadInt("Parameters", "OBC");
+    N1 = file.loadInt("Parameters", "N1");
+    N2 = file.loadInt("Parameters", "N2");
+    Uloc = file.loadReal("Parameters", "U");
+    phi = file.loadReal("Parameters", "phi");
+    file.loadStdVector("Parameters", "V", Vloc);
 }
 
-std::vector< std::vector<ComplexType> > Ni( const std::vector<Basis> &Bases,
+std::vector< ComplexVectorType > Ni( const std::vector<Basis> &Bases,
   const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham ){
-  std::vector< std::vector<ComplexType> > out;
-  std::vector<ComplexType> tmp1(Bases.at(0).getL(), 0.0e0);
-  std::vector<ComplexType> tmp2(Bases.at(1).getL(), 0.0e0);
+  std::vector< ComplexVectorType > out;
+  ComplexVectorType tmp1 = ComplexVectorType::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
+  ComplexVectorType tmp2 = ComplexVectorType::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
   std::vector< int > f1 = Bases.at(0).getFStates();
   std::vector< int > f2 = Bases.at(1).getFStates();
   size_t f1id = 0, f2id = 0;
@@ -135,10 +171,10 @@ std::vector< std::vector<ComplexType> > Ni( const std::vector<Basis> &Bases,
       ids.at(0) = f1id;
       size_t id = ham.DetermineTotalIndex(ids);
       for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
-        if ( btest(nf1, cnt) ) tmp1.at(cnt) += Vec(id) * std::conj( Vec(id) );
+        if ( btest(nf1, cnt) ) tmp1(cnt) += Vec(id) * std::conj( Vec(id) );
       }
       for (size_t cnt = 0; cnt < Bases.at(1).getL(); cnt++) {
-        if ( btest(nf2, cnt) ) tmp2.at(cnt) += Vec(id) * std::conj( Vec(id) );
+        if ( btest(nf2, cnt) ) tmp2(cnt) += Vec(id) * std::conj( Vec(id) );
       }
       f1id++;
     }
