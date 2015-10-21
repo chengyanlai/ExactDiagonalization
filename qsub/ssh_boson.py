@@ -33,6 +33,11 @@ if(platform.system() == "Linux"):
     NodeName = "edgestate.rcc.ucmerced.edu"
     qsub_cmd = "qsub -q batch.q"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
+  elif socket.gethostname() == 'atomtronics.ucmerced.edu':
+    SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
+    NodeName = "atomtronics.ucmerced.edu"
+    qsub_cmd = "qsub -q batch.q"
+    EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
   SRC_DIR = "/Volumes/home/Users/chengyanlai/GitRepo/ExactDiagonalization"
@@ -87,7 +92,8 @@ for nphi in Phils:
           f.close()
 
           if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \
-             socket.gethostname() == 'edgestate.rcc.ucmerced.edu':
+             socket.gethostname() == 'edgestate.rcc.ucmerced.edu' or \
+             socket.gethostname() == 'atomtronics.ucmerced.edu':
             shp.WriteQsubPBS("qsub.ucmerced", Job_Name, Exac_program, workdir,
                              NodeName=NodeName, NumCore=NumThreads)
           if not QSUB:

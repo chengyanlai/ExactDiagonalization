@@ -22,6 +22,10 @@ else ifeq ("$(NODE)", "edgestate.rcc.ucmerced.edu")
 	EIGENINC = /usr/local/include
 	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.15-patch1
 	MKLROOT = /opt/intel/composer_xe_2015.2.164/mkl
+else ifeq ("$(NODE)", "atomtronics.ucmerced.edu")
+	EIGENINC = /usr/local/include
+	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.15-patch1
+	MKLROOT = /opt/intel/composer_xe_2015.2.164/mkl
 else ifneq (, $(filter "$(NODE)", "comet-ln1.sdsc.edu" "comet-ln2.sdsc.edu" "comet-ln3.sdsc.edu" "comet-ln4.sdsc.edu"))
 	EIGENINC = /opt/eigen/include
 	HDF5ROOT = /home/chenyen/hdf5/HDF_Group/HDF5/1.8.15-patch1
@@ -34,13 +38,13 @@ endif
 
 
 ifeq ("$(OS)", "Darwin")
-	OPENMP = #-fopenmp
+	OPENMP =#-fopenmp
 	HDF5LIB = -L$(HDF5ROOT)/lib -lhdf5 -lhdf5_cpp
 	LAPACK = -lblas -llapack -lm
 	LAPACK_OMP = $(LAPACK)
-	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I./ -I$(HDF5ROOT)/include -I$(EIGENINC)
+	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I$(HDF5ROOT)/include -I$(EIGENINC)
 else ifeq ("$(OS)", "Linux")
-	OPENMP = -openmp
+	OPENMP =#-openmp
 	#NOTE: the order of linker matters!
 	HDF5LIB = $(HDF5ROOT)/lib/libhdf5_cpp.a $(HDF5ROOT)/lib/libhdf5.a $(HDF5ROOT)/lib/libz.a
 	LAPACK = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
@@ -62,7 +66,8 @@ BUILD_DIR := $(addprefix build/,$(MODULES))
 
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
-INCLUDES  := $(addprefix -I,$(SRC_DIR))
+# INCLUDES  := $(addprefix -I,$(SRC_DIR))
+INCLUDES  := -I./
 
 vpath %.cpp $(SRC_DIR)
 

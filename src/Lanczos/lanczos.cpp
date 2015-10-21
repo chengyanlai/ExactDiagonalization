@@ -1,5 +1,5 @@
 #include <cstring>
-#include "src/lanczos/lanczos.hpp"
+#include "src/Lanczos/lanczos.hpp"
 #ifdef MKL
     #include "mkl.h"
 #else

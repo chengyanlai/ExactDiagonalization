@@ -1,6 +1,6 @@
 #include <cassert>
 #include "src/EDType.hpp"
-#include "src/Lattice/Preset.hpp"
+#include "src/Lattice/preset.hpp"
 
 std::vector< Node<RealType, int>* > SawTooth(const int &L,
   const std::vector<RealType> JAB, const std::vector<RealType> JAA,

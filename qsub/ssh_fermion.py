@@ -33,6 +33,11 @@ if(platform.system() == "Linux"):
     NodeName = "edgestate.rcc.ucmerced.edu"
     qsub_cmd = "qsub -q batch.q"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
+  elif socket.gethostname() == 'atomtronics.ucmerced.edu':
+    SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
+    NodeName = "atomtronics.ucmerced.edu"
+    qsub_cmd = "qsub -q batch"
+    EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
   SRC_DIR = "/Volumes/home/Users/chengyanlai/GitRepo/ExactDiagonalization"
@@ -42,13 +47,14 @@ def SetV(L, type="Box"):
   V = np.zeros(L, dtype=np.float64)
   return V
 
-L = 3
-J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
-OBC = 0#1:True
+NumThreads = 1
+L = 13
+J12ratio = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
+OBC = 1#1:True
 N1 = np.int((L + 1) / 2)
 N2 = np.int((L - 1) / 2)
-Uin = [0.0, ]#0.5, 1.0, 5.0, 10.0]
-Phils = [1, ]#np.linspace(0, L, 10)
+Uin = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
+Phils = [0, ]#np.linspace(0, L, 10)
 Vtype = "Box"
 Vin = SetV(L, type=Vtype)
 
@@ -66,8 +72,12 @@ for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)
   for J12 in J12ratio:
     for U in Uin:
-      Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["J12", str(J12)]),
-        "".join(["n", str(nphi)]), Vtype])
+      if OBC:
+        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["J12", str(J12)]),
+          Vtype])
+      else:
+        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["J12", str(J12)]),
+          "".join(["n", str(nphi)]), Vtype])
 
       workdir = os.path.join(DATADIR, Job_Name)
 
@@ -89,7 +99,8 @@ for nphi in Phils:
           f.close()
 
           if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \
-             socket.gethostname() == 'edgestate.rcc.ucmerced.edu':
+             socket.gethostname() == 'edgestate.rcc.ucmerced.edu' or \
+             socket.gethostname() == 'atomtronics.ucmerced.edu':
             shp.WriteQsubPBS("qsub.ucmerced", Job_Name, Exac_program, workdir,
                              NodeName=NodeName, NumCore=NumThreads)
           if not QSUB:

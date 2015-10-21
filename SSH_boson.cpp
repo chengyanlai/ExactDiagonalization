@@ -141,7 +141,7 @@ std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,
 
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases,
   const ComplexVectorType &Vec ){
-  ComplexMatrixType tmp = RealMatrixType::Zero(Bases.at(0).getL(), Bases.at(0).getL());
+  ComplexMatrixType tmp = ComplexMatrixType::Zero(Bases.at(0).getL(), Bases.at(0).getL());
   std::vector< std::vector<int> > b = Bases.at(0).getBStates();
   assert( b.size() == Vec.size() );
   int coff = 0;

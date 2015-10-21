@@ -1,6 +1,6 @@
 #include <cassert>
 #include "src/EDType.hpp"
-#include "src/Lattice/Preset.hpp"
+#include "src/Lattice/preset.hpp"
 
 std::vector< Node<RealType, int>* > NN_1D_Chain(const int &L,
   const std::vector<RealType> J, const bool OBC){
