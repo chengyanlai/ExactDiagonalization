@@ -69,21 +69,21 @@ int main(int argc, char const *argv[]) {
   F1.Fermion();
   std::vector<int> st1 = F1.getFStates();
   std::vector<size_t> tg1 = F1.getFTags();
-  for (size_t cnt = 0; cnt < st1.size(); cnt++) {
-    INFO_NONEWLINE( std::setw(3) << st1.at(cnt) << " - ");
-    F1.printFermionBasis(st1.at(cnt));
-    INFO("- " << tg1.at(st1.at(cnt)));
-  }
+  // for (size_t cnt = 0; cnt < st1.size(); cnt++) {
+  //   INFO_NONEWLINE( std::setw(3) << st1.at(cnt) << " - ");
+  //   F1.printFermionBasis(st1.at(cnt));
+  //   INFO("- " << tg1.at(st1.at(cnt)));
+  // }
   // int N2 = (L-1)/2;
   Basis F2(L, N2, true);
   F2.Fermion();
   std::vector<int> st2 = F2.getFStates();
   std::vector<size_t> tg2 = F2.getFTags();
-  for (size_t cnt = 0; cnt < st2.size(); cnt++) {
-    INFO_NONEWLINE( std::setw(3) << st2.at(cnt) << " - ");
-    F2.printFermionBasis(st2.at(cnt));
-    INFO("- " << tg2.at(st2.at(cnt)));
-  }
+  // for (size_t cnt = 0; cnt < st2.size(); cnt++) {
+  //   INFO_NONEWLINE( std::setw(3) << st2.at(cnt) << " - ");
+  //   F2.printFermionBasis(st2.at(cnt));
+  //   INFO("- " << tg2.at(st2.at(cnt)));
+  // }
   file.saveNumber("Basis", "N1", N1);
   file.saveStdVector("Basis", "F1States", st1);
   file.saveStdVector("Basis", "F1Tags", tg1);
