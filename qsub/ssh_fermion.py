@@ -26,8 +26,6 @@ if(platform.system() == "Linux"):
       NodeName = "condensate.rcc.ucmerced.edu"
       qsub_cmd = "qsub -q batch.q"
       EXEC_DIR = os.path.join(SRC_DIR, "data")
-    else:
-      print("Please specify node on kagome (k or c):")
   elif socket.gethostname() == 'edgestate.rcc.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     NodeName = "edgestate.rcc.ucmerced.edu"
@@ -54,7 +52,10 @@ OBC = 1#1:True
 N1 = np.int((L + 1) / 2)
 N2 = np.int((L - 1) / 2)
 Uin = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
-Phils = [0, ]#np.linspace(0, L, 10)
+if OBC:
+  Phils = [0, ]
+else:
+  Phils = [0, ]#np.linspace(0, L, 10)
 Vtype = "Box"
 Vin = SetV(L, type=Vtype)
 

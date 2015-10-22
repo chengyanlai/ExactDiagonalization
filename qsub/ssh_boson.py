@@ -26,8 +26,6 @@ if(platform.system() == "Linux"):
       NodeName = "condensate.rcc.ucmerced.edu"
       qsub_cmd = "qsub -q batch.q"
       EXEC_DIR = os.path.join(SRC_DIR, "data")
-    else:
-      print("Please specify node on kagome (k or c):")
   elif socket.gethostname() == 'edgestate.rcc.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     NodeName = "edgestate.rcc.ucmerced.edu"
