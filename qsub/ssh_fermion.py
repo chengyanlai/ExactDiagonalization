@@ -47,11 +47,11 @@ def SetV(L, type="Box"):
 
 NumThreads = 1
 L = 13
-J12ratio = np.linspace(0.0, 1.0, 21)
+J12ratio = np.linspace(0.0, 1.0, 11)
 # J12ratio = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
 OBC = 1#1:True
-N1 = np.int((L + 1) / 2) + 1
-N2 = np.int((L - 1) / 2) + 1
+N1 = np.int((L + 1) / 2)
+N2 = np.int((L - 1) / 2)
 Uin = np.linspace(0.0, 16.0, 33)
 # Uin = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
 if OBC:

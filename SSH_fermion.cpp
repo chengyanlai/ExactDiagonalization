@@ -11,16 +11,29 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
-void LoadParameters( const std::string filename, int &L, RealType &J12ratio, int &OBC,
-  int &N1, int &N2, RealType &Uloc, std::vector<RealType> &Vloc, RealType &phi);
-std::vector< ComplexVectorType > Ni( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
-ComplexMatrixType NupNdn( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
-ComplexMatrixType NupNup( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
-ComplexMatrixType NdnNdn( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
+#define DTYPE 0//comment out this to compile complex
+
+#ifndef DTYPE
+#define DT ComplexType
+#define DTV ComplexVectorType
+#define DTM ComplexMatrixType
+#else
+#define DT RealType
+#define DTV RealVectorType
+#define DTM RealMatrixType
+#endif
+
+void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
+  int &OBC, int &N1, int &N2, RealType &Uloc,
+  std::vector<RealType> &Vloc, RealType &phi);
+std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec,
+  Hamiltonian<DT,int> &ham );
+DTM NupNdn( const std::vector<Basis> &Bases, const DTV &Vec,
+  Hamiltonian<DT,int> &ham );
+DTM NupNup( const std::vector<Basis> &Bases, const DTV &Vec,
+  Hamiltonian<DT,int> &ham );
+DTM NdnNdn( const std::vector<Basis> &Bases, const DTV &Vec,
+  Hamiltonian<DT,int> &ham );
 
 int main(int argc, char const *argv[]) {
   int L;
@@ -36,27 +49,28 @@ int main(int argc, char const *argv[]) {
   // const bool OBC = true;
   // const RealType J12ratio = 0.010e0;
   INFO("Build Lattice - ");
-  std::vector<ComplexType> J;
+  std::vector<DT> J;
   if ( OBC ){
-    J = std::vector<ComplexType>(L - 1, ComplexType(1.0, 0.0));
+    J = std::vector<DT>(L - 1, 1.0);
     for (size_t cnt = 0; cnt < L-1; cnt+=2) {
       J.at(cnt) *= J12ratio;
     }
   } else{
-    J = std::vector<ComplexType>(L, ComplexType(1.0, 0.0));
+    J = std::vector<DT>(L, 1.0);
     for (size_t cnt = 0; cnt < L; cnt+=2) {
       J.at(cnt) *= J12ratio;
     }
+#ifndef DTYPE
     if ( std::abs(phi) > 1.0e-10 ){
-      J.at(L-1) *= exp( ComplexType(0.0e0, 1.0e0) * phi );
-      // INFO(exp( ComplexType(0.0e0, 1.0e0) * phi ));
+      J.at(L-1) *= exp( DT(0.0, 1.0) * phi );
     }
+#endif
   }
   for ( auto &val : J ){
     INFO_NONEWLINE(val << " ");
   }
   INFO("");
-  const std::vector< Node<ComplexType, int>* > lattice = NN_1D_Chain(L, J, OBC);
+  const std::vector< Node<DT, int>* > lattice = NN_1D_Chain(L, J, OBC);
   file.saveNumber("1DChain", "L", L);
   file.saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
@@ -95,17 +109,17 @@ int main(int argc, char const *argv[]) {
   std::vector<Basis> Bases;
   Bases.push_back(F1);
   Bases.push_back(F2);
-  Hamiltonian<ComplexType,int> ham( Bases );
-  std::vector< std::vector<ComplexType> > Vloc;
-  std::vector<ComplexType> Vtmp;//(L, 1.0);
+  Hamiltonian<DT,int> ham( Bases );
+  std::vector< std::vector<DT> > Vloc;
+  std::vector<DT> Vtmp;//(L, 1.0);
   for ( RealType &val : Vin ){
-    Vtmp.push_back((ComplexType)val);
+    Vtmp.push_back((DT)val);
   }
   Vloc.push_back(Vtmp);
   Vloc.push_back(Vtmp);
-  std::vector< std::vector<ComplexType> > Uloc;
-  // std::vector<ComplexType> Utmp(L, ComplexType(10.0e0, 0.0e0) );
-  std::vector<ComplexType> Utmp(L, (ComplexType)Uin);
+  std::vector< std::vector<DT> > Uloc;
+  // std::vector<DT> Utmp(L, DT(10.0e0, 0.0e0) );
+  std::vector<DT> Utmp(L, (DT)Uin);
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
   ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
@@ -114,28 +128,28 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
   RealType Val = 0.0e0;
-  Hamiltonian<ComplexType,int>::VectorType Vec;
+  Hamiltonian<DT,int>::VectorType Vec;
   ham.eigh(Val, Vec);
   INFO("GS energy = " << Val);
   file.saveVector("GS", "EVec", Vec);
   file.saveNumber("GS", "EVal", Val);
   INFO("DONE!");
-  std::vector< ComplexVectorType > Nfi = Ni( Bases, Vec, ham );
+  std::vector< DTV > Nfi = Ni( Bases, Vec, ham );
   INFO(" Up Spin - ");
   INFO(Nfi.at(0));
   INFO(" Down Spin - ");
   INFO(Nfi.at(1));
-  ComplexMatrixType Nud = NupNdn( Bases, Vec, ham );
+  DTM Nud = NupNdn( Bases, Vec, ham );
   INFO(" Correlation NupNdn");
   INFO(Nud);
-  ComplexMatrixType Nuu = NupNup( Bases, Vec, ham );
+  DTM Nuu = NupNup( Bases, Vec, ham );
   INFO(" Correlation NupNup");
   INFO(Nuu);
-  ComplexMatrixType Ndd = NdnNdn( Bases, Vec, ham );
+  DTM Ndd = NdnNdn( Bases, Vec, ham );
   INFO(" Correlation NdnNdn");
   INFO(Ndd);
   file.saveVector("Obs", "Nup", Nfi.at(0));
-  file.saveVector("Obs", "Ndn", Nfi.at(0));
+  file.saveVector("Obs", "Ndn", Nfi.at(1));
   file.saveMatrix("Obs", "NupNdn", Nud);
   file.saveMatrix("Obs", "NupNup", Nuu);
   file.saveMatrix("Obs", "NdnNdn", Ndd);
@@ -156,11 +170,11 @@ void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
     file.loadStdVector("Parameters", "V", Vloc);
 }
 
-std::vector< ComplexVectorType > Ni( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham ){
-  std::vector< ComplexVectorType > out;
-  ComplexVectorType tmp1 = ComplexVectorType::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
-  ComplexVectorType tmp2 = ComplexVectorType::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
+std::vector< DTV > Ni( const std::vector<Basis> &Bases,
+  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  std::vector< DTV > out;
+  DTV tmp1 = DTV::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
+  DTV tmp2 = DTV::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
   std::vector< int > f1 = Bases.at(0).getFStates();
   std::vector< int > f2 = Bases.at(1).getFStates();
   size_t f1id = 0, f2id = 0;
@@ -171,10 +185,10 @@ std::vector< ComplexVectorType > Ni( const std::vector<Basis> &Bases,
       ids.at(0) = f1id;
       size_t id = ham.DetermineTotalIndex(ids);
       for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
-        if ( btest(nf1, cnt) ) tmp1(cnt) += Vec(id) * std::conj( Vec(id) );
+        if ( btest(nf1, cnt) ) tmp1(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
       }
       for (size_t cnt = 0; cnt < Bases.at(1).getL(); cnt++) {
-        if ( btest(nf2, cnt) ) tmp2(cnt) += Vec(id) * std::conj( Vec(id) );
+        if ( btest(nf2, cnt) ) tmp2(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
       }
       f1id++;
     }
@@ -185,9 +199,9 @@ std::vector< ComplexVectorType > Ni( const std::vector<Basis> &Bases,
   return out;
 }
 
-ComplexMatrixType NupNdn( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham ){
-  ComplexMatrixType out = ComplexMatrixType::Zero(
+DTM NupNdn( const std::vector<Basis> &Bases,
+  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  DTM out = DTM::Zero(
     Bases.at(0).getL(), Bases.at(1).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();
   std::vector< int > f2 = Bases.at(1).getFStates();
@@ -201,7 +215,7 @@ ComplexMatrixType NupNdn( const std::vector<Basis> &Bases,
       for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
         for (size_t cnt2 = 0; cnt2 < Bases.at(1).getL(); cnt2++) {
           if ( btest(nf2, cnt1) && btest(nf1, cnt2) ) {
-            out(cnt1, cnt2) +=  Vec(id) * std::conj( Vec(id) );
+            out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
           }
         }
       }
@@ -212,9 +226,9 @@ ComplexMatrixType NupNdn( const std::vector<Basis> &Bases,
   return out;
 }
 
-ComplexMatrixType NupNup( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham ){
-  ComplexMatrixType out = ComplexMatrixType::Zero(
+DTM NupNup( const std::vector<Basis> &Bases,
+  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  DTM out = DTM::Zero(
     Bases.at(0).getL(), Bases.at(0).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();
   std::vector< int > f2 = Bases.at(1).getFStates();
@@ -228,7 +242,7 @@ ComplexMatrixType NupNup( const std::vector<Basis> &Bases,
       for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
         for (size_t cnt2 = 0; cnt2 < Bases.at(0).getL(); cnt2++) {
           if ( btest(nf1, cnt1) && btest(nf1, cnt2) ) {
-            out(cnt1, cnt2) +=  Vec(id) * std::conj( Vec(id) );
+            out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
           }
         }
       }
@@ -239,9 +253,9 @@ ComplexMatrixType NupNup( const std::vector<Basis> &Bases,
   return out;
 }
 
-ComplexMatrixType NdnNdn( const std::vector<Basis> &Bases,
-  const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham ){
-  ComplexMatrixType out = ComplexMatrixType::Zero(
+DTM NdnNdn( const std::vector<Basis> &Bases,
+  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  DTM out = DTM::Zero(
     Bases.at(0).getL(), Bases.at(1).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();
   std::vector< int > f2 = Bases.at(1).getFStates();
@@ -255,7 +269,7 @@ ComplexMatrixType NdnNdn( const std::vector<Basis> &Bases,
       for (size_t cnt1 = 0; cnt1 < Bases.at(1).getL(); cnt1++) {
         for (size_t cnt2 = 0; cnt2 < Bases.at(1).getL(); cnt2++) {
           if ( btest(nf2, cnt1) && btest(nf2, cnt2) ) {
-            out(cnt1, cnt2) +=  Vec(id) * std::conj( Vec(id) );
+            out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
           }
         }
       }
