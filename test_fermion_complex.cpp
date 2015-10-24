@@ -19,12 +19,12 @@ ComplexMatrixType NdnNdn( const std::vector<Basis> &Bases,
   const ComplexVectorType &Vec, Hamiltonian<ComplexType,int> &ham );
 
 int main(int argc, char const *argv[]) {
-  const int L = 13;
+  const int L = 5;
   INFO("Build Lattice - ");
   const bool OBC = true;
   std::vector<ComplexType> J(L-1, ComplexType(1.0, 0.0));
   for (size_t cnt = 0; cnt < L-1; cnt+=2) {
-    J.at(cnt) *= 0.10e0;
+    J.at(cnt) *= 0.50e0;
   }
   // const bool OBC = false;
   // const std::vector<double> J(L, 1.0);

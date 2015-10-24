@@ -117,6 +117,7 @@ void Hamiltonian<Tnum, Tlabel>::FermionInterLocalPart(
       hloc.push_back(Triplet(id, id, g));
     }
   }
+  /*NOTE: for detatil difference*/
   for (size_t i = 0; i < bs.at(0).getL(); i++) {
     for (size_t up = 0; up < point1; up++) {
       for (size_t dn = 0; dn < point2; dn++) {
