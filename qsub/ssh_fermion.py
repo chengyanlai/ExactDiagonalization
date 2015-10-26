@@ -47,13 +47,11 @@ def SetV(L, type="Box"):
 
 NumThreads = 1
 L = 13
-J12ratio = np.linspace(0.0, 1.0, 11)
-# J12ratio = [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90, 1.00]
+J12ratio = np.linspace(0.0, 1.0, 51)
 OBC = 1#1:True
 N1 = np.int((L + 1) / 2)
 N2 = np.int((L - 1) / 2)
-Uin = np.linspace(0.0, 16.0, 33)
-# Uin = [0.0, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0]
+Uin = np.linspace(0.0, 10.0, 51)
 if OBC:
   Phils = [0, ]
 else:
@@ -87,6 +85,10 @@ for nphi in Phils:
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
       with shp.cd(workdir):
         if os.path.isfile('SSH.h5'):
+          print("".join([workdir, " already done!"]))
+          pass
+        elif os.path.isfile('SSHconf.h5'):
+          print("".join([workdir, " is schaduled!?"]))
           pass
         else:
           f = h5py.File('SSHconf.h5', 'w')
