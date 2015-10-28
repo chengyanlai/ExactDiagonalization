@@ -47,15 +47,16 @@ def SetV(L, type="Box"):
 
 NumThreads = 1
 L = 13
-J12ratio = np.linspace(0.0, 1.0, 51)
-OBC = 1#1:True
+J12ratio = [0.10, ]#np.linspace(0.0, 1.0, 51)
+# OBC = 1#1:True
+OBC = 0#0:False
 N1 = np.int((L + 1) / 2)
 N2 = np.int((L - 1) / 2)
-Uin = np.linspace(0.0, 10.0, 51)
+Uin = [0.0, ]#np.linspace(0.0, 10.0, 51)
 if OBC:
   Phils = [0, ]
 else:
-  Phils = [0, ]#np.linspace(0, L, 10)
+  Phils = np.linspace(0, L, 66)
 Vtype = "Box"
 Vin = SetV(L, type=Vtype)
 

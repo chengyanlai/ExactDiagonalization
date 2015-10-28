@@ -10,8 +10,8 @@ ifeq "$(NODE)" ""
 NODE = $(shell uname -n)
 endif
 
-ifeq ("$(NODE)", "CHEN-YENs-MacBook-Pro-Retina.local")
-	EIGENINC = /Volumes/home/Users/chengyanlai/GitRepo/eigen/
+ifeq ("$(NODE)", "CHEN-YENs-MacBook-Pro.local")
+	EIGENINC = /Volumes/Files/GitHub/eigen/
 	HDF5ROOT = /usr/local/Cellar/hdf5/1.8.15/
 	MKLROOT =
 else ifeq ("$(NODE)", "kagome.rcc.ucmerced.edu")

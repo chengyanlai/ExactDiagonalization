@@ -11,7 +11,7 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
-#define DTYPE 0//comment out this to compile complex
+// #define DTYPE 0//comment out this to compile complex
 
 #ifndef DTYPE
 #define DT ComplexType
