@@ -38,7 +38,7 @@ if(platform.system() == "Linux"):
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
-  SRC_DIR = "/Volumes/home/Users/chengyanlai/GitRepo/ExactDiagonalization"
+  SRC_DIR = "/Volumes/Files/GitRepo/ExactDiagonalization"
   EXEC_DIR = os.path.join(SRC_DIR, "data")
 
 def SetV(L, type="Box"):
