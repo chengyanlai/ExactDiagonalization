@@ -11,8 +11,8 @@ NODE = $(shell uname -n)
 endif
 
 ifeq ("$(NODE)", "CHEN-YENs-MacBook-Pro.local")
-	EIGENINC = /Volumes/Files/GitHub/eigen/
-	HDF5ROOT = /usr/local/Cellar/hdf5/1.8.15/
+	EIGENINC = /Volumes/Files/GitHub/eigen
+	HDF5ROOT = /usr/local/opt/hdf5
 	MKLROOT =
 else ifeq ("$(NODE)", "kagome.rcc.ucmerced.edu")
 	EIGENINC = /usr/local/include

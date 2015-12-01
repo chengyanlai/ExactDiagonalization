@@ -139,6 +139,9 @@ int main(int argc, char const *argv[]) {
   INFO(Nfi.at(0));
   INFO(" Down Spin - ");
   INFO(Nfi.at(1));
+  INFO(" N_i - ");
+  DTV Ni = Nfi.at(0) + Nfi.at(1);
+  INFO(Ni);
   DTM Nud = NupNdn( Bases, Vec, ham );
   INFO(" Correlation NupNdn");
   INFO(Nud);
@@ -148,6 +151,9 @@ int main(int argc, char const *argv[]) {
   DTM Ndd = NdnNdn( Bases, Vec, ham );
   INFO(" Correlation NdnNdn");
   INFO(Ndd);
+  INFO(" N_i^2 - ");
+  DTM Ni2 = Nuu.diagonal() + Ndd.diagonal() + 2.0e0 * Nud.diagonal();
+  INFO(Ni2);
   file.saveVector("Obs", "Nup", Nfi.at(0));
   file.saveVector("Obs", "Ndn", Nfi.at(1));
   file.saveMatrix("Obs", "NupNdn", Nud);

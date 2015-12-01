@@ -62,13 +62,13 @@ int main(int argc, char const *argv[]) {
   B1.Boson();
   std::vector< std::vector<int> > st = B1.getBStates();
   std::vector< RealType > tg = B1.getBTags();
-  for (size_t cnt = 0; cnt < tg.size(); cnt++) {
-    INFO_NONEWLINE( std::setw(3) << cnt << " - ");
-    for (auto &j : st.at(cnt)){
-      INFO_NONEWLINE(j << " ");
-    }
-    INFO("- " << tg.at(cnt));
-  }
+  // for (size_t cnt = 0; cnt < tg.size(); cnt++) {
+  //   INFO_NONEWLINE( std::setw(3) << cnt << " - ");
+  //   for (auto &j : st.at(cnt)){
+  //     INFO_NONEWLINE(j << " ");
+  //   }
+  //   INFO("- " << tg.at(cnt));
+  // }
   file.saveNumber("Basis", "N", N);
   // file.saveStdVector("Basis", "States", st);
   // file.saveStdVector("Basis", "Tags", tg);
@@ -105,6 +105,7 @@ int main(int argc, char const *argv[]) {
   }
   ComplexMatrixType Nij = NiNj( Bases, Vec );
   INFO(Nij);
+  INFO(Nij.diagonal());
   return 0;
   file.saveStdVector("Obs", "Nb", Nbi);
   file.saveMatrix("Obs", "Nij", Nij);

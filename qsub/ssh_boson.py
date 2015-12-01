@@ -38,38 +38,56 @@ if(platform.system() == "Linux"):
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
-  SRC_DIR = "/Volumes/home/Users/chengyanlai/GitRepo/ExactDiagonalization"
+  SRC_DIR = "/Volumes/Files/GitRepo/ExactDiagonalization"
   EXEC_DIR = os.path.join(SRC_DIR, "data")
 
-def SetV(L, type="Box"):
-  V = np.zeros(L, dtype=np.float64)
+def SetV(L, vtype="Box"):
+  if vtype == "Box":
+    V = np.zeros(L, dtype=np.float64)
+  else:
+    print("Vtype is not existed!")
+    sys.exit()
   return V
 
-L = 3
-J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
-OBC = 0#1:True
-N = np.int((L + 1) / 2)
-Uin = [0.0, ]#0.5, 1.0, 5.0, 10.0]
-Phils = [1, ]#np.linspace(0, L, 10)
+L = 13
+# J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
+J12ratio = [1.00, ]
+OBC = 1#1:True
+# OBC = 0#0:False
+if L % 2 == 1:
+  N = L
+  # N = np.int((L + 1) / 2)
+else:
+  N = L
+  # N = np.int( L / 2 )
+Uin = [10.0, ]#0.5, 1.0, 5.0, 10.0]
+if OBC:
+  Phils = [0, ]
+else:
+  Phils = np.linspace(0, L, 66)
 Vtype = "Box"
-Vin = SetV(L, type=Vtype)
+Vin = SetV(L, vtype=Vtype)
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "SSH.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:
-  LN1N2 = "-".join(["SSHO", "".join(["L", str(L)]), str(N)])
+  LN1N2 = "-".join(["BSSHO", "".join(["L", str(L)]), str(N)])
 else:
-  LN1N2 = "-".join(["SSHP", "".join(["L", str(L)]), str(N)])
+  LN1N2 = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
 for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)
   for J12 in J12ratio:
     for U in Uin:
-      Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["J12", str(J12)]),
-        "".join(["n", str(nphi)]), Vtype])
+      if OBC:
+        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["Jr", str(J12)]),
+          Vtype])
+      else:
+        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["Jr", str(J12)]),
+          "".join(["n", str(nphi)]), Vtype])
 
       workdir = os.path.join(DATADIR, Job_Name)
 

@@ -1,5 +1,6 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/Lanczos/lanczos.hpp"
+#include "src/Lanczos/krylov.hpp"
 
 template<typename Tnum, typename Tlabel>
 Hamiltonian<Tnum, Tlabel>::Hamiltonian( const std::vector<Basis> &bs )
@@ -95,10 +96,17 @@ void Hamiltonian<Tnum, Tlabel>::eigh( RealType &Val, VectorType &Vec,
   size_t max_iter = 200;
   RealType err_tol = 1.0e-9;
   if( !(FullDiagonalization) ){
-    bool converge = LanczosEV(getTotalHilbertSpace(), H_total,
-      Vec, Val, max_iter, err_tol);
+    bool converge = LanczosEV(H_total, Vec, Val, max_iter, err_tol);
     if ( !(converge) ) INFO("Lanczos is not converged!");
   }
+}
+
+template<>
+void Hamiltonian<ComplexType, int>::expH( const ComplexType Prefactor,
+  ComplexVectorType &Vec )
+{
+  size_t Kmax = 10;
+  krylov(H_total, Vec, Prefactor, Kmax);
 }
 
 template class Hamiltonian<RealType, int>;

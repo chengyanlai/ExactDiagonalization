@@ -11,7 +11,7 @@
 #endif
 
 
-bool LanczosEV(const size_t N, const ComplexSparseMatrixType A,
+bool LanczosEV(const ComplexSparseMatrixType A,
   ComplexVectorType &Vec, RealType &Val,
   size_t &max_iter, double err_tol)
 {
@@ -106,7 +106,7 @@ bool LanczosEV(const size_t N, const ComplexSparseMatrixType A,
   return converged;
 }
 
-bool LanczosEV(const size_t N, const RealSparseMatrixType A,
+bool LanczosEV(const RealSparseMatrixType A,
   RealVectorType &Vec, RealType &Val, size_t &max_iter, double err_tol)
 {
   const int min_iter = 2;

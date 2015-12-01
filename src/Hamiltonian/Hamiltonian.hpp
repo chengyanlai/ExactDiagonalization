@@ -49,7 +49,7 @@ public:
     const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Fermion Functions ^^^^^^^ */
   void eigh( RealType &Val, VectorType &Vec, const bool FullDiagonalization = false );
-  // void exp( const bool FullDiagonalization = false );
+  void expH( const ComplexType Prefactor, ComplexVectorType &Vec );
   // inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
     assert( ids.size() == HilbertSpaces.size() );

@@ -41,24 +41,35 @@ elif(platform.system() == "Darwin"):
   SRC_DIR = "/Volumes/Files/GitRepo/ExactDiagonalization"
   EXEC_DIR = os.path.join(SRC_DIR, "data")
 
-def SetV(L, type="Box"):
-  V = np.zeros(L, dtype=np.float64)
+def SetV(L, vtype="Box"):
+  if vtype == "Box":
+    V = np.zeros(L, dtype=np.float64)
+  else:
+    print("Vtype is not existed!")
+    sys.exit()
   return V
 
 NumThreads = 1
 L = 13
-J12ratio = [0.10, ]#np.linspace(0.0, 1.0, 51)
+# J12ratio = np.linspace(0.0, 1.0, 51)
+J12ratio = [1.00, ]
 # OBC = 1#1:True
-OBC = 0#0:False
-N1 = np.int((L + 1) / 2)
-N2 = np.int((L - 1) / 2)
-Uin = [0.0, ]#np.linspace(0.0, 10.0, 51)
+OBC = 1#0:False
+if L % 2 == 1:
+  # N1 = np.int((L + 1) / 2)
+  # N2 = np.int((L - 1) / 2)
+  N1 = 11
+  N2 = 2
+else:
+  N1 = np.int(L / 2)
+  N2 = np.int(L / 2)
+Uin = [10.0, ]#np.linspace(0.0, 10.0, 51)
 if OBC:
   Phils = [0, ]
 else:
   Phils = np.linspace(0, L, 66)
 Vtype = "Box"
-Vin = SetV(L, type=Vtype)
+Vin = SetV(L, vtype=Vtype)
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "SSH.f"))
@@ -75,10 +86,10 @@ for nphi in Phils:
   for J12 in J12ratio:
     for U in Uin:
       if OBC:
-        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["J12", str(J12)]),
+        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["Jr", str(J12)]),
           Vtype])
       else:
-        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["J12", str(J12)]),
+        Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["Jr", str(J12)]),
           "".join(["n", str(nphi)]), Vtype])
 
       workdir = os.path.join(DATADIR, Job_Name)
