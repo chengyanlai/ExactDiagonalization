@@ -61,7 +61,7 @@ def SetV(L, Val1=0.0, Val2=0.0, vtype="Uniform"):
     sys.exit()
   return V
 
-NumThreads = 1
+NumThreads = 2
 
 L = 13
 OBC = 1# 1:True

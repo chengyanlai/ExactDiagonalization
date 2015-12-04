@@ -11,7 +11,16 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
+#ifdef MKL
+  #include "mkl.h"
+#endif
 
+#ifndef NumCores
+#define NumCores 2
+#endif
+
+void SaveObs( const std::string filename, const std::string gname,
+  const std::vector<ComplexType> &v, const ComplexMatrixType &m);
 void LoadEqmParameters( const std::string filename, int &L, int &OBC,
   int &N, RealType &Uloc, std::vector<RealType> &Vloc);
 void LoadDynParameters( const std::string filename, RealType &dt, int &Tsteps,
@@ -20,13 +29,17 @@ std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVecto
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 
 int main(int argc, char const *argv[]) {
+  Eigen::setNbThreads(NumCores);
+#ifdef MKL
+  mkl_set_num_threads(NumCores);
+#endif
+  INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   int L;
   int OBC;
   int N;
   RealType Uin;
   std::vector<RealType> Vin;
   LoadEqmParameters( "Eqm.h5", L, OBC, N, Uin, Vin );
-  HDF5IO file("SourceSink.h5");
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -39,8 +52,6 @@ int main(int argc, char const *argv[]) {
   }
   INFO("");
   const std::vector< Node<ComplexType, int>* > lattice = NN_1D_Chain(L, J, OBC);
-  file.saveNumber("1DChain", "L", L);
-  file.saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
   }
@@ -50,7 +61,6 @@ int main(int argc, char const *argv[]) {
   B1.Boson();
   std::vector< std::vector<int> > st = B1.getBStates();
   std::vector< RealType > tg = B1.getBTags();
-  file.saveNumber("Basis", "N", N);
   INFO("DONE!");
   INFO_NONEWLINE("Build Hamiltonian - ");
   std::vector<Basis> Bases;
@@ -74,18 +84,25 @@ int main(int argc, char const *argv[]) {
   Hamiltonian<ComplexType,int>::VectorType Vec;
   ham.eigh(Val, Vec);
   INFO("GS energy = " << Val);
+  HDF5IO file("GS.h5");
+  file.saveNumber("1DChain", "L", L);
+  file.saveStdVector("1DChain", "J", J);
+  file.saveNumber("Basis", "N", N);
   file.saveVector("GS", "EVec", Vec);
   file.saveNumber("GS", "EVal", Val);
   INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Vec );
+  INFO("N_i = ");
   for (auto &n : Nbi ){
-    INFO( n << " " );
+    INFO_NONEWLINE( n.real() << " " );
   }
+  INFO(" ");
   ComplexMatrixType Nij = NiNj( Bases, Vec );
-  INFO(Nij);
-  INFO(Nij.diagonal());
-  file.saveStdVector("Obs", "Nb", Nbi);
-  file.saveMatrix("Obs", "Nij", Nij);
+  INFO("N_iN_j = ");
+  INFO(Nij.real());
+  INFO("N_i^2 = ");
+  INFO(Nij.diagonal().real());
+  SaveObs("SourceSink.h5", "Obs", Nbi, Nij);
   /* NOTE: Real-time dynamics */
   int Tsteps;
   RealType dt;
@@ -100,27 +117,37 @@ int main(int argc, char const *argv[]) {
   Vloc.clear();
   Vloc.push_back(Vtmp);
   INFO("");
-  INFO("Quench the global interaction to" << Uin);
+  INFO("Quench the global interaction to " << Uin);
   Utmp.assign(L, (ComplexType)Uin);
   Uloc.clear();
   Uloc.push_back(Utmp);
   INFO("Update the local/total Hamiltonian");
   ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
   ham.BuildTotalHamiltonian();
+  INFO("Start Time-Evolution");
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
+    INFO( cntT );
     ComplexType Prefactor = ComplexType(0.0, dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );
     Nij = NiNj( Bases, Vec );
-    /* NOTE: group name */
+    /* NOTE: H5 group name */
     std::string gname = "Obs-";
     gname.append(std::to_string((unsigned long long)cntT));
     gname.append("/");
-    file.saveStdVector(gname, "Nb", Nbi);
-    file.saveMatrix(gname, "Nij", Nij);
+    SaveObs("SourceSink.h5", gname, Nbi, Nij);
   }
+  INFO("End Program!!");
   return 0;
+}
+
+void SaveObs( const std::string filename, const std::string gname,
+  const std::vector<ComplexType> &v, const ComplexMatrixType &m)
+{
+  HDF5IO file(filename);
+  file.saveStdVector(gname, "Nb", v);
+  file.saveMatrix(gname, "Nij", m);
 }
 
 void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N,

@@ -7,7 +7,7 @@
 #include "src/Lanczos/krylov.hpp"
 
 #ifndef DEBUG
-#define DEBUG 5
+#define DEBUG 4
 #endif
 
 void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
@@ -24,25 +24,20 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
   ComplexMatrixType Vm = ComplexMatrixType::Zero(Vec.size(), Kmax);
   std::vector<RealType> Alphas;
   std::vector<RealType> Betas;
-  //NOTE: normalized Vec
   int cntK = 0;
+  //NOTE: normalized Vec
   Vec.normalize();
   Vm.col(cntK) = Vec;
   while ( cntK < Kmax ) {
     ComplexVectorType work = A * Vm.col(cntK);
     if( cntK > 0 ) work -= beta * Vm.col(cntK-1);
-    // Vm.col(cntK+1) = work;
-    // ComplexType alpha_c = Vm.col(cntK+1).dot( Vm.col(cntK) );
     ComplexType alpha_c = work.dot( Vm.col(cntK) );
     alpha = alpha_c.real();
-    // Vm.col(cntK+1) -= alpha * Vm.col(cntK);
     work -= alpha * Vm.col(cntK);
-    // beta = Vm.col(cntK+1).norm();
     beta = work.norm();
     Alphas.push_back(alpha);
-    if( DEBUG > 5 ){
-      INFO("alpha @ " << cntK << " is " << alpha);
-      INFO(" beta @ " << cntK << " is " << beta);
+    if( DEBUG > 4 ){
+      INFO("@ " << cntK << " alpha is " << alpha << " beta is " << beta);
     }
     if( beta > beta_err ){
       work.normalize();
@@ -73,10 +68,10 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
     RealType* d = &Alphas[0];
     RealType* e = &Betas[0];
     RealType* z = (RealType*)malloc(Kused * Kused * sizeof(RealType));
-    RealType* work = (RealType*)malloc(4 * Kused * sizeof(RealType));
+    RealType* worktmp = (RealType*)malloc(4 * Kused * sizeof(RealType));
     int info;
     //dstev - LAPACK
-    dstev((char*)"V", &Kused, d, e, z, &Kused, work, &info);
+    dstev((char*)"V", &Kused, d, e, z, &Kused, worktmp, &info);
     if(info != 0){
       INFO("Lapack INFO = " << info);
       RUNTIME_ERROR("Error in Lapack function 'dstev'");
@@ -89,6 +84,11 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
     }
     ComplexMatrixType tmp = Vm * Kmat;
     Vec = tmp * Dmat * tmp.adjoint() * Vec;
+    free(worktmp);
+    free(z);
+    /* NOTE: Can not free e and d because they are pointing to vector. */
+    // free(e);
+    // free(d);
   }
 }
 
@@ -97,7 +97,7 @@ ComplexMatrixType expD( const ComplexType Prefactor, const size_t dim,
 {
   ComplexMatrixType Dmat = ComplexMatrixType::Zero(dim, dim);
   for (size_t cnt = 0; cnt < dim; cnt++) {
-    Dmat(cnt, cnt) = exp(Prefactor) * (ComplexType)d[cnt];
+    Dmat(cnt, cnt) = exp(Prefactor) * d[cnt];
   }
   return Dmat;
 }
