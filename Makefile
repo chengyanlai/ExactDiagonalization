@@ -16,8 +16,8 @@ ifeq ("$(NODE)", "CHEN-YENs-MacBook-Pro.local")
 	MKLROOT =
 else ifeq ("$(NODE)", "kagome.rcc.ucmerced.edu")
 	EIGENINC = /usr/local/include
-	HDF5ROOT = /data2/hdf5/HDF_Group/HDF5/1.8.15-patch1
-	MKLROOT = /data2/intel/composer_xe_2015.2.164/mkl
+	HDF5ROOT = /condensate1/hdf5/HDF_Group/HDF5/1.8.15-patch1
+	MKLROOT = /condensate1/intel/composer_xe_2015.2.164/mkl
 else ifeq ("$(NODE)", "edgestate.rcc.ucmerced.edu")
 	EIGENINC = /usr/local/include
 	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.15-patch1
@@ -78,7 +78,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/SSH.f build/SSH.b build/test.fermion build/test.boson build/test.lattice build/test.node
+all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -87,6 +87,9 @@ build/SSH.b: build/SSH_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/SSH.f: build/SSH_fermion.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/SourceSinkDyn.b: build/SourceSinkDyn_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 # build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)

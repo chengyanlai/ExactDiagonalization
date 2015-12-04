@@ -25,6 +25,7 @@ public:
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
   void Boson();
+  void BosonTB( const size_t TBloc );
   void Fermion();
   inline bool getType()const{return isFermion;};
   inline size_t getL()const{return L;};

@@ -7,7 +7,7 @@
 #include "src/Lanczos/krylov.hpp"
 
 #ifndef DEBUG
-#define DEBUG 6
+#define DEBUG 5
 #endif
 
 void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
@@ -87,8 +87,8 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
     if ( DEBUG > 5 ) {
       INFO( "K^H * K " << std::endl << tmpKmat * Kmat);
     }
-    // ComplexMatrixType tmp = Vm * Kmat;
-    // Vec = Vm * Kmat * Dmat * Kmat.adjoint() * Vm.adjoint() * Vec;
+    ComplexMatrixType tmp = Vm * Kmat;
+    Vec = tmp * Dmat * tmp.adjoint() * Vec;
   }
 }
 

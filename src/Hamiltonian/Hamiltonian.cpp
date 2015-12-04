@@ -103,9 +103,8 @@ void Hamiltonian<Tnum, Tlabel>::eigh( RealType &Val, VectorType &Vec,
 
 template<>
 void Hamiltonian<ComplexType, int>::expH( const ComplexType Prefactor,
-  ComplexVectorType &Vec )
+  ComplexVectorType &Vec, const size_t Kmax )
 {
-  size_t Kmax = 10;
   krylov(H_total, Vec, Prefactor, Kmax);
 }
 
