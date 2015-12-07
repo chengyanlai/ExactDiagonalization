@@ -23,7 +23,7 @@ int main(int argc, char const *argv[]) {
   int N;
   RealType Uin, phi;
   std::vector<RealType> Vin;
-  LoadParameters( "SSHconf.h5", L, J12ratio, OBC, N, Uin, Vin, phi);
+  LoadParameters( "conf.h5", L, J12ratio, OBC, N, Uin, Vin, phi);
   HDF5IO file("SSH.h5");
   // const int L = 5;
   // const bool OBC = true;
@@ -60,8 +60,8 @@ int main(int argc, char const *argv[]) {
   // int N1 = (L+1)/2;
   Basis B1(L, N);
   B1.Boson();
-  std::vector< std::vector<int> > st = B1.getBStates();
-  std::vector< RealType > tg = B1.getBTags();
+  // std::vector< std::vector<int> > st = B1.getBStates();
+  // std::vector< RealType > tg = B1.getBTags();
   // for (size_t cnt = 0; cnt < tg.size(); cnt++) {
   //   INFO_NONEWLINE( std::setw(3) << cnt << " - ");
   //   for (auto &j : st.at(cnt)){

@@ -17,9 +17,6 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
-  // Vm.clear();
-  // Alphas.clear();
-  // Betas.clear();
   //NOTE: Setup the memory
   ComplexMatrixType Vm = ComplexMatrixType::Zero(Vec.size(), Kmax);
   std::vector<RealType> Alphas;

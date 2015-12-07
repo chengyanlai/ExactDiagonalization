@@ -49,18 +49,21 @@ def SetV(L, vtype="Box"):
     sys.exit()
   return V
 
-L = 13
+NumThreads = 1
+
+L = 7
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
 J12ratio = [1.00, ]
 OBC = 1#1:True
 # OBC = 0#0:False
 if L % 2 == 1:
-  N = L
+  N = L - 1
   # N = np.int((L + 1) / 2)
 else:
   N = L
   # N = np.int( L / 2 )
-Uin = [10.0, ]#0.5, 1.0, 5.0, 10.0]
+# Uin = [10.0, ]#0.5, 1.0, 5.0, 10.0]
+Uin = [0.0, 1.0, 3.0, 5.0, 7.0, 9.0]
 if OBC:
   Phils = [0, ]
 else:
@@ -96,7 +99,7 @@ for nphi in Phils:
         if os.path.isfile('SSH.h5'):
           pass
         else:
-          f = h5py.File('SSHconf.h5', 'w')
+          f = h5py.File('conf.h5', 'w')
           para = f.create_group("Parameters")
           dset = para.create_dataset("L", data=L)
           dset = para.create_dataset("J12", data=J12)

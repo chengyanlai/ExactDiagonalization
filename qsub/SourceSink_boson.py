@@ -67,12 +67,12 @@ L = 13
 OBC = 1# 1:True
 # OBC = 0# 0:False
 N = L
-Uin = [0.0, 2.0, 4.0, 6.0, 8.0, 10.0]
+Uin = [0.0, ]#2.0, 4.0, 6.0, 8.0, 10.0]
 VtypeEqm = "Uniform"
 Val1 = 0.0
 Vin = SetV(L, Val1=Val1, vtype=VtypeEqm)
 # NOTE: Dynamics parameters
-Tsteps = 2000# Tstep * dt is final time
+Tsteps = 10# Tstep * dt is final time
 dt = 0.01
 VtypeDyn = "SinkCenter"
 Val2List = [-4.0, ]

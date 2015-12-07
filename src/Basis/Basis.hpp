@@ -27,6 +27,8 @@ public:
   void Boson();
   void BosonTB( const size_t TBloc );
   void Fermion();
+  void Save( const std::string filename, const std::string gname );
+  void Load( const std::string filename, const std::string gname );
   inline bool getType()const{return isFermion;};
   inline size_t getL()const{return L;};
   inline size_t getN()const{return N;};

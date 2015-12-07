@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <map>
+#include <numeric>
 #include "src/EDType.hpp"
 #include "src/bitwise.h"
 #include "src/Node/Node.hpp"
@@ -11,6 +13,7 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
+
 #ifdef MKL
   #include "mkl.h"
 #endif
@@ -19,12 +22,12 @@
 #define NumCores 2
 #endif
 
+void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
+  RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m);
-void LoadEqmParameters( const std::string filename, int &L, int &OBC,
-  int &N, RealType &Uloc, std::vector<RealType> &Vloc);
-void LoadDynParameters( const std::string filename, RealType &dt, int &Tsteps,
-  RealType &Uloc, std::vector<RealType> &Vloc);
+void TerminatorBeam( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec);
+void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 
@@ -34,12 +37,9 @@ int main(int argc, char const *argv[]) {
   mkl_set_num_threads(NumCores);
 #endif
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
-  int L;
-  int OBC;
-  int N;
-  RealType Uin;
-  std::vector<RealType> Vin;
-  LoadEqmParameters( "Eqm.h5", L, OBC, N, Uin, Vin );
+  int L, OBC, N, Tsteps, TBloc;
+  RealType Uin, Vin, dt;
+  LoadParameters( "conf.h5", L, OBC, N, Uin, Vin, dt, Tsteps, TBloc );
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -58,17 +58,18 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO("Build Basis - ");
   Basis B1(L, N);
-  B1.Boson();
+  B1.BosonTB(TBloc);
   INFO("DONE!");
-  INFO_NONEWLINE("Build Hamiltonian - ");
+  INFO("Build GS - ");
+  ComplexVectorType Vec = ComplexVectorType::Zero(B1.getHilbertSpace());
+  GetGS(TBloc, B1, Vec);
+  INFO("DONE!");
+  INFO("Build Hamiltonian - ");
   std::vector<Basis> Bases;
   Bases.push_back(B1);
   Hamiltonian<ComplexType,int> ham( Bases );
   std::vector< std::vector<ComplexType> > Vloc;
-  std::vector<ComplexType> Vtmp;//(L, 1.0);
-  for ( RealType &val : Vin ){
-    Vtmp.push_back((ComplexType)val);
-  }
+  std::vector<ComplexType> Vtmp(L, (ComplexType)Vin);
   Vloc.push_back(Vtmp);
   std::vector< std::vector<ComplexType> > Uloc;
   std::vector<ComplexType> Utmp(L, (ComplexType)Uin);
@@ -77,55 +78,13 @@ int main(int argc, char const *argv[]) {
   ham.BuildHoppingHamiltonian(Bases, lattice);
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
-  INFO_NONEWLINE("Diagonalize Hamiltonian - ");
-  RealType Val = 0.0e0;
-  Hamiltonian<ComplexType,int>::VectorType Vec;
-  ham.eigh(Val, Vec);
-  INFO("GS energy = " << Val);
-  HDF5IO file("GS.h5");
-  file.saveNumber("1DChain", "L", L);
-  file.saveStdVector("1DChain", "J", J);
-  file.saveNumber("Basis", "N", N);
-  file.saveVector("GS", "EVec", Vec);
-  file.saveNumber("GS", "EVal", Val);
-  INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Vec );
-  INFO("N_i = ");
-  for (auto &n : Nbi ){
-    INFO_NONEWLINE( n.real() << " " );
-  }
-  INFO(" ");
   ComplexMatrixType Nij = NiNj( Bases, Vec );
-  INFO("N_iN_j = ");
-  INFO(Nij.real());
-  INFO("N_i^2 = ");
-  INFO(Nij.diagonal().real());
-  SaveObs("SourceSink.h5", "Obs", Nbi, Nij);
-  /* NOTE: Real-time dynamics */
-  int Tsteps;
-  RealType dt;
-  Vin.clear();
-  LoadDynParameters( "Dyn.h5", dt, Tsteps, Uin, Vin);
-  Vtmp.clear();
-  INFO("Quench the local potetnial to");
-  for ( RealType &val : Vin ){
-    Vtmp.push_back((ComplexType)val);
-    INFO_NONEWLINE(" " << val);
-  }
-  Vloc.clear();
-  Vloc.push_back(Vtmp);
-  INFO("");
-  INFO("Quench the global interaction to " << Uin);
-  Utmp.assign(L, (ComplexType)Uin);
-  Uloc.clear();
-  Uloc.push_back(Utmp);
-  INFO("Update the local/total Hamiltonian");
-  ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
-  ham.BuildTotalHamiltonian();
-  INFO("Start Time-Evolution");
+  SaveObs("TB.h5", "Obs-0", Nbi, Nij);
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     ComplexType Prefactor = ComplexType(0.0, dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
+    TerminatorBeam(TBloc, B1, Vec);
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );
     Nij = NiNj( Bases, Vec );
@@ -133,9 +92,8 @@ int main(int argc, char const *argv[]) {
     std::string gname = "Obs-";
     gname.append(std::to_string((unsigned long long)cntT));
     gname.append("/");
-    SaveObs("SourceSink.h5", gname, Nbi, Nij);
+    SaveObs("TB.h5", gname, Nbi, Nij);
   }
-  INFO("End Program!!");
   return 0;
 }
 
@@ -144,26 +102,75 @@ void SaveObs( const std::string filename, const std::string gname,
 {
   HDF5IO file(filename);
   file.saveStdVector(gname, "Nb", v);
+  ComplexType Ntot = std::accumulate(v.begin(), v.end(), ComplexType(0.0, 0.0));
+  file.saveNumber(gname, "Ntot", Ntot.real());
   file.saveMatrix(gname, "Nij", m);
 }
 
-void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N,
-  RealType &Uloc, std::vector<RealType> &Vloc){
+void TerminatorBeam( const size_t TBloc, const Basis &bs,
+  ComplexVectorType &Vec)
+{
+  assert( Vec.size() == bs.getHilbertSpace() );
+  ComplexVectorType TBVec = Vec;
+  std::map<RealType, std::vector<int> > BsMap;
+  std::vector< std::vector<int> > bSt = bs.getBStates();
+  std::vector<RealType> bTg = bs.getBTags();
+  std::transform( bTg.begin(), bTg.end(), bSt.begin(),
+    std::inserter(BsMap, BsMap.end() ), std::make_pair<RealType const&,std::vector<int> const&> );
+  for (std::map<RealType, std::vector<int> >::iterator it = BsMap.begin(); it != BsMap.end(); it++) {
+    if ( it->second.at(TBloc) > 0 ) {
+      std::vector<int> newbs = it->second;
+      newbs.at(TBloc) = 0;
+      RealType newtag = BosonBasisTag(newbs);
+      ComplexType val1 = Vec(bs.getIndexFromTag(it->first));
+      val1 = val1 * conj(val1);
+      ComplexType val2 = TBVec(bs.getIndexFromTag(newtag));
+      val2 = val2 * conj(val2);
+      TBVec(bs.getIndexFromTag(newtag)) = sqrt( val1 + val2 );
+    }
+  }
+  Vec = TBVec;
+}
+
+void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
+{
+  HDF5IO gsf("SSH.h5");
+  ComplexVectorType gswf;
+  gsf.loadVector("GS", "EVec", gswf);
+  Basis GS(bs.getL(), bs.getN());
+  GS.Boson();
+  std::vector< std::vector<int> > gsbs = GS.getBStates();
+  std::vector<RealType> gsts = GS.getBTags();
+  std::map<RealType, std::vector<int> > GSmap;
+  std::transform( gsts.begin(), gsts.end(), gsbs.begin(),
+    std::inserter(GSmap, GSmap.end() ), std::make_pair<RealType const&,std::vector<int> const&> );
+  for (std::map<RealType, std::vector<int> >::iterator it = GSmap.begin(); it != GSmap.end(); it++) {
+    if ( it->second.at(TBloc) > 0 ) {
+      std::vector<int> newbs = it->second;
+      newbs.at(TBloc) = 0;
+      RealType newtag = BosonBasisTag(newbs);
+      ComplexType val1 = gswf(GS.getIndexFromTag(it->first));
+      val1 = val1 * conj(val1);
+      ComplexType val2 = Vec(bs.getIndexFromTag(newtag));
+      val2 = val2 * conj(val2);
+      Vec(bs.getIndexFromTag(newtag)) = sqrt( val1 + val2 );
+    }else {
+      Vec(bs.getIndexFromTag(it->first)) = gswf(GS.getIndexFromTag(it->first));
+    }
+  }
+}
+
+void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
+  RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
     N = file.loadInt("Parameters", "N");
     Uloc = file.loadReal("Parameters", "U");
-    file.loadStdVector("Parameters", "V", Vloc);
-}
-
-void LoadDynParameters( const std::string filename, RealType &dt, int &Tsteps,
-  RealType &Uloc, std::vector<RealType> &Vloc){
-    HDF5IO file(filename);
+    Vloc = file.loadReal("Parameters", "V");
     dt = file.loadReal("Parameters", "dt");
     Tsteps = file.loadInt("Parameters", "Tsteps");
-    Uloc = file.loadReal("Parameters", "U");
-    file.loadStdVector("Parameters", "V", Vloc);
+    TBloc = file.loadInt("Parameters", "TBloc");
 }
 
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,

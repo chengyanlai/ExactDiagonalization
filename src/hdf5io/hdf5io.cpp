@@ -223,12 +223,12 @@ void HDF5IO::saveStdVector(const std::string& GroupName, const std::string& Name
       DataSet.write(V.data(),H5::PredType::NATIVE_ULONG, dspace);
     } catch ( const H5::GroupIException not_found_error ){
       H5::DataSet DataSet = FG.createDataSet(Name.c_str(),
-        H5::PredType::NATIVE_ULONG,dspace);
-      DataSet.write(V.data(),H5::PredType::NATIVE_ULONG);
+        H5::PredType::NATIVE_ULONG, dspace);
+      DataSet.write(V.data(), H5::PredType::NATIVE_ULONG);
     }
     FG.close();
   } catch( const H5::Exception err ){
-    RUNTIME_ERROR("HDF5IO::saveUlongStdVector");
+    RUNTIME_ERROR("HDF5IO::saveUlongStdVector ");
   }
 }
 
