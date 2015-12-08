@@ -81,7 +81,8 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
+all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b
+# all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@

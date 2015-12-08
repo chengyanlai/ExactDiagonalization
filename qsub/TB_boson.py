@@ -43,11 +43,11 @@ elif(platform.system() == "Darwin"):
 
 NumThreads = 2
 
-L = 7
+L = 4
 OBC = 1# 1:True
 # OBC = 0# 0:False
 N = L - 1
-Uin = [0.0, 1.0, 3.0, 5.0, 7.0, 9.0]
+Uin = [0.0, ]#1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time

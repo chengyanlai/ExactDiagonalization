@@ -140,10 +140,11 @@ int main(int argc, char const *argv[]) {
 }
 
 void SaveObs( const std::string filename, const std::string gname,
-  const std::vector<ComplexType> &v, const ComplexMatrixType &m)
-{
+  const std::vector<ComplexType> &v, const ComplexMatrixType &m){
   HDF5IO file(filename);
   file.saveStdVector(gname, "Nb", v);
+  ComplexType Ntot = std::accumulate(v.begin(), v.end(), ComplexType(0.0, 0.0));
+  file.saveNumber(gname, "Ntot", Ntot.real());
   file.saveMatrix(gname, "Nij", m);
 }
 

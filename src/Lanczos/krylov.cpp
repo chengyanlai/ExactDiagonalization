@@ -1,4 +1,5 @@
 #include <cmath>
+#include <Eigen/Eigenvalues>
 #ifdef MKL
     #include "mkl.h"
 #else
@@ -7,7 +8,7 @@
 #include "src/Lanczos/krylov.hpp"
 
 #ifndef DEBUG
-#define DEBUG 4
+#define DEBUG 5
 #endif
 
 void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
@@ -17,7 +18,6 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
-  //NOTE: Setup the memory
   ComplexMatrixType Vm = ComplexMatrixType::Zero(Vec.size(), Kmax);
   std::vector<RealType> Alphas;
   std::vector<RealType> Betas;
@@ -51,50 +51,43 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
   }
   if ( DEBUG ) {
     assert( Alphas.size() == cntK );
-    assert( Alphas.size() == Betas.size() + 1 );
+    assert( Betas.size() == cntK - 1 );
     if ( DEBUG > 5 ) {
-      ComplexMatrixType tmpVm = Vm.adjoint();
+      ComplexMatrixType tmpVm = Vm;
+      tmpVm.adjointInPlace();
       INFO( "Vm^H * Vm " << std::endl << tmpVm * Vm);
     }
   }
   int Kused = cntK;
   if ( Kused == 1 ){
     /* NOTE: This is a special case that input vector is eigenvector */
-    Vec = exp(Prefactor) * Vec;
+    Vec = exp(Prefactor * Alphas.at(0)) * Vec;
   } else{
-    RealType* d = &Alphas[0];
-    RealType* e = &Betas[0];
-    RealType* z = (RealType*)malloc(Kused * Kused * sizeof(RealType));
-    RealType* worktmp = (RealType*)malloc(4 * Kused * sizeof(RealType));
-    int info;
-    //dstev - LAPACK
-    dstev((char*)"V", &Kused, d, e, z, &Kused, worktmp, &info);
-    if(info != 0){
-      INFO("Lapack INFO = " << info);
-      RUNTIME_ERROR("Error in Lapack function 'dstev'");
+    RealMatrixType TriDiag = RealMatrixType::Zero(Kused, Kused);
+    for (size_t cnt = 0; cnt < Kused; cnt++) {
+      TriDiag(cnt, cnt) = Alphas.at(cnt);
+      if (cnt > 0) {
+        TriDiag(cnt, cnt-1) = Betas.at(cnt - 1);
+        TriDiag(cnt-1, cnt) = Betas.at(cnt - 1);
+      }
     }
-    ComplexMatrixType Dmat = expD(Prefactor, Kused, d);
-    Eigen::Map<RealMatrixType> Kmat(z, Kused, Kused);
-    RealMatrixType tmpKmat = Kmat.adjoint();
-    if ( DEBUG > 5 ) {
-      INFO( "K^H * K " << std::endl << tmpKmat * Kmat);
+    Eigen::SelfAdjointEigenSolver<RealMatrixType> es;
+    es.compute(TriDiag);
+    RealVectorType Dvec = es.eigenvalues();
+    ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kused, Kused);
+    for (size_t cnt = 0; cnt < Kused; cnt++) {
+      Dmat(cnt,cnt) = exp( Prefactor * Dvec(cnt) );
     }
-    ComplexMatrixType tmp = Vm * Kmat;
-    Vec = tmp * Dmat * tmp.adjoint() * Vec;
-    free(worktmp);
-    free(z);
-    /* NOTE: Can not free e and d because they are pointing to vector. */
-    // free(e);
-    // free(d);
+    RealMatrixType Kmat = es.eigenvectors();
+    if ( DEBUG > 4 ) {
+      RealMatrixType tmpKmat = Kmat;
+      tmpKmat.transposeInPlace();
+      INFO( "K^T * K " << std::endl << tmpKmat * Kmat );
+    }
+    INFO(Kused);
+    ComplexMatrixType Otmp = Vm.block(0, 0, Vec.size(), Kused) * Kmat;
+    ComplexMatrixType OtmpAdj = Otmp;
+    OtmpAdj.adjointInPlace();
+    Vec = ( Otmp * Dmat ) * ( OtmpAdj * Vec );
   }
-}
-
-ComplexMatrixType expD( const ComplexType Prefactor, const size_t dim,
-  const RealType* d )
-{
-  ComplexMatrixType Dmat = ComplexMatrixType::Zero(dim, dim);
-  for (size_t cnt = 0; cnt < dim; cnt++) {
-    Dmat(cnt, cnt) = exp(Prefactor) * d[cnt];
-  }
-  return Dmat;
 }

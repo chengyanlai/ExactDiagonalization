@@ -81,10 +81,16 @@ int main(int argc, char const *argv[]) {
   std::vector<ComplexType> Nbi = Ni( Bases, Vec );
   ComplexMatrixType Nij = NiNj( Bases, Vec );
   SaveObs("TB.h5", "Obs-0", Nbi, Nij);
+  INFO(Vec);
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     ComplexType Prefactor = ComplexType(0.0, dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
+    INFO(" ");
+    INFO(Vec);
+    INFO(" ");
     TerminatorBeam(TBloc, B1, Vec);
+    INFO(Vec);
+    std::cin.get();
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );
     Nij = NiNj( Bases, Vec );
