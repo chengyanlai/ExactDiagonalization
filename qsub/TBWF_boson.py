@@ -34,7 +34,7 @@ if(platform.system() == "Linux"):
   elif socket.gethostname() == 'atomtronics.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     NodeName = "atomtronics.ucmerced.edu"
-    qsub_cmd = "qsub -q batch.q"
+    qsub_cmd = "qsub -q batch"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
@@ -43,11 +43,11 @@ elif(platform.system() == "Darwin"):
 
 NumThreads = 2
 
-L = 4
+L = 12
 OBC = 1# 1:True
 # OBC = 0# 0:False
 N = L - 1
-Uin = [0.0, ]#1.0, 3.0, 5.0, 7.0, 9.0]
+Uin = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
@@ -55,7 +55,7 @@ dt = 0.01
 TBloc = L - 1
 
 APPs = []
-APPs.append(os.path.join(SRC_DIR, "build", "TB.b"))
+APPs.append(os.path.join(SRC_DIR, "build", "TBWF.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:

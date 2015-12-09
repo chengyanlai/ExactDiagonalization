@@ -81,7 +81,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b
+all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TBWF.b
 # all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
@@ -96,7 +96,7 @@ build/SSH.f: build/SSH_fermion.o $(OBJ)
 build/SourceSinkDyn.b: build/SourceSinkDyn_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/TB.b: build/TB_boson.o $(OBJ)
+build/TBWF.b: build/TBWF_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 # build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)

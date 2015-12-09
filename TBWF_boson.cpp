@@ -100,7 +100,7 @@ int main(int argc, char const *argv[]) {
     TerminatorBeam(TBloc, B1, Vec);
     // INFO(" ");
     // INFO(Vec.norm());
-    std::cin.get();
+    // std::cin.get();
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );
     Nij = NiNj( Bases, Vec );
@@ -127,7 +127,7 @@ void TerminatorBeam( const size_t TBloc, const Basis &bs,
   ComplexVectorType &Vec)
 {
   assert( Vec.size() == bs.getHilbertSpace() );
-  ComplexVectorType TBVec = Vec;
+  // ComplexVectorType TBVec = Vec;
   std::map<RealType, std::vector<int> > BsMap;
   std::vector< std::vector<int> > bSt = bs.getBStates();
   std::vector<RealType> bTg = bs.getBTags();
@@ -140,15 +140,14 @@ void TerminatorBeam( const size_t TBloc, const Basis &bs,
       RealType newtag = BosonBasisTag(newbs);
       size_t new_idx = bs.getIndexFromTag(newtag);
       assert( new_idx < bs.getHilbertSpace() );
-      ComplexType val1 = Vec(bs.getIndexFromTag(it->first));
-      val1 = val1 * std::conj(val1);
-      ComplexType val2 = TBVec(new_idx);
-      val2 = val2 * std::conj(val2);
-      TBVec(new_idx) = (ComplexType)std::sqrt( (val1 + val2).real() );
+      size_t old_idx = bs.getIndexFromTag(it->first);
+      assert( old_idx < bs.getHilbertSpace() );
+      ComplexType val1 = std::conj(Vec(old_idx)) * Vec(old_idx);
+      ComplexType val2 = std::conj(Vec(new_idx)) * Vec(new_idx);
+      Vec(new_idx) = (ComplexType)std::sqrt( (val1 + val2).real() );
+      Vec(old_idx) = ComplexType(0.0e0, 0.0e0);
     }
   }
-  TBVec.normalize();
-  Vec = TBVec;
 }
 
 void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )

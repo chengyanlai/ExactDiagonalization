@@ -34,7 +34,7 @@ if(platform.system() == "Linux"):
   elif socket.gethostname() == 'atomtronics.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     NodeName = "atomtronics.ucmerced.edu"
-    qsub_cmd = "qsub -q batch.q"
+    qsub_cmd = "qsub -q batch"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
@@ -51,19 +51,19 @@ def SetV(L, vtype="Box"):
 
 NumThreads = 1
 
-L = 4
+L = 12
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
-J12ratio = [1.00, ]
-OBC = 1#1:True
-# OBC = 0#0:False
+J12ratio = [1.00, ]# NOTE: Prepare for Terminator Beam
+OBC = 1# 1:True # NOTE: Prepare for Terminator Beam
+# OBC = 0# 0:False
 if L % 2 == 1:
-  N = L - 1
-  # N = np.int((L + 1) / 2)
+  N = np.int((L + 1) / 2)
 else:
-  N = L - 1
-  # N = np.int( L / 2 )
+  N = np.int( L / 2 )
+N = L - 1# NOTE: Prepare for Terminator Beam
 # Uin = [10.0, ]#0.5, 1.0, 5.0, 10.0]
-Uin = [0.0, ]#1.0, 3.0, 5.0, 7.0, 9.0]
+# Uin = [0.0, 1.0, 3.0, 5.0, 7.0, 9.0]
+Uin = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 3.0, 5.0, 7.0, 9.0]# NOTE: Prepare for Terminator Beam
 if OBC:
   Phils = [0, ]
 else:
