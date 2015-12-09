@@ -18,6 +18,10 @@
   #include "mkl.h"
 #endif
 
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
 #ifndef NumCores
 #define NumCores 2
 #endif
@@ -59,6 +63,15 @@ int main(int argc, char const *argv[]) {
   INFO("Build Basis - ");
   Basis B1(L, N);
   B1.BosonTB(TBloc);
+  // std::vector< std::vector<int> > st = B1.getBStates();
+  // std::vector< RealType > tg = B1.getBTags();
+  // for (size_t cnt = 0; cnt < tg.size(); cnt++) {
+  //   INFO_NONEWLINE( std::setw(3) << cnt << " - ");
+  //   for (auto &j : st.at(cnt)){
+  //     INFO_NONEWLINE(j << " ");
+  //   }
+  //   INFO("- " << tg.at(cnt));
+  // }
   INFO("DONE!");
   INFO("Build GS - ");
   ComplexVectorType Vec = ComplexVectorType::Zero(B1.getHilbertSpace());
@@ -81,15 +94,12 @@ int main(int argc, char const *argv[]) {
   std::vector<ComplexType> Nbi = Ni( Bases, Vec );
   ComplexMatrixType Nij = NiNj( Bases, Vec );
   SaveObs("TB.h5", "Obs-0", Nbi, Nij);
-  INFO(Vec);
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-    ComplexType Prefactor = ComplexType(0.0, dt);/* NOTE: hbar = 1 */
+    ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
-    INFO(" ");
-    INFO(Vec);
-    INFO(" ");
     TerminatorBeam(TBloc, B1, Vec);
-    INFO(Vec);
+    // INFO(" ");
+    // INFO(Vec.norm());
     std::cin.get();
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );
@@ -128,13 +138,16 @@ void TerminatorBeam( const size_t TBloc, const Basis &bs,
       std::vector<int> newbs = it->second;
       newbs.at(TBloc) = 0;
       RealType newtag = BosonBasisTag(newbs);
+      size_t new_idx = bs.getIndexFromTag(newtag);
+      assert( new_idx < bs.getHilbertSpace() );
       ComplexType val1 = Vec(bs.getIndexFromTag(it->first));
-      val1 = val1 * conj(val1);
-      ComplexType val2 = TBVec(bs.getIndexFromTag(newtag));
-      val2 = val2 * conj(val2);
-      TBVec(bs.getIndexFromTag(newtag)) = sqrt( val1 + val2 );
+      val1 = val1 * std::conj(val1);
+      ComplexType val2 = TBVec(new_idx);
+      val2 = val2 * std::conj(val2);
+      TBVec(new_idx) = (ComplexType)std::sqrt( (val1 + val2).real() );
     }
   }
+  TBVec.normalize();
   Vec = TBVec;
 }
 
@@ -145,6 +158,12 @@ void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
   gsf.loadVector("GS", "EVec", gswf);
   Basis GS(bs.getL(), bs.getN());
   GS.Boson();
+  if ( DEBUG ){
+    int oldL = gsf.loadUlong("1DChain", "L");
+    int oldN = gsf.loadUlong("1DChain", "N");
+    assert( oldL == bs.getL() );
+    assert( oldN == bs.getN() );
+  }
   std::vector< std::vector<int> > gsbs = GS.getBStates();
   std::vector<RealType> gsts = GS.getBTags();
   std::map<RealType, std::vector<int> > GSmap;
@@ -155,11 +174,7 @@ void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
       std::vector<int> newbs = it->second;
       newbs.at(TBloc) = 0;
       RealType newtag = BosonBasisTag(newbs);
-      ComplexType val1 = gswf(GS.getIndexFromTag(it->first));
-      val1 = val1 * conj(val1);
-      ComplexType val2 = Vec(bs.getIndexFromTag(newtag));
-      val2 = val2 * conj(val2);
-      Vec(bs.getIndexFromTag(newtag)) = sqrt( val1 + val2 );
+      Vec(bs.getIndexFromTag(newtag)) = gswf(GS.getIndexFromTag(it->first));
     }else {
       Vec(bs.getIndexFromTag(it->first)) = gswf(GS.getIndexFromTag(it->first));
     }

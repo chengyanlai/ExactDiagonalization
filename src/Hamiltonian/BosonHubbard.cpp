@@ -52,12 +52,15 @@ const Basis &bs, std::vector<Triplet> &hhop )
           b_copy.at(site_j) = b.at(site_j) + 1;
           b_copy.at(site_i) = b.at(site_i) - 1;
           size_t state_id2 = bs.getIndexFromTag( BosonBasisTag(b_copy) );
-          //FIXME: Need to loop over all species_id!
-          // size_t idx1 = DetermineTotalIndex(species_id, state_id1);
-          size_t idx1 = DetermineTotalIndex(std::vector<size_t>(1, state_id1));
-          // size_t idx2 = DetermineTotalIndex(species_id, state_id2);
-          size_t idx2 = DetermineTotalIndex(std::vector<size_t>(1, state_id2));
-          hhop.push_back(Triplet(idx2, idx1, val));
+          if ( state_id2 < bs.getHilbertSpace() ){
+            //FIXME: Need to loop over all species_id!
+            // size_t idx1 = DetermineTotalIndex(species_id, state_id1);
+            size_t idx1 = DetermineTotalIndex(std::vector<size_t>(1, state_id1));
+            // size_t idx2 = DetermineTotalIndex(species_id, state_id2);
+            size_t idx2 = DetermineTotalIndex(std::vector<size_t>(1, state_id2));
+            hhop.push_back(Triplet(idx2, idx1, val));
+            // INFO(idx2 << "(" << BosonBasisTag(b_copy) << " " << bs.BTags.at(idx2) << ") " << idx1 << " " << val);
+          }
         }
       }
     }

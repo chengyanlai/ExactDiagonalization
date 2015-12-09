@@ -47,7 +47,12 @@ public:
   inline size_t getIndexFromTag( const RealType tg )const{
     assert( !(isFermion) );
     auto it = binary_locate(BTags.begin(), BTags.end(), tg);
-    return std::distance(BTags.begin(), it);
+    size_t idx = std::distance(BTags.begin(), it);
+    if ( std::abs(BTags.at(idx) - tg) < 1.0e-12 ){
+      return idx;
+    } else{
+      return getHilbertSpace();
+    }
   };//for Boson
 private:
   size_t L;

@@ -51,6 +51,7 @@ int main(int argc, char const *argv[]) {
   INFO("");
   const std::vector< Node<ComplexType, int>* > lattice = NN_1D_Chain(L, J, OBC);
   file.saveNumber("1DChain", "L", L);
+  file.saveNumber("1DChain", "U", Uin);
   file.saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
@@ -69,7 +70,7 @@ int main(int argc, char const *argv[]) {
   //   }
   //   INFO("- " << tg.at(cnt));
   // }
-  file.saveNumber("Basis", "N", N);
+  file.saveNumber("1DChain", "N", N);
   // file.saveStdVector("Basis", "States", st);
   // file.saveStdVector("Basis", "Tags", tg);
   INFO("DONE!");
@@ -106,7 +107,6 @@ int main(int argc, char const *argv[]) {
   ComplexMatrixType Nij = NiNj( Bases, Vec );
   INFO(Nij);
   INFO(Nij.diagonal());
-  return 0;
   file.saveStdVector("Obs", "Nb", Nbi);
   file.saveMatrix("Obs", "Nij", Nij);
   return 0;

@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <numeric>
 #include "src/EDType.hpp"
 #include "src/bitwise.h"
 #include "src/Node/Node.hpp"
@@ -124,7 +125,7 @@ int main(int argc, char const *argv[]) {
   ham.BuildTotalHamiltonian();
   INFO("Start Time-Evolution");
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-    ComplexType Prefactor = ComplexType(0.0, dt);/* NOTE: hbar = 1 */
+    ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );

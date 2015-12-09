@@ -49,9 +49,12 @@ void Basis::BosonTB( const size_t TBloc )
   assert( TBloc < L );
   std::vector< std::vector<int> > work;
   int k, Nres;
-  std::vector<int> Ivec(L, 0);
   /* NOTE: Include all U(1) sector which has particle number smaller than N */
+  std::vector<int> Ivec(L,0);
+  work.push_back( Ivec );
+  BTags.push_back( BosonBasisTag(Ivec) );
   for (ptrdiff_t cntN = N; cntN > 0; cntN--) {
+    Ivec.assign(L, 0);
     Ivec.at(0) = cntN;
     work.push_back( Ivec );
     BTags.push_back( BosonBasisTag(Ivec) );
