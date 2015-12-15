@@ -50,20 +50,23 @@ def SetV(L, vtype="Box"):
   return V
 
 NumThreads = 1
-L = 13
+L = 15
 # J12ratio = np.linspace(0.0, 1.0, 51)
 J12ratio = [1.00, ]
+# J12ratio = [0.10, ]
 # OBC = 1#1:True
-OBC = 1#0:False
+OBC = 1# 0:False
 if L % 2 == 1:
   # N1 = np.int((L + 1) / 2)
   # N2 = np.int((L - 1) / 2)
-  N1 = 11
-  N2 = 2
+  N1 = 10
+  N2 = 5
 else:
-  N1 = np.int(L / 2)
-  N2 = np.int(L / 2)
-Uin = [10.0, ]#np.linspace(0.0, 10.0, 51)
+  # N1 = np.int(L / 2)
+  # N2 = np.int(L / 2)
+  N1 = 8
+  N2 = 4
+Uin = [10.0, ]#0.0, ]#np.linspace(0.0, 10.0, 51)
 if OBC:
   Phils = [0, ]
 else:
@@ -76,9 +79,9 @@ APPs.append(os.path.join(SRC_DIR, "build", "SSH.f"))
 Exac_program = "\n".join(APPs)
 
 if OBC:
-  LN1N2 = "-".join(["SSHO", "".join(["L", str(L)]), str(N1), str(N2)])
+  LN1N2 = "-".join(["FSSHO", "".join(["L", str(L)]), str(N1), str(N2)])
 else:
-  LN1N2 = "-".join(["SSHP", "".join(["L", str(L)]), str(N1), str(N2)])
+  LN1N2 = "-".join(["FSSHP", "".join(["L", str(L)]), str(N1), str(N2)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
 for nphi in Phils:
@@ -96,14 +99,14 @@ for nphi in Phils:
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
       with shp.cd(workdir):
-        if os.path.isfile('SSH.h5'):
+        if os.path.isfile('FSSH.h5'):
           print("".join([workdir, " already done!"]))
           pass
-        elif os.path.isfile('SSHconf.h5'):
+        elif os.path.isfile('conf.h5'):
           print("".join([workdir, " is schaduled!?"]))
           pass
         else:
-          f = h5py.File('SSHconf.h5', 'w')
+          f = h5py.File('conf.h5', 'w')
           para = f.create_group("Parameters")
           dset = para.create_dataset("L", data=L)
           dset = para.create_dataset("J12", data=J12)

@@ -89,7 +89,7 @@ void Hamiltonian<Tnum, Tlabel>::BuildHoppingHamiltonian(
 }
 
 template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::eigh( RealType &Val, VectorType &Vec,
+void Hamiltonian<Tnum, Tlabel>::eigh( std::vector<RealType> &Val, VectorType &Vec,
   const bool FullDiagonalization)
 {
   Vec = VectorType::Random(getTotalHilbertSpace());

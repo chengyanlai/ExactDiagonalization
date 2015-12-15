@@ -63,7 +63,7 @@ else ifeq ("$(OS)", "Linux")
 	CC = icpc $(OPENMP) -O3 -Wall -std=c++11 -I./ -I$(HDF5ROOT)/include -I$(EIGENINC) -DMKL
 endif
 
-MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io
+MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io RungeKutta
 SRC_DIR   := $(addprefix src/,$(MODULES))
 BUILD_DIR := $(addprefix build/,$(MODULES))
 
@@ -81,7 +81,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TBWF.b
+all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TBWF.b build/TBLB.b
 # all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
@@ -97,6 +97,9 @@ build/SourceSinkDyn.b: build/SourceSinkDyn_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/TBWF.b: build/TBWF_boson.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/TBLB.b: build/TBLB_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 # build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)

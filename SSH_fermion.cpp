@@ -43,22 +43,35 @@ int main(int argc, char const *argv[]) {
   int N2;
   RealType Uin, phi;
   std::vector<RealType> Vin;
-  LoadParameters( "SSHconf.h5", L, J12ratio, OBC, N1, N2, Uin, Vin, phi);
-  HDF5IO file("SSH.h5");
+  LoadParameters( "conf.h5", L, J12ratio, OBC, N1, N2, Uin, Vin, phi);
+  HDF5IO file("FSSH.h5");
   // const int L = 5;
   // const bool OBC = true;
   // const RealType J12ratio = 0.010e0;
   INFO("Build Lattice - ");
   std::vector<DT> J;
   if ( OBC ){
+    // J = std::vector<DT>(L - 1, 0.0);// NOTE: Atomic limit testing
     J = std::vector<DT>(L - 1, 1.0);
-    for (size_t cnt = 0; cnt < L-1; cnt+=2) {
-      J.at(cnt) *= J12ratio;
+    if ( J12ratio > 1.0e0 ) {
+      for (size_t cnt = 1; cnt < L-1; cnt+=2) {
+        J.at(cnt) /= J12ratio;
+      }
+    } else{
+      for (size_t cnt = 0; cnt < L-1; cnt+=2) {
+        J.at(cnt) *= J12ratio;
+      }
     }
   } else{
     J = std::vector<DT>(L, 1.0);
-    for (size_t cnt = 0; cnt < L; cnt+=2) {
-      J.at(cnt) *= J12ratio;
+    if ( J12ratio > 1.0e0 ) {
+      for (size_t cnt = 1; cnt < L; cnt+=2) {
+        J.at(cnt) /= J12ratio;
+      }
+    } else{
+      for (size_t cnt = 0; cnt < L; cnt+=2) {
+        J.at(cnt) *= J12ratio;
+      }
     }
 #ifndef DTYPE
     if ( std::abs(phi) > 1.0e-10 ){
@@ -127,12 +140,12 @@ int main(int argc, char const *argv[]) {
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
-  RealType Val = 0.0e0;
+  std::vector<RealType> Val;
   Hamiltonian<DT,int>::VectorType Vec;
   ham.eigh(Val, Vec);
-  INFO("GS energy = " << Val);
+  INFO("GS energy = " << Val.at(0));
   file.saveVector("GS", "EVec", Vec);
-  file.saveNumber("GS", "EVal", Val);
+  file.saveStdVector("GS", "EVal", Val);
   INFO("DONE!");
   std::vector< DTV > Nfi = Ni( Bases, Vec, ham );
   INFO(" Up Spin - ");

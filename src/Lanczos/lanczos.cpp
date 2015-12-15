@@ -12,9 +12,10 @@
 
 
 bool LanczosEV(const ComplexSparseMatrixType A,
-  ComplexVectorType &Vec, RealType &Val,
+  ComplexVectorType &Vec, std::vector<RealType> &Val,
   size_t &max_iter, double err_tol)
 {
+  Val.clear();
   const int min_iter = 2;
   const RealType beta_err = 1E-14;
   if( max_iter < min_iter ){
@@ -95,20 +96,24 @@ bool LanczosEV(const ComplexSparseMatrixType A,
       Vec += z[k] * Vm[k];
     }
     max_iter = it;
-    Val = d[0];
+    Val.push_back(d[0]);
+    Val.push_back(d[1]);
     free(z), free(work);
   }
   else{
     max_iter = 1;
-    Val = 0;
+    Val.push_back(0.0e0);
+    Val.push_back(0.0e0);
   }
   free(Alphas), free(Betas), free(d), free(e);
   return converged;
 }
 
 bool LanczosEV(const RealSparseMatrixType A,
-  RealVectorType &Vec, RealType &Val, size_t &max_iter, double err_tol)
+  RealVectorType &Vec, std::vector<RealType> &Val, size_t &max_iter,
+  double err_tol)
 {
+  Val.clear();
   const int min_iter = 2;
   const RealType beta_err = 1E-14;
   if( max_iter < min_iter ){
@@ -194,12 +199,14 @@ bool LanczosEV(const RealSparseMatrixType A,
       Vec += z[k] * Vm[k];
     }
     max_iter = it;
-    Val = d[0];
+    Val.push_back(d[0]);
+    Val.push_back(d[1]);
     free(z), free(work);
   }
   else{
     max_iter = 1;
-    Val = 0;
+    Val.push_back(0.0e0);
+    Val.push_back(0.0e0);
   }
   free(Alphas), free(Betas), free(d), free(e);
   return converged;

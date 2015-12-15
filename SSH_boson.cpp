@@ -24,7 +24,7 @@ int main(int argc, char const *argv[]) {
   RealType Uin, phi;
   std::vector<RealType> Vin;
   LoadParameters( "conf.h5", L, J12ratio, OBC, N, Uin, Vin, phi);
-  HDF5IO file("SSH.h5");
+  HDF5IO file("BSSH.h5");
   // const int L = 5;
   // const bool OBC = true;
   // const RealType J12ratio = 0.010e0;
@@ -93,12 +93,12 @@ int main(int argc, char const *argv[]) {
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
-  RealType Val = 0.0e0;
+  std::vector<RealType> Val;
   Hamiltonian<ComplexType,int>::VectorType Vec;
   ham.eigh(Val, Vec);
-  INFO("GS energy = " << Val);
+  INFO("GS energy = " << Val.at(0));
   file.saveVector("GS", "EVec", Vec);
-  file.saveNumber("GS", "EVal", Val);
+  file.saveStdVector("GS", "EVal", Val);
   INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Vec );
   for (auto &n : Nbi ){

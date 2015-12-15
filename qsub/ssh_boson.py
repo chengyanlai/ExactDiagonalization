@@ -51,7 +51,7 @@ def SetV(L, vtype="Box"):
 
 NumThreads = 1
 
-L = 12
+L = 7
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
 J12ratio = [1.00, ]# NOTE: Prepare for Terminator Beam
 OBC = 1# 1:True # NOTE: Prepare for Terminator Beam
@@ -63,7 +63,7 @@ else:
 N = L - 1# NOTE: Prepare for Terminator Beam
 # Uin = [10.0, ]#0.5, 1.0, 5.0, 10.0]
 # Uin = [0.0, 1.0, 3.0, 5.0, 7.0, 9.0]
-Uin = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 3.0, 5.0, 7.0, 9.0]# NOTE: Prepare for Terminator Beam
+Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]# NOTE: Prepare for Terminator Beam
 if OBC:
   Phils = [0, ]
 else:
@@ -96,7 +96,7 @@ for nphi in Phils:
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
       with shp.cd(workdir):
-        if os.path.isfile('SSH.h5'):
+        if os.path.isfile('BSSH.h5'):
           pass
         else:
           f = h5py.File('conf.h5', 'w')

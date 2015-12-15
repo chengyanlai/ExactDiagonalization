@@ -10,6 +10,14 @@ import numpy as np
 import h5py
 import Script_Helpers as shp
 
+def Copy_Initial_WF(target, destination):
+  if os.path.isfile(target):
+    cmd = " ".join(["cp", target, destination])
+    subprocess.call(cmd, shell=True)
+  else:
+    print("Initial wavefunction NOT found!", target)
+    sys.exit()
+
 if(platform.system() == "Linux"):
   QSUB = True
   if socket.gethostname() == 'stargate.phys.nthu.edu.tw':
@@ -43,11 +51,14 @@ elif(platform.system() == "Darwin"):
 
 NumThreads = 2
 
-L = 12
+# NOTE: This depends on the algorithm!!
+L = 8
+N = L - 2
+# L = 10
+# N = L - 1
 OBC = 1# 1:True
 # OBC = 0# 0:False
-N = L - 1
-Uin = [0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 0.9, 1.0, 3.0, 5.0, 7.0, 9.0]
+Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
@@ -59,20 +70,29 @@ APPs.append(os.path.join(SRC_DIR, "build", "TBWF.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:
+  # NOTE: This depends on the algorithm!!
+  IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L - 1)]), str(N)])
+  # IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L)]), str(N)])
   LN1N2 = "-".join(["TBO", "".join(["L", str(L)]), str(N)])
 else:
+  # NOTE: This depends on the algorithm!!
+  IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L - 1)]), str(N)])
+  # IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
   LN1N2 = "-".join(["TBP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
 for U in Uin:
+  Job_Name =  "-".join(["".join(["U", str(U)]), "Jr1.0-Box"])
+  IWF_FILE = os.path.join(EXEC_DIR, IWF_DIR, Job_Name, "BSSH.h5")
   Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["V", str(Vin)])])
   workdir = os.path.join(DATADIR, Job_Name)
 
   os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
   with shp.cd(workdir):
-    if os.path.isfile('TB.h5'):
+    if os.path.isfile('TBWF.h5'):
       pass
     else:
+      Copy_Initial_WF(IWF_FILE, workdir)
       f = h5py.File('conf.h5', 'w')
       para = f.create_group("Parameters")
       dset = para.create_dataset("L", data=L)

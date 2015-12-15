@@ -26,12 +26,17 @@
 #define NumCores 2
 #endif
 
+#ifndef METHOD
+#define METHOD 2
+#endif
+
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
   RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m);
 void TerminatorBeam( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec);
-void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
+void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
+void GetGS2( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 
@@ -75,7 +80,11 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO("Build GS - ");
   ComplexVectorType Vec = ComplexVectorType::Zero(B1.getHilbertSpace());
-  GetGS(TBloc, B1, Vec);
+  if ( METHOD == 1) {
+    GetGS1(TBloc, B1, Vec);
+  } else if ( METHOD == 2) {
+    GetGS2(TBloc, B1, Vec);
+  }
   INFO("DONE!");
   INFO("Build Hamiltonian - ");
   std::vector<Basis> Bases;
@@ -93,7 +102,7 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Vec );
   ComplexMatrixType Nij = NiNj( Bases, Vec );
-  SaveObs("TB.h5", "Obs-0", Nbi, Nij);
+  SaveObs("TBWF.h5", "Obs-0", Nbi, Nij);
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
@@ -108,14 +117,13 @@ int main(int argc, char const *argv[]) {
     std::string gname = "Obs-";
     gname.append(std::to_string((unsigned long long)cntT));
     gname.append("/");
-    SaveObs("TB.h5", gname, Nbi, Nij);
+    SaveObs("TBWF.h5", gname, Nbi, Nij);
   }
   return 0;
 }
 
 void SaveObs( const std::string filename, const std::string gname,
-  const std::vector<ComplexType> &v, const ComplexMatrixType &m)
-{
+  const std::vector<ComplexType> &v, const ComplexMatrixType &m){
   HDF5IO file(filename);
   file.saveStdVector(gname, "Nb", v);
   ComplexType Ntot = std::accumulate(v.begin(), v.end(), ComplexType(0.0, 0.0));
@@ -124,8 +132,7 @@ void SaveObs( const std::string filename, const std::string gname,
 }
 
 void TerminatorBeam( const size_t TBloc, const Basis &bs,
-  ComplexVectorType &Vec)
-{
+  ComplexVectorType &Vec){
   assert( Vec.size() == bs.getHilbertSpace() );
   // ComplexVectorType TBVec = Vec;
   std::map<RealType, std::vector<int> > BsMap;
@@ -150,9 +157,8 @@ void TerminatorBeam( const size_t TBloc, const Basis &bs,
   }
 }
 
-void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
-{
-  HDF5IO gsf("SSH.h5");
+void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec ){
+  HDF5IO gsf("BSSH.h5");
   ComplexVectorType gswf;
   gsf.loadVector("GS", "EVec", gswf);
   Basis GS(bs.getL(), bs.getN());
@@ -177,6 +183,32 @@ void GetGS( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
     }else {
       Vec(bs.getIndexFromTag(it->first)) = gswf(GS.getIndexFromTag(it->first));
     }
+  }
+}
+
+void GetGS2( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
+{
+  HDF5IO gsf("BSSH.h5");
+  ComplexVectorType gswf;
+  gsf.loadVector("GS", "EVec", gswf);
+  Basis GS(bs.getL() - 1, bs.getN());
+  GS.Boson();
+  if ( DEBUG ){
+    int oldL = gsf.loadUlong("1DChain", "L");
+    int oldN = gsf.loadUlong("1DChain", "N");
+    assert( oldL == bs.getL() - 1 );
+    assert( oldN == bs.getN() );
+  }
+  std::vector< std::vector<int> > gsbs = GS.getBStates();
+  std::vector<RealType> gsts = GS.getBTags();
+  std::map<RealType, std::vector<int> > GSmap;
+  std::transform( gsts.begin(), gsts.end(), gsbs.begin(),
+    std::inserter(GSmap, GSmap.end() ), std::make_pair<RealType const&,std::vector<int> const&> );
+  for (std::map<RealType, std::vector<int> >::iterator it = GSmap.begin(); it != GSmap.end(); it++) {
+    std::vector<int> newbs = it->second;
+    newbs.push_back(0);
+    RealType newtag = BosonBasisTag(newbs);
+    Vec(bs.getIndexFromTag(newtag)) = gswf(GS.getIndexFromTag(it->first));
   }
 }
 

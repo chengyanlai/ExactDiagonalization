@@ -4,11 +4,11 @@
 #include "src/EigenMatrix.hpp"
 
 bool LanczosEV(const RealSparseMatrixType A,
-  RealVectorType &Vec, RealType &Val,
+  RealVectorType &Vec, std::vector<RealType> &Val,
   size_t &max_iter, double err_tol = 1.0E-10);
 
 bool LanczosEV(const ComplexSparseMatrixType A,
-  ComplexVectorType &Vec, RealType &Val,
+  ComplexVectorType &Vec, std::vector<RealType> &Val,
   size_t &max_iter, double err_tol = 1.0E-10);
 
 #endif/* end of include guard: __LANCZOS_HPP__ */

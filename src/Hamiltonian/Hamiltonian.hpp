@@ -48,9 +48,9 @@ public:
     const std::vector< Node<Tnum, Tlabel>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Fermion Functions ^^^^^^^ */
-  void eigh( RealType &Val, VectorType &Vec, const bool FullDiagonalization = false );
+  void eigh( std::vector<RealType> &Val, VectorType &Vec, const bool FullDiagonalization = false );
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
-  // inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
+  inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
     assert( ids.size() == HilbertSpaces.size() );
     size_t tidx = 0;
