@@ -6,13 +6,13 @@
 
 void Lindblad_RK4( const RealType &dt, const RealType &gamma,
   const size_t TBloc, const std::vector<Basis> &bas,
-  const std::vector<Hamiltonian<ComplexType,int> > &ham,
+  const std::vector<Hamiltonian<ComplexType> > &ham,
   const std::vector<std::vector<size_t> > &CIdx,
   std::vector<ComplexMatrixType> &Rhos);
 
 void Lindblad_Newton( const RealType &dt, const RealType &gamma,
   const size_t TBloc, const std::vector<Basis> &bas,
-  const std::vector<Hamiltonian<ComplexType,int> > &ham,
+  const std::vector<Hamiltonian<ComplexType> > &ham,
   const std::vector<std::vector<size_t> > &CIdx,
   std::vector<ComplexMatrixType> &Rhos);
 

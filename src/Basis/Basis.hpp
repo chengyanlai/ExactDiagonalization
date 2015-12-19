@@ -18,7 +18,7 @@ inline RandomIt binary_locate(RandomIt first, RandomIt last, const T& val) {
 
 class Basis
 {
-template<typename Tnum, typename Tlabel>
+template<typename Tnum>
   friend class Hamiltonian;
 public:
   Basis(const bool _isFermion = false);

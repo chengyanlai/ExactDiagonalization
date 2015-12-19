@@ -50,22 +50,22 @@ def SetV(L, vtype="Box"):
   return V
 
 NumThreads = 1
-L = 15
+L = 12
 # J12ratio = np.linspace(0.0, 1.0, 51)
 J12ratio = [1.00, ]
 # J12ratio = [0.10, ]
 # OBC = 1#1:True
 OBC = 1# 0:False
 if L % 2 == 1:
-  # N1 = np.int((L + 1) / 2)
-  # N2 = np.int((L - 1) / 2)
-  N1 = 10
-  N2 = 5
+  N1 = np.int((L + 1) / 2)
+  N2 = np.int((L - 1) / 2)
+  # N1 = 10
+  # N2 = 5
 else:
-  # N1 = np.int(L / 2)
-  # N2 = np.int(L / 2)
-  N1 = 8
-  N2 = 4
+  N1 = np.int(L / 2)
+  N2 = np.int(L / 2)
+  # N1 = 8
+  # N2 = 4
 Uin = [10.0, ]#0.0, ]#np.linspace(0.0, 10.0, 51)
 if OBC:
   Phils = [0, ]

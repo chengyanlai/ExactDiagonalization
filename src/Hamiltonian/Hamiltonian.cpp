@@ -2,8 +2,8 @@
 #include "src/Lanczos/lanczos.hpp"
 #include "src/Lanczos/krylov.hpp"
 
-template<typename Tnum, typename Tlabel>
-Hamiltonian<Tnum, Tlabel>::Hamiltonian( const std::vector<Basis> &bs )
+template<typename Tnum>
+Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 {
   // get each hilbert space
   HilbertSpaces.clear();
@@ -20,11 +20,11 @@ Hamiltonian<Tnum, Tlabel>::Hamiltonian( const std::vector<Basis> &bs )
   H_hop.reserve(2*TotalDim);
 }
 
-template<typename Tnum, typename Tlabel>
-Hamiltonian<Tnum, Tlabel>::~Hamiltonian(){}
+template<typename Tnum>
+Hamiltonian<Tnum>::~Hamiltonian(){}
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::BuildLocalHamiltonian(
+template<typename Tnum>
+void Hamiltonian<Tnum>::BuildLocalHamiltonian(
   const std::vector< std::vector<Tnum> > &Vloc,
   const std::vector< std::vector<Tnum> > &Uloc,
   const std::vector<Basis> &bs )
@@ -64,9 +64,9 @@ void Hamiltonian<Tnum, Tlabel>::BuildLocalHamiltonian(
   // INFO(H_local);
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::BuildHoppingHamiltonian(
-  const std::vector<Basis> &bs, const std::vector< Node<Tnum, Tlabel>* > &lt )
+template<typename Tnum>
+void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
+  const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt )
 {
   /* NOTE: This functiuon assume all bases live in the same lattice
   and have the same hopping amplitude. */
@@ -88,8 +88,8 @@ void Hamiltonian<Tnum, Tlabel>::BuildHoppingHamiltonian(
   // INFO(H_hop);
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::eigh( std::vector<RealType> &Val, VectorType &Vec,
+template<typename Tnum>
+void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec,
   const bool FullDiagonalization)
 {
   Vec = VectorType::Random(getTotalHilbertSpace());
@@ -102,11 +102,11 @@ void Hamiltonian<Tnum, Tlabel>::eigh( std::vector<RealType> &Val, VectorType &Ve
 }
 
 template<>
-void Hamiltonian<ComplexType, int>::expH( const ComplexType Prefactor,
+void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
   ComplexVectorType &Vec, const size_t Kmax )
 {
   krylov(H_total, Vec, Prefactor, Kmax);
 }
 
-template class Hamiltonian<RealType, int>;
-template class Hamiltonian<ComplexType, int>;
+template class Hamiltonian<RealType>;
+template class Hamiltonian<ComplexType>;

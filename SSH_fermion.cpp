@@ -27,13 +27,13 @@ void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
   int &OBC, int &N1, int &N2, RealType &Uloc,
   std::vector<RealType> &Vloc, RealType &phi);
 std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT,int> &ham );
+  Hamiltonian<DT> &ham );
 DTM NupNdn( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT,int> &ham );
+  Hamiltonian<DT> &ham );
 DTM NupNup( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT,int> &ham );
+  Hamiltonian<DT> &ham );
 DTM NdnNdn( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT,int> &ham );
+  Hamiltonian<DT> &ham );
 
 int main(int argc, char const *argv[]) {
   int L;
@@ -83,7 +83,7 @@ int main(int argc, char const *argv[]) {
     INFO_NONEWLINE(val << " ");
   }
   INFO("");
-  const std::vector< Node<DT, int>* > lattice = NN_1D_Chain(L, J, OBC);
+  const std::vector< Node<DT>* > lattice = NN_1D_Chain(L, J, OBC);
   file.saveNumber("1DChain", "L", L);
   file.saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
@@ -122,7 +122,7 @@ int main(int argc, char const *argv[]) {
   std::vector<Basis> Bases;
   Bases.push_back(F1);
   Bases.push_back(F2);
-  Hamiltonian<DT,int> ham( Bases );
+  Hamiltonian<DT> ham( Bases );
   std::vector< std::vector<DT> > Vloc;
   std::vector<DT> Vtmp;//(L, 1.0);
   for ( RealType &val : Vin ){
@@ -141,7 +141,7 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
   std::vector<RealType> Val;
-  Hamiltonian<DT,int>::VectorType Vec;
+  Hamiltonian<DT>::VectorType Vec;
   ham.eigh(Val, Vec);
   INFO("GS energy = " << Val.at(0));
   file.saveVector("GS", "EVec", Vec);
@@ -190,7 +190,7 @@ void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
 }
 
 std::vector< DTV > Ni( const std::vector<Basis> &Bases,
-  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  const DTV &Vec, Hamiltonian<DT> &ham ){
   std::vector< DTV > out;
   DTV tmp1 = DTV::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
   DTV tmp2 = DTV::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
@@ -219,7 +219,7 @@ std::vector< DTV > Ni( const std::vector<Basis> &Bases,
 }
 
 DTM NupNdn( const std::vector<Basis> &Bases,
-  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  const DTV &Vec, Hamiltonian<DT> &ham ){
   DTM out = DTM::Zero(
     Bases.at(0).getL(), Bases.at(1).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();
@@ -246,7 +246,7 @@ DTM NupNdn( const std::vector<Basis> &Bases,
 }
 
 DTM NupNup( const std::vector<Basis> &Bases,
-  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  const DTV &Vec, Hamiltonian<DT> &ham ){
   DTM out = DTM::Zero(
     Bases.at(0).getL(), Bases.at(0).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();
@@ -273,7 +273,7 @@ DTM NupNup( const std::vector<Basis> &Bases,
 }
 
 DTM NdnNdn( const std::vector<Basis> &Bases,
-  const DTV &Vec, Hamiltonian<DT,int> &ham ){
+  const DTV &Vec, Hamiltonian<DT> &ham ){
   DTM out = DTM::Zero(
     Bases.at(0).getL(), Bases.at(1).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();

@@ -49,7 +49,7 @@ int main(int argc, char const *argv[]) {
     INFO_NONEWLINE(val << " ");
   }
   INFO("");
-  const std::vector< Node<ComplexType, int>* > lattice = NN_1D_Chain(L, J, OBC);
+  const std::vector< Node<ComplexType>* > lattice = NN_1D_Chain(L, J, OBC);
   file.saveNumber("1DChain", "L", L);
   file.saveNumber("1DChain", "U", Uin);
   file.saveStdVector("1DChain", "J", J);
@@ -77,7 +77,7 @@ int main(int argc, char const *argv[]) {
   INFO_NONEWLINE("Build Hamiltonian - ");
   std::vector<Basis> Bases;
   Bases.push_back(B1);
-  Hamiltonian<ComplexType,int> ham( Bases );
+  Hamiltonian<ComplexType> ham( Bases );
   std::vector< std::vector<ComplexType> > Vloc;
   std::vector<ComplexType> Vtmp;//(L, 1.0);
   for ( RealType &val : Vin ){
@@ -94,7 +94,7 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
   std::vector<RealType> Val;
-  Hamiltonian<ComplexType,int>::VectorType Vec;
+  Hamiltonian<ComplexType>::VectorType Vec;
   ham.eigh(Val, Vec);
   INFO("GS energy = " << Val.at(0));
   file.saveVector("GS", "EVec", Vec);

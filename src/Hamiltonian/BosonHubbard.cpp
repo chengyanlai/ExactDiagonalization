@@ -3,8 +3,8 @@
 #include <map>
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::BosonIntraLocalPart( const size_t species_id,
+template<typename Tnum>
+void Hamiltonian<Tnum>::BosonIntraLocalPart( const size_t species_id,
   const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
   const Basis &bs, std::vector<Triplet> &hloc )
 {
@@ -32,20 +32,20 @@ void Hamiltonian<Tnum, Tlabel>::BosonIntraLocalPart( const size_t species_id,
   }
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::BosonIntraHoppingPart( const size_t species_id,
-const std::vector< Node<Tnum, Tlabel>* > &lt,
+template<typename Tnum>
+void Hamiltonian<Tnum>::BosonIntraHoppingPart( const size_t species_id,
+const std::vector< Node<Tnum>* > &lt,
 const Basis &bs, std::vector<Triplet> &hhop )
 {
   int state_id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
-    for ( Node<Tnum, Tlabel>* l : lt ) {
-      Tlabel site_i = l->data;
-      std::vector< Node<Tnum, Tlabel>* > nn = l->getNeighbors();
+    for ( Node<Tnum>* l : lt ) {
+      size_t site_i = l->data;
+      std::vector< Node<Tnum>* > nn = l->getNeighbors();
       std::vector< Tnum > nnJ = l->getJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
         std::vector<int> b_copy = b;
-        Tlabel site_j = nn.at(cnt)->data;
+        size_t site_j = nn.at(cnt)->data;
         if ( b_copy.at(site_i) > 0 ){
           Tnum val = (Tnum)(-1.0e0) * nnJ.at(cnt) *
             sqrt( (Tnum)((b.at(site_j) + 1) * b.at(site_i)) );
@@ -68,5 +68,5 @@ const Basis &bs, std::vector<Triplet> &hhop )
   }
 }
 
-template class Hamiltonian<RealType, int>;
-template class Hamiltonian<ComplexType, int>;
+template class Hamiltonian<RealType>;
+template class Hamiltonian<ComplexType>;

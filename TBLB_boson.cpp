@@ -61,7 +61,7 @@ int main(int argc, char const *argv[]) {
     INFO_NONEWLINE(val << " ");
   }
   INFO("");
-  const std::vector< Node<ComplexType, int>* > lattice = NN_1D_Chain(L, J, OBC);
+  const std::vector< Node<ComplexType>* > lattice = NN_1D_Chain(L, J, OBC);
   for ( auto &lt : lattice ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
   }
@@ -81,9 +81,9 @@ int main(int argc, char const *argv[]) {
   std::vector< std::vector<ComplexType> > Uloc;
   std::vector<ComplexType> Utmp(L, (ComplexType)Uin);
   Uloc.push_back(Utmp);
-  std::vector<Hamiltonian<ComplexType,int> > Hams;
+  std::vector<Hamiltonian<ComplexType> > Hams;
   for ( auto &bs : Bases ){
-    Hamiltonian<ComplexType,int> ham( std::vector<Basis>(1, bs) );
+    Hamiltonian<ComplexType> ham( std::vector<Basis>(1, bs) );
     ham.BuildLocalHamiltonian(Vloc, Uloc, std::vector<Basis>(1, bs));
     ham.BuildHoppingHamiltonian(std::vector<Basis>(1, bs), lattice);
     ham.BuildTotalHamiltonian();

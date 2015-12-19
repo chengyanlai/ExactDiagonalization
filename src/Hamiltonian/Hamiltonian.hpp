@@ -6,7 +6,7 @@
 #include "src/Node/Node.hpp"
 #include "src/Basis/Basis.hpp"
 
-template<typename Tnum = RealType, typename Tlabel = int>
+template<typename Tnum = RealType>
 class Hamiltonian{
 public:
   typedef Eigen::Matrix<Tnum, Eigen::Dynamic, Eigen::Dynamic,
@@ -30,13 +30,13 @@ public:
     const std::vector< std::vector<Tnum> > &Uloc,
     const std::vector<Basis> &bs );
   void BuildHoppingHamiltonian(
-    const std::vector<Basis> &bs, const std::vector< Node<Tnum, Tlabel>* > &lt );
+    const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt );
   /* vvvvvvv Boson Functions vvvvvvv */
   void BosonIntraLocalPart( const size_t species_id,
     const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
     const Basis &bs, std::vector<Triplet> &hloc );
   void BosonIntraHoppingPart( const size_t species_id,
-    const std::vector< Node<Tnum, Tlabel>* > &lt,
+    const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Boson Functions ^^^^^^^ */
   /* vvvvvvv Fermion Functions vvvvvvv */
@@ -45,7 +45,7 @@ public:
   void FermionInterLocalPart( const std::vector<int> species_id, const Tnum &Uloc,
       const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
   void FermionIntraHoppingPart( const size_t species_id,
-    const std::vector< Node<Tnum, Tlabel>* > &lt,
+    const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Fermion Functions ^^^^^^^ */
   void eigh( std::vector<RealType> &Val, VectorType &Vec, const bool FullDiagonalization = false );
