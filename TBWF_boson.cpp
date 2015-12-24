@@ -27,15 +27,18 @@
 #endif
 
 #ifndef METHOD
-#define METHOD 2
+#define METHOD 1
 #endif
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
-  RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc);
+  RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc,
+  RealType &factor);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m);
-void TerminatorBeam( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec);
-void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
+void TerminatorBeam( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
+  const bool HARD_CUT = true, const RealType factor = 0.0e0 );
+void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
+  const bool HARD_CUT = true, const RealType factor = 0.0e0 );
 void GetGS2( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
@@ -47,8 +50,8 @@ int main(int argc, char const *argv[]) {
 #endif
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   int L, OBC, N, Tsteps, TBloc;
-  RealType Uin, Vin, dt;
-  LoadParameters( "conf.h5", L, OBC, N, Uin, Vin, dt, Tsteps, TBloc );
+  RealType Uin, Vin, dt, factor;
+  LoadParameters( "conf.h5", L, OBC, N, Uin, Vin, dt, Tsteps, TBloc, factor );
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -67,7 +70,12 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO("Build Basis - ");
   Basis B1(L, N);
-  B1.BosonTB(TBloc);
+  bool HARD_CUT = true;
+  assert( factor >= 0.0e0 && factor < 1.0e0 );
+  if ( factor > 1.0e-10 ) {
+    HARD_CUT = false;
+  }
+  B1.BosonTB(TBloc, HARD_CUT);
   // std::vector< std::vector<int> > st = B1.getBStates();
   // std::vector< RealType > tg = B1.getBTags();
   // for (size_t cnt = 0; cnt < tg.size(); cnt++) {
@@ -80,9 +88,9 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO("Build GS - ");
   ComplexVectorType Vec = ComplexVectorType::Zero(B1.getHilbertSpace());
-  if ( METHOD == 1) {
+  if ( METHOD == 1 ) {
     GetGS1(TBloc, B1, Vec);
-  } else if ( METHOD == 2) {
+  } else if ( METHOD == 2 ) {
     GetGS2(TBloc, B1, Vec);
   }
   INFO("DONE!");
@@ -132,7 +140,7 @@ void SaveObs( const std::string filename, const std::string gname,
 }
 
 void TerminatorBeam( const size_t TBloc, const Basis &bs,
-  ComplexVectorType &Vec){
+  ComplexVectorType &Vec, const bool HARD_CUT, const RealType factor ){
   assert( Vec.size() == bs.getHilbertSpace() );
   // ComplexVectorType TBVec = Vec;
   std::map<RealType, std::vector<int> > BsMap;
@@ -143,21 +151,35 @@ void TerminatorBeam( const size_t TBloc, const Basis &bs,
   for (std::map<RealType, std::vector<int> >::iterator it = BsMap.begin(); it != BsMap.end(); it++) {
     if ( it->second.at(TBloc) > 0 ) {
       std::vector<int> newbs = it->second;
-      newbs.at(TBloc) = 0;
+      if ( HARD_CUT || newbs.at(TBloc) == 1 ) {
+        newbs.at(TBloc) = 0;
+      } else if ( newbs.at(TBloc) > 0 ) {
+        newbs.at(TBloc) -= 1;
+      } else {
+        std::cout << "Some Wrong in TerminatorBeam" << std::endl;
+      }
       RealType newtag = BosonBasisTag(newbs);
       size_t new_idx = bs.getIndexFromTag(newtag);
       assert( new_idx < bs.getHilbertSpace() );
       size_t old_idx = bs.getIndexFromTag(it->first);
       assert( old_idx < bs.getHilbertSpace() );
-      ComplexType val1 = std::conj(Vec(old_idx)) * Vec(old_idx);
-      ComplexType val2 = std::conj(Vec(new_idx)) * Vec(new_idx);
-      Vec(new_idx) = (ComplexType)std::sqrt( (val1 + val2).real() );
-      Vec(old_idx) = ComplexType(0.0e0, 0.0e0);
+      if ( HARD_CUT ) {
+        RealType val1 = (std::conj(Vec(old_idx)) * Vec(old_idx)).real();
+        RealType val2 = (std::conj(Vec(new_idx)) * Vec(new_idx)).real();
+        Vec(new_idx) = (ComplexType)std::sqrt( val1 + val2 );
+        Vec(old_idx) = ComplexType(0.0e0, 0.0e0);
+      } else {
+        RealType val1 = (std::conj(Vec(old_idx)) * Vec(old_idx)).real();
+        RealType val2 = (std::conj(Vec(new_idx)) * Vec(new_idx)).real();
+        Vec(new_idx) = (ComplexType)std::sqrt( std::sqrt(factor) * val1 + val2 );
+        Vec(old_idx) = (ComplexType)std::sqrt( std::sqrt(1.0e0 - factor) * val1 );
+      }
     }
   }
 }
 
-void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec ){
+void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
+  const bool HARD_CUT, const RealType factor ){
   HDF5IO gsf("BSSH.h5");
   ComplexVectorType gswf;
   gsf.loadVector("GS", "EVec", gswf);
@@ -177,9 +199,26 @@ void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec ){
   for (std::map<RealType, std::vector<int> >::iterator it = GSmap.begin(); it != GSmap.end(); it++) {
     if ( it->second.at(TBloc) > 0 ) {
       std::vector<int> newbs = it->second;
-      newbs.at(TBloc) = 0;
+      if ( HARD_CUT ) {
+        newbs.at(TBloc) = 0;
+      } else {
+        newbs.at(TBloc) -= 1;
+      }
       RealType newtag = BosonBasisTag(newbs);
-      Vec(bs.getIndexFromTag(newtag)) = gswf(GS.getIndexFromTag(it->first));
+      if ( HARD_CUT ) {
+        Vec(bs.getIndexFromTag(newtag)) = gswf(GS.getIndexFromTag(it->first));
+      } else {
+        size_t new_idx = bs.getIndexFromTag(newtag);
+        assert( new_idx < bs.getHilbertSpace() );
+        size_t old_idx = bs.getIndexFromTag(it->first);
+        assert( old_idx < bs.getHilbertSpace() );
+        RealType val1 = (std::conj(Vec(old_idx)) * Vec(old_idx)).real();
+        RealType val2 = (std::conj(Vec(new_idx)) * Vec(new_idx)).real();
+        RealType val3 = (std::conj(gswf(GS.getIndexFromTag(it->first))) *
+                         gswf(GS.getIndexFromTag(it->first)) ).real();
+        Vec(bs.getIndexFromTag(newtag)) = (ComplexType)std::sqrt( std::sqrt(factor) * val3 + val2 );
+        Vec(bs.getIndexFromTag(it->first)) = (ComplexType)std::sqrt( std::sqrt(1.0e0 - factor) * val3 + val1 );
+      }
     }else {
       Vec(bs.getIndexFromTag(it->first)) = gswf(GS.getIndexFromTag(it->first));
     }
@@ -213,7 +252,8 @@ void GetGS2( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
 }
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
-  RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc){
+  RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc,
+  RealType &factor){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
@@ -223,6 +263,7 @@ void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
     dt = file.loadReal("Parameters", "dt");
     Tsteps = file.loadInt("Parameters", "Tsteps");
     TBloc = file.loadInt("Parameters", "TBloc");
+    factor = file.loadReal("Parameters", "FACTOR");
 }
 
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,

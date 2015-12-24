@@ -25,7 +25,7 @@ public:
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
   void Boson();
-  void BosonTB( const size_t TBloc );
+  void BosonTB( const size_t TBloc, const bool HARD_CUT = false );
   void Fermion();
   void Save( const std::string filename, const std::string gname );
   void Load( const std::string filename, const std::string gname );

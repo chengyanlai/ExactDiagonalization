@@ -46,17 +46,20 @@ elif platform.system() == "Darwin":
 
 NumThreads = 2
 
-L = 9
+L = 8
 OBC = 1# 1:True
 # OBC = 0# 0:False
 N = L - 1
+# Uin = []#
 Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
 dt = 0.01
-TBloc = L - 1
-GammaList = [0.1, 0.5, 1.0, 10.0]
+# TBloc = L - 1
+TBloc = np.int(L / 2)
+# GammaList = []#
+GammaList = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 20.0]
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "TBLB.b"))
@@ -70,7 +73,7 @@ else:
   LN1N2 = "-".join(["TBP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
-job_id = 8254
+job_id = 0
 RUN_NOW = True
 QSUB = True
 for Gamma in GammaList:
@@ -78,12 +81,15 @@ for Gamma in GammaList:
     Job_Name =  "-".join(["".join(["U", str(U)]), "Jr1.0-Box"])
     IWF_FILE = os.path.join(EXEC_DIR, IWF_DIR, Job_Name, "BSSH.h5")
     Job_Name =  "-".join( ["".join(["U", str(U)]), "".join(["V", str(Vin)]),
-                           "".join(["G", str(Gamma)])] )
+                           "".join(["G", str(Gamma)]), "".join(["TB", str(TBloc)])] )
     workdir = os.path.join(DATADIR, Job_Name)
 
     os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
     with shp.cd(workdir):
       if os.path.isfile('TBLB.h5'):
+        pass
+      elif os.path.isfile('conf.h5'):
+        print("".join([workdir, " is schaduled!?"]))
         pass
       else:
         Copy_Initial_WF(IWF_FILE, workdir)

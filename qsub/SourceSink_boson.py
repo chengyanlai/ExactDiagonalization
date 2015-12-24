@@ -76,7 +76,7 @@ Vin = SetV(L, Val1=Val1, vtype=VtypeEqm)
 Tsteps = 2000# Tstep * dt is final time
 dt = 0.01
 VtypeDyn = "SinkCenter"
-Val2List = [-3.0, ]
+Val2List = [-3.0, -9.0, -27.0]
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "SourceSinkDyn.b"))

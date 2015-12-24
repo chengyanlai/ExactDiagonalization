@@ -51,7 +51,7 @@ def SetV(L, vtype="Box"):
 
 NumThreads = 1
 
-L = 7
+L = 8
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
 J12ratio = [1.00, ]# NOTE: Prepare for Terminator Beam
 OBC = 1# 1:True # NOTE: Prepare for Terminator Beam

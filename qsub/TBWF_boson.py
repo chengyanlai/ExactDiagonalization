@@ -52,18 +52,24 @@ elif(platform.system() == "Darwin"):
 NumThreads = 2
 
 # NOTE: This depends on the algorithm!!
-L = 8
-N = L - 2
-# L = 10
-# N = L - 1
+Algorithm = 1
+if Algorithm == 1:
+  L = 8
+  N = L - 1
+elif Algorithm == 2:
+  L = 8
+  N = L - 2
 OBC = 1# 1:True
 # OBC = 0# 0:False
-Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
+Uin = [0.0, ]#0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
 dt = 0.01
-TBloc = L - 1
+# TBloc = L - 1
+TBloc = np.int(L / 2)
+
+FACTOR = 0.0e0
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "TBWF.b"))
@@ -71,20 +77,25 @@ Exac_program = "\n".join(APPs)
 
 if OBC:
   # NOTE: This depends on the algorithm!!
-  IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L - 1)]), str(N)])
-  # IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L)]), str(N)])
+  if Algorithm == 1:
+    IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L)]), str(N)])
+  elif Algorithm == 2:
+    IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L - 1)]), str(N)])
   LN1N2 = "-".join(["TBO", "".join(["L", str(L)]), str(N)])
 else:
   # NOTE: This depends on the algorithm!!
-  IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L - 1)]), str(N)])
-  # IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
+  if Algoritm == 1:
+    IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
+  elif Algoritm == 2:
+    IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L - 1)]), str(N)])
   LN1N2 = "-".join(["TBP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
 for U in Uin:
   Job_Name =  "-".join(["".join(["U", str(U)]), "Jr1.0-Box"])
   IWF_FILE = os.path.join(EXEC_DIR, IWF_DIR, Job_Name, "BSSH.h5")
-  Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["V", str(Vin)])])
+  Job_Name =  "-".join([ "".join(["U", str(U)]), "".join(["V", str(Vin)]),
+                         "".join(["TB", str(TBloc)]) ])
   workdir = os.path.join(DATADIR, Job_Name)
 
   os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
@@ -103,6 +114,7 @@ for U in Uin:
       dset = para.create_dataset("Tsteps", data=Tsteps)
       dset = para.create_dataset("dt", data=dt)
       dset = para.create_dataset("TBloc", data=TBloc)
+      dset = para.create_dataset("FACTOR", data=FACTOR)
       f.close()
 
       if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \
