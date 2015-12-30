@@ -46,20 +46,20 @@ elif platform.system() == "Darwin":
 
 NumThreads = 2
 
-L = 8
+L = 9
 OBC = 1# 1:True
 # OBC = 0# 0:False
 N = L - 1
-# Uin = []#
-Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
+Uin = [0.5, ]#
+# Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
 dt = 0.01
-# TBloc = L - 1
-TBloc = np.int(L / 2)
-# GammaList = []#
-GammaList = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 20.0]
+TBloc = L - 1
+# TBloc = np.int(L / 2)
+GammaList = [0.1, ]#
+# GammaList = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 20.0]
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "TBLB.b"))

@@ -40,7 +40,7 @@ endif
 ifeq ("$(OS)", "Darwin")
 	OPENMP =#-fopenmp
 	HDF5LIB = -L$(HDF5ROOT)/lib -lhdf5 -lhdf5_cpp
-	LAPACK = -lblas -llapack -lm
+	LAPACK = -lblas -llapack -lm -larpack
 	LAPACK_OMP = $(LAPACK)
 	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I$(HDF5ROOT)/include -I$(EIGENINC)
 else ifeq ("$(OS)", "Linux")
@@ -51,7 +51,7 @@ else ifeq ("$(OS)", "Linux")
 	$(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a -Wl,--start-group \
 	$(MKLROOT)/lib/intel64/libmkl_intel_lp64.a \
 	$(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a \
-	-Wl,--end-group -lpthread -lm
+	-Wl,--end-group -lpthread -lm -larpack
 	LAPACK_OMP = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
 	$(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a -Wl,--start-group \
 	${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \

@@ -50,6 +50,7 @@ public:
   /* ^^^^^^^ Fermion Functions ^^^^^^^ */
   void eigh( std::vector<RealType> &Val, VectorType &Vec, const bool FullDiagonalization = false );
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
+  void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
   inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
     assert( ids.size() == HilbertSpaces.size() );
@@ -66,5 +67,7 @@ private:
   SparseMatrixType H_hop;
   SparseMatrixType H_local;
   SparseMatrixType H_total;
+  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals,
+    int nev = 1, RealType tol = 0.0e0);
 };
 #endif//__HAMILTONIAN_HPP__

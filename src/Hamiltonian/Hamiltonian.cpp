@@ -1,6 +1,7 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/Lanczos/lanczos.hpp"
 #include "src/Lanczos/krylov.hpp"
+#include "src/Lanczos/arpack.hpp"
 
 template<typename Tnum>
 Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
@@ -92,12 +93,18 @@ template<typename Tnum>
 void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec,
   const bool FullDiagonalization)
 {
-  Vec = VectorType::Random(getTotalHilbertSpace());
-  size_t max_iter = 200;
-  RealType err_tol = 1.0e-9;
+  size_t dim = getTotalHilbertSpace();
+  Vec = VectorType::Random(dim);
+  // size_t max_iter = 200;
+  // RealType err_tol = 1.0e-9;
   if( !(FullDiagonalization) ){
-    bool converge = LanczosEV(H_total, Vec, Val, max_iter, err_tol);
-    if ( !(converge) ) INFO("Lanczos is not converged!");
+    // std::cout << "arpack" << std::endl;
+    Tnum* input_ptr = Vec.data();
+    arpackDiagonalize(dim, input_ptr, Val, /*nev*/2, /*tol*/0.0e0);
+    Vec = Eigen::Map<VectorType>(input_ptr, dim);
+    // std::cout << Val.size() << " done" << std::endl;
+    // bool converge = LanczosEV(H_total, Vec, Val, max_iter, err_tol);
+    // if ( !(converge) ) INFO("Lanczos is not converged!");
   }
 }
 
@@ -106,6 +113,28 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
   ComplexVectorType &Vec, const size_t Kmax )
 {
   krylov(H_total, Vec, Prefactor, Kmax);
+}
+
+/* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y
+ * @param x the input vector
+ * @param y the output vector
+ * @param alpha the scaling value
+ */
+template<>
+void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)const {
+  size_t dim = getTotalHilbertSpace();
+  Eigen::Map<RealVectorType> Vin(x, dim);
+  Eigen::Map<RealVectorType> Vout(y, dim);
+  Vout = H_total * Vin + alpha * Vout;
+  memcpy(y, Vout.data(), dim * sizeof(RealType) );
+}
+template<>
+void Hamiltonian<ComplexType>::mvprod(ComplexType* x, ComplexType* y, RealType alpha)const {
+  size_t dim = getTotalHilbertSpace();
+  Eigen::Map<ComplexVectorType> Vin(x, dim);
+  Eigen::Map<ComplexVectorType> Vout(y, dim);
+  Vout = H_total * Vin + alpha * Vout;
+  memcpy(y, Vout.data(), dim * sizeof(ComplexType) );
 }
 
 template class Hamiltonian<RealType>;

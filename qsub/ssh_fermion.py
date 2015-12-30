@@ -50,7 +50,7 @@ def SetV(L, vtype="Box"):
   return V
 
 NumThreads = 1
-L = 12
+L = 10
 # J12ratio = np.linspace(0.0, 1.0, 51)
 J12ratio = [1.00, ]
 # J12ratio = [0.10, ]
