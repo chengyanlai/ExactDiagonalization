@@ -27,7 +27,7 @@
 #endif
 
 #ifndef METHOD
-#define METHOD 1
+#define METHOD 2
 #endif
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
@@ -38,7 +38,7 @@ void SaveObs( const std::string filename, const std::string gname,
 void TerminatorBeam( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
   const bool HARD_CUT = true, const RealType factor = 0.0e0 );
 void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
-  const bool HARD_CUT = true, const RealType factor = 0.0e0 );
+  const bool HARD_CUT = true );
 void GetGS2( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec );
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
@@ -71,8 +71,8 @@ int main(int argc, char const *argv[]) {
   INFO("Build Basis - ");
   Basis B1(L, N);
   bool HARD_CUT = true;
-  assert( factor >= 0.0e0 && factor < 1.0e0 );
-  if ( factor > 1.0e-10 ) {
+  assert( factor > 0.0e0 && factor <= 1.0e0 );
+  if ( 1.0e0 - factor > 1.0e-10 ) {/* 1.0 is HARD_CUT; 0.0 doesn't make sense */
     HARD_CUT = false;
   }
   B1.BosonTB(TBloc, HARD_CUT);
@@ -89,7 +89,10 @@ int main(int argc, char const *argv[]) {
   INFO("Build GS - ");
   ComplexVectorType Vec = ComplexVectorType::Zero(B1.getHilbertSpace());
   if ( METHOD == 1 ) {
-    GetGS1(TBloc, B1, Vec);
+    GetGS1(TBloc, B1, Vec, HARD_CUT);
+    if ( !HARD_CUT ) {
+      TerminatorBeam(TBloc, B1, Vec, HARD_CUT, factor);
+    }
   } else if ( METHOD == 2 ) {
     GetGS2(TBloc, B1, Vec);
   }
@@ -114,7 +117,7 @@ int main(int argc, char const *argv[]) {
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
     ham.expH(Prefactor, Vec);
-    TerminatorBeam(TBloc, B1, Vec);
+    TerminatorBeam(TBloc, B1, Vec, HARD_CUT, factor);
     // INFO(" ");
     // INFO(Vec.norm());
     // std::cin.get();
@@ -168,18 +171,20 @@ void TerminatorBeam( const size_t TBloc, const Basis &bs,
         RealType val2 = (std::conj(Vec(new_idx)) * Vec(new_idx)).real();
         Vec(new_idx) = (ComplexType)std::sqrt( val1 + val2 );
         Vec(old_idx) = ComplexType(0.0e0, 0.0e0);
-      } else {
+      } else {/* FIXME: this is wrong!! */
+        ComplexVectorType NewVec = Vec;
         RealType val1 = (std::conj(Vec(old_idx)) * Vec(old_idx)).real();
         RealType val2 = (std::conj(Vec(new_idx)) * Vec(new_idx)).real();
-        Vec(new_idx) = (ComplexType)std::sqrt( std::sqrt(factor) * val1 + val2 );
-        Vec(old_idx) = (ComplexType)std::sqrt( std::sqrt(1.0e0 - factor) * val1 );
+        NewVec(new_idx) = (ComplexType)std::sqrt( factor * val1 + val2 );
+        NewVec(old_idx) = (ComplexType)std::sqrt( (1.0e0 - factor) * val1 );
+        Vec = NewVec;
       }
     }
   }
 }
 
 void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
-  const bool HARD_CUT, const RealType factor ){
+  const bool HARD_CUT ){
   HDF5IO gsf("BSSH.h5");
   ComplexVectorType gswf;
   gsf.loadVector("GS", "EVec", gswf);
@@ -197,28 +202,11 @@ void GetGS1( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
   std::transform( gsts.begin(), gsts.end(), gsbs.begin(),
     std::inserter(GSmap, GSmap.end() ), std::make_pair<RealType const&,std::vector<int> const&> );
   for (std::map<RealType, std::vector<int> >::iterator it = GSmap.begin(); it != GSmap.end(); it++) {
-    if ( it->second.at(TBloc) > 0 ) {
+    if ( it->second.at(TBloc) > 0 && HARD_CUT ) {
       std::vector<int> newbs = it->second;
-      if ( HARD_CUT ) {
-        newbs.at(TBloc) = 0;
-      } else {
-        newbs.at(TBloc) -= 1;
-      }
+      newbs.at(TBloc) = 0;
       RealType newtag = BosonBasisTag(newbs);
-      if ( HARD_CUT ) {
-        Vec(bs.getIndexFromTag(newtag)) = gswf(GS.getIndexFromTag(it->first));
-      } else {
-        size_t new_idx = bs.getIndexFromTag(newtag);
-        assert( new_idx < bs.getHilbertSpace() );
-        size_t old_idx = bs.getIndexFromTag(it->first);
-        assert( old_idx < bs.getHilbertSpace() );
-        RealType val1 = (std::conj(Vec(old_idx)) * Vec(old_idx)).real();
-        RealType val2 = (std::conj(Vec(new_idx)) * Vec(new_idx)).real();
-        RealType val3 = (std::conj(gswf(GS.getIndexFromTag(it->first))) *
-                         gswf(GS.getIndexFromTag(it->first)) ).real();
-        Vec(bs.getIndexFromTag(newtag)) = (ComplexType)std::sqrt( std::sqrt(factor) * val3 + val2 );
-        Vec(bs.getIndexFromTag(it->first)) = (ComplexType)std::sqrt( std::sqrt(1.0e0 - factor) * val3 + val1 );
-      }
+      Vec(bs.getIndexFromTag(newtag)) = gswf(GS.getIndexFromTag(it->first));
     }else {
       Vec(bs.getIndexFromTag(it->first)) = gswf(GS.getIndexFromTag(it->first));
     }

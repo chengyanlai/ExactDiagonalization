@@ -11,9 +11,13 @@ import h5py
 import Script_Helpers as shp
 
 def Copy_Initial_WF(target, destination):
-  cmd = " ".join(["cp", target, destination])
-  print("Run Command - ", cmd)
-  subprocess.call(cmd, shell=True)
+  if os.path.isfile(target):
+    cmd = " ".join(["cp", target, destination])
+    # print("Run Command - ", cmd)
+    subprocess.call(cmd, shell=True)
+  else:
+    print("Initial wavefunction NOT found!", target)
+    sys.exit()
 
 if platform.system() == "Linux":
   if socket.gethostname() == 'stargate.phys.nthu.edu.tw':
@@ -46,20 +50,23 @@ elif platform.system() == "Darwin":
 
 NumThreads = 2
 
-L = 9
+L = 8
+Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
+TBloc = L - 1
+# TBloc = np.int(L / 2)
+GammaList = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 15.0, 20.0, 25.0]
+# L = 9
+# Uin = [0.5, ]#
+# TBloc = L - 1
+# GammaList = [0.1, ]#
+
 OBC = 1# 1:True
 # OBC = 0# 0:False
 N = L - 1
-Uin = [0.5, ]#
-# Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 Vin = 0.0
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
 dt = 0.01
-TBloc = L - 1
-# TBloc = np.int(L / 2)
-GammaList = [0.1, ]#
-# GammaList = [0.01, 0.1, 0.5, 1.0, 5.0, 10.0, 20.0]
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "TBLB.b"))

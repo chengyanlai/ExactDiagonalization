@@ -74,7 +74,7 @@ void Basis::BosonTB( const size_t TBloc, const bool HARD_CUT )
         }
       }
       /* NOTE: Rule out the state which is not existed in terminator beam setup */
-      if ( Ivec.at(TBloc) < 2 && HARD_CUT ) {
+      if ( !(HARD_CUT) || (Ivec.at(TBloc) < 2 && HARD_CUT) ) {
         work.push_back( Ivec );
         BTags.push_back( BosonBasisTag(Ivec) );
         Nres = std::accumulate(Ivec.begin(), Ivec.end(), 0);

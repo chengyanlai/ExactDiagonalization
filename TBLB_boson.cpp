@@ -101,9 +101,9 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Rhos );
   ComplexMatrixType Nij = NiNj( Bases, Rhos );
-  std::string output_file = "TBLB";
-  output_file.append(std::to_string(gamma));
-  output_file.append(".h5");
+  std::string output_file = "TBLB.h5";
+  // output_file.append(std::to_string(gamma));
+  // output_file.append(".h5");
   SaveObs(output_file, "Obs-0", Nbi, Nij);
   std::vector<std::vector<size_t> > CIdx = IndexCollapse(TBloc, Bases);
   INFO("Trace = " << TraceRhos(Rhos));

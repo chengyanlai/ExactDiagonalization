@@ -1,7 +1,7 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
-#include "src/Lanczos/lanczos.hpp"
-#include "src/Lanczos/krylov.hpp"
+// #include "src/Lanczos/lanczos.hpp"
 #include "src/Lanczos/arpack.hpp"
+#include "src/Lanczos/krylov.hpp"
 
 template<typename Tnum>
 Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
