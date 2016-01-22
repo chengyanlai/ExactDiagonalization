@@ -52,8 +52,8 @@ elif(platform.system() == "Darwin"):
 NumThreads = 2
 
 # NOTE: This depends on the algorithm!!
-Algorithm = 2
-L = 8
+Algorithm = 1
+L = 9
 N = L - 1
 if Algorithm == 2:
   L += 1
@@ -68,7 +68,7 @@ TBloc = L - 1
 # TBloc = np.int(L / 2)
 
 #/* 1.0 is HARD_CUT; 0.0 doesn't make sense */
-FactorList = [0.01, 0.03, 0.05, 0.1, 0.2, 0.4, 0.6, 1.0]
+FactorList = [0.01, 0.02, 0.03, 0.04, 0.05, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0]
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "TBWF.b"))
@@ -101,6 +101,10 @@ for Factor in FactorList:
     os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
     with shp.cd(workdir):
       if os.path.isfile('TBWF.h5'):
+        print("Skip", workdir)
+        pass
+      elif os.path.isfile('conf.h5'):
+        print("Skip", workdir)
         pass
       else:
         Copy_Initial_WF(IWF_FILE, workdir)
@@ -115,6 +119,7 @@ for Factor in FactorList:
         dset = para.create_dataset("dt", data=dt)
         dset = para.create_dataset("TBloc", data=TBloc)
         dset = para.create_dataset("FACTOR", data=Factor)
+        dset = para.create_dataset("METHOD", data=Algorithm)
         f.close()
 
         if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \

@@ -27,12 +27,12 @@
 #endif
 
 #ifndef METHOD
-#define METHOD 2
+#define METHOD 1
 #endif
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
   RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc,
-  RealType &factor);
+  RealType &factor, int &method_run);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m);
 void TerminatorBeam( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec,
@@ -49,9 +49,11 @@ int main(int argc, char const *argv[]) {
   mkl_set_num_threads(NumCores);
 #endif
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
-  int L, OBC, N, Tsteps, TBloc;
+  int L, OBC, N, Tsteps, TBloc, method_run;
   RealType Uin, Vin, dt, factor;
-  LoadParameters( "conf.h5", L, OBC, N, Uin, Vin, dt, Tsteps, TBloc, factor );
+  LoadParameters( "conf.h5", L, OBC, N, Uin, Vin, dt, Tsteps, TBloc, factor,
+    method_run );
+  assert( METHOD == method_run );
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -241,7 +243,7 @@ void GetGS2( const size_t TBloc, const Basis &bs, ComplexVectorType &Vec )
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
   RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc,
-  RealType &factor){
+  RealType &factor, int &method_run){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
@@ -252,6 +254,7 @@ void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
     Tsteps = file.loadInt("Parameters", "Tsteps");
     TBloc = file.loadInt("Parameters", "TBloc");
     factor = file.loadReal("Parameters", "FACTOR");
+    method_run = file.loadReal("Parameters", "METHOD");
 }
 
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,

@@ -1,9 +1,9 @@
 #include <iostream>
-#include "src/Lanczos/arpack.hpp"
+#include "src/Lanczos/arpack_wrapper.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<>
-void Hamiltonian<ComplexType >::arpackDiagonalize(int n,
+void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
   ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol){
   /*
   // n        : dimension of the matrix
@@ -130,15 +130,13 @@ void Hamiltonian<ComplexType >::arpackDiagonalize(int n,
 
   int *select;
   // when howmny == 'A', this is used as workspace to reorder the eigenvectors
-  if( howmny == 'A' )
-    select = new int[ncv];
+  select = new int[ncv];
 
   // This vector will return the eigenvalues from the second routine, dseupd.
   ComplexType *d = new ComplexType[nev+1];
 
   ComplexType *z = 0;
-  if( rvec )
-    z = new ComplexType[n*nev];
+  z = new ComplexType[n*nev];
   /* On exit, if RVEC = .TRUE. and HOWMNY = 'A', then the columns of
        Z represent approximate eigenvectors (Ritz vectors) corresponding
        to the NCONV=IPARAM(5) Ritz values for eigensystem
@@ -179,11 +177,9 @@ void Hamiltonian<ComplexType >::arpackDiagonalize(int n,
   /* TODO: make complex eigenvector */
   memcpy(input_ptr, z, n * sizeof(ComplexType));
   delete [] workev;
-  if( rvec )
-    delete [] z;
+  delete [] z;
   delete [] d;
-  if( howmny == 'A' )
-    delete [] select;
+  delete [] select;
   delete [] rwork;
   delete [] workl;
   delete [] workd;
@@ -218,12 +214,10 @@ void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr,
   int rvec = 1;
   char howmny = 'A';
   int *select;
-  if( howmny == 'A' )
-    select = new int[ncv];
+  select = new int[ncv];
   RealType *d = new RealType[nev];
   RealType *z = 0;
-  if( rvec )
-    z = new RealType[n*nev];
+  z = new RealType[n*nev];
   RealType sigma;
   dsaupd_(&ido, &bmat, &n, &which[0], &nev, &tol, resid, &ncv, v, &ldv,
           iparam, ipntr, workd, workl, &lworkl, &info);
@@ -254,8 +248,6 @@ void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr,
   delete [] workd;
   delete [] workl;
   delete [] d;
-  if( rvec )
-    delete [] z;
-  if( howmny == 'A' )
-    delete [] select;
+  delete [] z;
+  delete [] select;
 }

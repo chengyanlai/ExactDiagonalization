@@ -1,6 +1,4 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
-// #include "src/Lanczos/lanczos.hpp"
-#include "src/Lanczos/arpack.hpp"
 #include "src/Lanczos/krylov.hpp"
 
 template<typename Tnum>
@@ -95,16 +93,10 @@ void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec,
 {
   size_t dim = getTotalHilbertSpace();
   Vec = VectorType::Random(dim);
-  // size_t max_iter = 200;
-  // RealType err_tol = 1.0e-9;
   if( !(FullDiagonalization) ){
-    // std::cout << "arpack" << std::endl;
     Tnum* input_ptr = Vec.data();
     arpackDiagonalize(dim, input_ptr, Val, /*nev*/2, /*tol*/0.0e0);
     Vec = Eigen::Map<VectorType>(input_ptr, dim);
-    // std::cout << Val.size() << " done" << std::endl;
-    // bool converge = LanczosEV(H_total, Vec, Val, max_iter, err_tol);
-    // if ( !(converge) ) INFO("Lanczos is not converged!");
   }
 }
 
