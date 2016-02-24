@@ -58,20 +58,15 @@ void Lindblad_Newton( const RealType &dt, const RealType &gamma,
   const ComplexType imagI = ComplexType(0.0e0, 1.0e0);
   for (size_t cnt = 0; cnt < ham.size(); cnt++) {
     ComplexSparseMatrixType h = ham.at(cnt).getTotalHamiltonian();
-    /* FIXME: We can not use nl as a const, which should be a vector */
     ComplexMatrixType LBmat1 = Nb_tbloc(TBloc, bas.at(cnt), Rhos.at(cnt));
     if ( cnt + 1 < ham.size() ) {
       assert( CIdx.at(cnt).size() == Rhos.at(cnt).cols() );
       ComplexMatrixType LBmat2 = Lindblad1(TBloc, Rhos.at(cnt+1), bas.at(cnt), CIdx.at(cnt));
       Rhos.at(cnt) = dt * ( imagI * (Rhos.at(cnt) * h - h * Rhos.at(cnt)) -
                             gamma * LBmat1 + gamma * LBmat2 );
-      // Rhos.at(cnt) += dt * ( imagI * (Rhos.at(cnt) * h - h * Rhos.at(cnt)) -
-      //                       gamma * LBmat1 + gamma * LBmat2 );
     } else {
       Rhos.at(cnt) = dt * ( imagI * (Rhos.at(cnt) * h - h * Rhos.at(cnt)) -
                             gamma * LBmat1 );
-      // Rhos.at(cnt) += dt * ( imagI * (Rhos.at(cnt) * h - h * Rhos.at(cnt)) -
-      //                       gamma * LBmat1 );
     }
   }
 }
@@ -100,18 +95,13 @@ ComplexMatrixType Lindblad1(const size_t TBloc, const ComplexMatrixType &MapMat,
 ComplexMatrixType Nb_tbloc( const size_t TBloc, const Basis &bs,
   const ComplexMatrixType &rho){
   ComplexMatrixType tmp1 = rho;
-  // ComplexMatrixType tmp2 = rho;
   std::vector< std::vector<int> > b = bs.getBStates();
   assert( b.size() == rho.cols() );
   assert( b.size() == rho.rows() );
   size_t coff = 0;
   for ( auto &nbi : b ){
     tmp1.col(coff) *= (RealType)nbi.at(TBloc);
-    // tmp2.row(coff) *= (RealType)nbi.at(TBloc);
     coff++;
   }
-  // return 0.50e0 * ( tmp1 + tmp2 );
   return 0.50e0 * ( tmp1 + tmp1.adjoint() );
 }
-
-// ComplexMatrixType Lindblad2(const ComplexMatrixType &Mat){}

@@ -32,7 +32,8 @@ void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
   RealType &Uloc, RealType &Vloc, RealType &dt, int &Tsteps, int &TBloc,
   RealType &Gamma);
 void SaveObs( const std::string filename, const std::string gname,
-  const std::vector<ComplexType> &v, const ComplexMatrixType &m);
+  const std::vector<ComplexType> &v, const ComplexMatrixType &m,
+  const ComplexMatrixType &cm);
 void GetRho( const Basis &bs, ComplexMatrixType &Mat );
 std::vector<std::vector<size_t> > IndexCollapse(const size_t TBloc,
   const std::vector<Basis> &bs);
@@ -40,6 +41,8 @@ std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,
   const std::vector<ComplexMatrixType> &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases,
   const std::vector<ComplexMatrixType> &Rhos );
+ComplexMatrixType OPCM( const std::vector<Basis> &Bases,
+  const std::vector<ComplexMatrixType> &Rhos);
 
 int main(int argc, char const *argv[]) {
   Eigen::setNbThreads(NumCores);
@@ -101,27 +104,25 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Rhos );
   ComplexMatrixType Nij = NiNj( Bases, Rhos );
+  ComplexMatrixType CM = OPCM( Bases, Rhos );
   std::string output_file = "TBLB.h5";
-  // output_file.append(std::to_string(gamma));
-  // output_file.append(".h5");
-  SaveObs(output_file, "Obs-0", Nbi, Nij);
+  SaveObs(output_file, "Obs-0", Nbi, Nij, CM);
   std::vector<std::vector<size_t> > CIdx = IndexCollapse(TBloc, Bases);
   INFO("Trace = " << TraceRhos(Rhos));
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     Lindblad_RK4( dt, gamma, TBloc, Bases, Hams, CIdx, Rhos);
-    // Lindblad_Newton( dt, gamma, TBloc, Bases, Hams, CIdx, Rhos);
-    /* NOTE: Check trace og Rhos */
+    /* NOTE: Check trace of Rhos */
     RealType tr = TraceRhos(Rhos);
     INFO("Trace = " << tr);
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Rhos );
     Nij = NiNj( Bases, Rhos );
+    CM = OPCM( Bases, Rhos );
     /* NOTE: H5 group name */
     std::string gname = "Obs-";
     gname.append(std::to_string((unsigned long long)cntT));
     gname.append("/");
-    SaveObs(output_file, gname, Nbi, Nij);
-    // std::cin.get();
+    SaveObs(output_file, gname, Nbi, Nij, CM);
   }
   return 0;
 }
@@ -151,12 +152,14 @@ std::vector<std::vector<size_t> > IndexCollapse(const size_t TBloc,
 }
 
 void SaveObs( const std::string filename, const std::string gname,
-  const std::vector<ComplexType> &v, const ComplexMatrixType &m){
+  const std::vector<ComplexType> &v, const ComplexMatrixType &m,
+  const ComplexMatrixType &cm){
   HDF5IO file(filename);
   file.saveStdVector(gname, "Nb", v);
   ComplexType Ntot = std::accumulate(v.begin(), v.end(), ComplexType(0.0, 0.0));
   file.saveNumber(gname, "Ntot", Ntot.real());
   file.saveMatrix(gname, "Nij", m);
+  file.saveMatrix(gname, "OPCM", cm);
 }
 
 void GetRho( const Basis &bs, ComplexMatrixType &Mat ){
@@ -224,4 +227,33 @@ ComplexMatrixType NiNj( const std::vector<Basis> &Bases,
     }
   }
   return tmp;
+}
+
+ComplexMatrixType OPCM( const std::vector<Basis> &Bases,
+  const std::vector<ComplexMatrixType> &Rhos){
+  /* NOTE: Calculate <c^\dagger_i c_j> = Tr( \rho * c^\dagger_i c_j ) */
+  ComplexMatrixType tmp = ComplexMatrixType::Zero(Bases.at(0).getL(), Bases.at(0).getL());
+  for (size_t cnt = 0; cnt < Bases.size(); cnt++) {
+    std::vector< std::vector<int> > b = Bases.at(cnt).getBStates();
+    assert( b.size() == Rhos.at(cnt).cols() );
+    assert( b.size() == Rhos.at(cnt).rows() );
+    int state_id1 = 0;
+    for ( auto &nbi : b ){
+      for (size_t site_i = 0; site_i < Bases.at(cnt).getL(); site_i++) {
+        for (size_t site_j = site_i; site_j < Bases.at(cnt).getL(); site_j++) {
+          if ( nbi.at(site_j) > 0 ) {
+            std::vector<int> nbj = nbi;
+            nbj.at(site_i) = nbj.at(site_i) + 1;
+            RealType val = (RealType)nbj.at(site_i);
+            val *= (RealType)nbj.at(site_j);
+            nbj.at(site_j) = nbj.at(site_j) - 1;
+            size_t state_id2 = Bases.at(cnt).getIndexFromTag( BosonBasisTag(nbj) );
+            tmp(site_i,site_j) += sqrt(val) * Rhos.at(cnt)(state_id1,state_id2);
+          }
+        }
+      }
+      state_id1 += 1;
+    }
+  }
+  return tmp + tmp.adjoint();
 }

@@ -53,12 +53,12 @@ NumThreads = 2
 L = 8
 TBloc = L - 1
 # TBloc = np.int(L / 2)
-Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
-GammaList = [0.01, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 7.0, 9.0, 10.0, 15.0, 20.0, 25.0]
+# Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
+# GammaList = [0.01, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 7.0, 9.0, 10.0, 15.0, 20.0, 25.0]
 # L = 9
-# Uin = [0.5, ]#
+Uin = [0.0, ]#
 # TBloc = L - 1
-# GammaList = [0.1, ]#
+GammaList = [20.0, ]#
 
 OBC = 1# 1:True
 # OBC = 0# 0:False
@@ -75,6 +75,7 @@ Exac_program = "\n".join(APPs)
 if OBC:
   IWF_DIR = "-".join(["BSSHO", "".join(["L", str(L)]), str(N)])
   LN1N2 = "-".join(["TBO", "".join(["L", str(L)]), str(N)])
+  LN1N2 = "-".join(["TBO", "".join(["L", str(L)]), str(N),"test"])
 else:
   IWF_DIR = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
   LN1N2 = "-".join(["TBP", "".join(["L", str(L)]), str(N)])
