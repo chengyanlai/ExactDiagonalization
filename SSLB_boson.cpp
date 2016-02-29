@@ -28,12 +28,11 @@
 #endif
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
-  RealType &Uloc, std::vector<RealType> &Vloc, RealType &dt, int &Tsteps,
-  std::vector<size_t> &Sites, RealType &Gamma);
+  RealType &Uloc, std::vector<RealType> &Veqm, std::vector<RealType> &Vdyn,
+  RealType &dt, int &Tsteps, std::vector<size_t> &Sites, RealType &Gamma);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m,
   const ComplexMatrixType &cm);
-void GetRho( const Basis &bs, ComplexMatrixType &Mat );
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,
   const ComplexMatrixType &Rhos );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases,
@@ -49,9 +48,9 @@ int main(int argc, char const *argv[]) {
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   int L, OBC, N, Tsteps;
   RealType Uin, dt, gamma;
-  std::vector<RealType> Vin;
+  std::vector<RealType> Veqm, Vdyn;
   std::vector<size_t> Sites;
-  LoadParameters( "conf.h5", L, OBC, N, Uin, Vin, dt, Tsteps, Sites, gamma );
+  LoadParameters( "conf.h5", L, OBC, N, Uin, Veqm, Vdyn, dt, Tsteps, Sites, gamma );
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -76,32 +75,58 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO("Build Hamiltonian - ");
   std::vector< std::vector<ComplexType> > Vloc;
-  INFO("Quench the local potetnial to");
+  INFO("Initial potential set to ");
   std::vector<ComplexType> Vtmp;
-  for ( RealType &val : Vin ){
+  for ( RealType &val : Veqm ){
     Vtmp.push_back((ComplexType)val);
     INFO_NONEWLINE(" " << val);
   }
+  INFO(" ");
   Vloc.push_back(Vtmp);
   std::vector< std::vector<ComplexType> > Uloc;
   std::vector<ComplexType> Utmp(L, (ComplexType)Uin);
   Uloc.push_back(Utmp);
   Hamiltonian<ComplexType> ham( Bases );
+  ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
+  ham.BuildHoppingHamiltonian(Bases, lattice);
+  ham.BuildTotalHamiltonian();
+  INFO("DONE!");
+  INFO_NONEWLINE("Diagonalize Hamiltonian - ");
+  std::vector<RealType> Val;
+  Hamiltonian<ComplexType>::VectorType Vec;
+  ham.eigh(Val, Vec);
+  INFO("DONE!");
   INFO("Build Initial Density Matrix - ");
-  ComplexMatrixType Rho = ComplexMatrixType::Zero(Bases.at(0).getHilbertSpace(), Bases.at(0).getHilbertSpace());
-  GetRho(Bases.at(0), Rho);
+  ComplexMatrixType Rho = Vec * Vec.adjoint();
+  INFO("Trace = " << Rho.trace());
   INFO("DONE!");
   std::vector<ComplexType> Nbi = Ni( Bases, Rho );
   ComplexMatrixType Nij = NiNj( Bases, Rho );
   ComplexMatrixType CM = OPCM( Bases, Rho );
-  std::string output_file = "TBLB.h5";
+  std::string output_file = "SSLB.h5";
   SaveObs(output_file, "Obs-0", Nbi, Nij, CM);
-  INFO("Trace = " << Rho.trace());
+
+  INFO("Quench the local potetnial to");
+  Vtmp.clear();
+  for ( RealType &val : Vdyn ){
+    Vtmp.push_back((ComplexType)val);
+    INFO_NONEWLINE(" " << val);
+  }
+  Vloc.clear();
+  Vloc.push_back(Vtmp);
+  INFO("");
+  INFO("Quench the global interaction to " << Uin);
+  Utmp.assign(L, (ComplexType)Uin);
+  Uloc.clear();
+  Uloc.push_back(Utmp);
+  INFO("Update the local/total Hamiltonian");
+  ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
+  ham.BuildTotalHamiltonian();
+  INFO("Start Time-Evolution");
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     Lindblad_RK4( dt, gamma, Sites, Bases, ham, Rho );
     /* NOTE: Check trace of Rhos */
-    ComplexType tr = Rho.trace();
-    INFO("Trace = " << tr);
+    INFO("Trace = " << Rho.trace());
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Rho );
     Nij = NiNj( Bases, Rho );
@@ -126,22 +151,9 @@ void SaveObs( const std::string filename, const std::string gname,
   file.saveMatrix(gname, "OPCM", cm);
 }
 
-void GetRho( const Basis &bs, ComplexMatrixType &Mat ){
-  HDF5IO gsf("BSSH.h5");
-  ComplexVectorType gswf;
-  gsf.loadVector("GS", "EVec", gswf);
-  if ( DEBUG ){
-    int oldL = gsf.loadUlong("1DChain", "L");
-    int oldN = gsf.loadUlong("1DChain", "N");
-    assert( oldL == bs.getL() );
-    assert( oldN == bs.getN() );
-  }
-  Mat = gswf * gswf.adjoint();
-}
-
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
-  RealType &Uloc, std::vector<RealType> &Vloc, RealType &dt, int &Tsteps,
-  std::vector<size_t> &Sites, RealType &Gamma){
+  RealType &Uloc, std::vector<RealType> &Veqm, std::vector<RealType> &Vdyn,
+  RealType &dt, int &Tsteps, std::vector<size_t> &Sites, RealType &Gamma){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
@@ -150,7 +162,8 @@ void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
     dt = file.loadReal("Parameters", "dt");
     Gamma = file.loadReal("Parameters", "Gamma");
     Tsteps = file.loadInt("Parameters", "Tsteps");
-    file.loadStdVector("Parameters", "V", Vloc);
+    file.loadStdVector("Parameters", "Veqm", Veqm);
+    file.loadStdVector("Parameters", "Vdyn", Vdyn);
     file.loadStdVector("Parameters", "Sites", Sites);
 }
 
