@@ -60,16 +60,29 @@ else ifeq ("$(OS)", "Linux")
 	CC = icpc $(OPENMP) -O3 -Wall -std=c++11 -I./ -I$(HDF5ROOT)/include -I$(EIGENINC) -DMKL
 endif
 
-MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io RungeKutta
+MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io
 SRC_DIR   := $(addprefix src/,$(MODULES))
-BUILD_DIR := $(addprefix build/,$(MODULES))
-
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
+
+TB_MODULES   := TerminatorBeam
+TB_SRC_DIR   := $(addprefix src/,$(MODULES) $(TB_MODULES))
+TB_SRC       := $(foreach sdir,$(TB_SRC_DIR),$(wildcard $(sdir)/*.cpp))
+TB_OBJ       := $(patsubst src/%.cpp,build/%.o,$(TB_SRC))
+
+DP_MODULES   := Dephasing
+DP_SRC_DIR   := $(addprefix src/,$(MODULES) $(DP_MODULES))
+DP_SRC       := $(foreach sdir,$(DP_SRC_DIR),$(wildcard $(sdir)/*.cpp))
+DP_OBJ       := $(patsubst src/%.cpp,build/%.o,$(DP_SRC))
+
+BUILD_DIR := $(addprefix build/,$(MODULES) $(TB_MODULES) $(DP_MODULES))
+
 # INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  := -I./
 
 vpath %.cpp $(SRC_DIR)
+vpath %.cpp $(TB_SRC_DIR)
+vpath %.cpp $(DP_SRC_DIR)
 
 define make-goal
 $1/%.o: %.cpp
@@ -78,7 +91,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TBWF.b build/TBLB.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TBWF.b build/TBLB.b build/SSLB.b
 # all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
@@ -99,10 +112,12 @@ build/SourceSinkDyn.b: build/SourceSinkDyn_boson.o $(OBJ)
 build/TBWF.b: build/TBWF_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/TBLB.b: build/TBLB_boson.o $(OBJ)
+build/TBLB.b: build/TBLB_boson.o $(TB_OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-# build/test.fermion: build/test_fermion_hamiltonian.o $(OBJ)
+build/SSLB.b: build/SSLB_boson.o $(DP_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
 build/test.fermion: build/test_fermion_complex.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 

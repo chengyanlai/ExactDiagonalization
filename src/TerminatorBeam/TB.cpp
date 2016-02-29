@@ -1,4 +1,4 @@
-#include "src/RungeKutta/RungeKutta.hpp"
+#include "src/TerminatorBeam/TB.hpp"
 
 /* NOTE: 4-th order Runge-Kutta integration.
 
@@ -58,15 +58,15 @@ void Lindblad_Newton( const RealType &dt, const RealType &gamma,
   const ComplexType imagI = ComplexType(0.0e0, 1.0e0);
   for (size_t cnt = 0; cnt < ham.size(); cnt++) {
     ComplexSparseMatrixType h = ham.at(cnt).getTotalHamiltonian();
-    ComplexMatrixType LBmat1 = Nb_tbloc(TBloc, bas.at(cnt), Rhos.at(cnt));
+    ComplexMatrixType LBmat2 = Lindblad2(TBloc, bas.at(cnt), Rhos.at(cnt));
     if ( cnt + 1 < ham.size() ) {
       assert( CIdx.at(cnt).size() == Rhos.at(cnt).cols() );
-      ComplexMatrixType LBmat2 = Lindblad1(TBloc, Rhos.at(cnt+1), bas.at(cnt), CIdx.at(cnt));
+      ComplexMatrixType LBmat1 = Lindblad1(TBloc, Rhos.at(cnt+1), bas.at(cnt), CIdx.at(cnt));
       Rhos.at(cnt) = dt * ( imagI * (Rhos.at(cnt) * h - h * Rhos.at(cnt)) -
-                            gamma * LBmat1 + gamma * LBmat2 );
+                            gamma * LBmat2 + gamma * LBmat1 );
     } else {
       Rhos.at(cnt) = dt * ( imagI * (Rhos.at(cnt) * h - h * Rhos.at(cnt)) -
-                            gamma * LBmat1 );
+                            gamma * LBmat2 );
     }
   }
 }
@@ -92,8 +92,10 @@ ComplexMatrixType Lindblad1(const size_t TBloc, const ComplexMatrixType &MapMat,
   return work;
 }
 
-ComplexMatrixType Nb_tbloc( const size_t TBloc, const Basis &bs,
+ComplexMatrixType Lindblad2( const size_t TBloc, const Basis &bs,
   const ComplexMatrixType &rho){
+  /* NOTE: This returns the desity matrix multiply the particle number in TBloc
+  respectively to each basis */
   ComplexMatrixType tmp1 = rho;
   std::vector< std::vector<int> > b = bs.getBStates();
   assert( b.size() == rho.cols() );

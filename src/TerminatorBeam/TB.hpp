@@ -19,7 +19,7 @@ void Lindblad_Newton( const RealType &dt, const RealType &gamma,
 ComplexMatrixType Lindblad1(const size_t TBloc, const ComplexMatrixType &MapMat,
   const Basis &bs, const std::vector<size_t> &CIdx);
 
-ComplexMatrixType Nb_tbloc( const size_t TBloc, const Basis &bs,
+ComplexMatrixType Lindblad2( const size_t TBloc, const Basis &bs,
   const ComplexMatrixType &rho);
 
 #endif /* end of include guard: __RUNGE_KUTTA_HPP__ */

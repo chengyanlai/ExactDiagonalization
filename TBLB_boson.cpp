@@ -13,7 +13,7 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
-#include "src/RungeKutta/RungeKutta.hpp"
+#include "src/TerminatorBeam/TB.hpp"
 
 #ifdef MKL
   #include "mkl.h"
@@ -243,10 +243,10 @@ ComplexMatrixType OPCM( const std::vector<Basis> &Bases,
         for (size_t site_j = site_i; site_j < Bases.at(cnt).getL(); site_j++) {
           if ( nbi.at(site_j) > 0 ) {
             std::vector<int> nbj = nbi;
-            nbj.at(site_i) = nbj.at(site_i) + 1;
-            RealType val = (RealType)nbj.at(site_i);
-            val *= (RealType)nbj.at(site_j);
+            RealType val = (RealType)nbj.at(site_j);
             nbj.at(site_j) = nbj.at(site_j) - 1;
+            nbj.at(site_i) = nbj.at(site_i) + 1;
+            val *= (RealType)nbj.at(site_i);
             size_t state_id2 = Bases.at(cnt).getIndexFromTag( BosonBasisTag(nbj) );
             tmp(site_i,site_j) += sqrt(val) * Rhos.at(cnt)(state_id1,state_id2);
           }
