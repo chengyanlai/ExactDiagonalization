@@ -47,25 +47,26 @@ void Lindblad_Newton( const RealType &dt, const RealType &gamma,
 ComplexMatrixType Lindblad1( const std::vector<size_t> &sites, const Basis &bs,
   const ComplexMatrixType &rho){
   std::vector< std::vector<int> > b = bs.getBStates();
-  ComplexMatrixType work = rho;
+  ComplexMatrixType tmp = ComplexMatrixType::Zero(rho.rows(), rho.cols());
   assert( b.size() == rho.cols() );
   assert( b.size() == rho.rows() );
-  size_t coff = 0;
-  for ( auto &nbi : b ){
-    RealType val = 0.0e0;
-    for ( auto &site : sites){
-      val += (RealType)nbi.at(site);
+  for ( auto &site : sites){
+    size_t coff = 0;
+    ComplexMatrixType work = rho;
+    for ( auto &nbi : b ){
+      RealType val = (RealType)nbi.at(site);
+      work.col(coff) *= val;
+      work.row(coff) *= val;
+      coff++;
     }
-    work.col(coff) *= val;
-    work.row(coff) *= val;
-    coff++;
+    tmp += work;
   }
-  return work;
+  return tmp;
 }
 
 ComplexMatrixType Lindblad2( const std::vector<size_t> &sites, const Basis &bs,
   const ComplexMatrixType &rho){
-  ComplexMatrixType tmp1 = rho;
+  ComplexMatrixType tmp = rho;
   std::vector< std::vector<int> > b = bs.getBStates();
   assert( b.size() == rho.cols() );
   assert( b.size() == rho.rows() );
@@ -76,8 +77,8 @@ ComplexMatrixType Lindblad2( const std::vector<size_t> &sites, const Basis &bs,
       RealType nb = (RealType)nbi.at(site);
       val += nb * nb;
     }
-    tmp1.col(coff) *= val;
+    tmp.col(coff) *= val;
     coff++;
   }
-  return 0.50e0 * ( tmp1 + tmp1.adjoint() );
+  return 0.50e0 * ( tmp + tmp.adjoint() );
 }
