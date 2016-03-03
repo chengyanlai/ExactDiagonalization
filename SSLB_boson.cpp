@@ -32,13 +32,15 @@ void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
   RealType &dt, int &Tsteps, std::vector<size_t> &Sites, RealType &Gamma);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m,
-  const ComplexMatrixType &cm);
+  const ComplexMatrixType &cm, const ComplexType val);
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,
   const ComplexMatrixType &Rhos );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases,
   const ComplexMatrixType &Rhos );
 ComplexMatrixType OPCM( const std::vector<Basis> &Bases,
   const ComplexMatrixType &Rhos);
+ComplexType Energy( const Hamiltonian<ComplexType> &ham,
+  const ComplexMatrixType &rho );
 
 int main(int argc, char const *argv[]) {
   Eigen::setNbThreads(NumCores);
@@ -103,8 +105,9 @@ int main(int argc, char const *argv[]) {
   std::vector<ComplexType> Nbi = Ni( Bases, Rho );
   ComplexMatrixType Nij = NiNj( Bases, Rho );
   ComplexMatrixType CM = OPCM( Bases, Rho );
+  ComplexType Eavg = Energy(ham, Rho);
   std::string output_file = "SSLB.h5";
-  SaveObs(output_file, "Obs-0", Nbi, Nij, CM);
+  SaveObs(output_file, "Obs-0", Nbi, Nij, CM, Eavg);
 
   INFO("Quench the local potetnial to");
   Vtmp.clear();
@@ -131,24 +134,26 @@ int main(int argc, char const *argv[]) {
     Nbi = Ni( Bases, Rho );
     Nij = NiNj( Bases, Rho );
     CM = OPCM( Bases, Rho );
+    Eavg = Energy(ham, Rho);
     /* NOTE: H5 group name */
     std::string gname = "Obs-";
     gname.append(std::to_string((unsigned long long)cntT));
     gname.append("/");
-    SaveObs(output_file, gname, Nbi, Nij, CM);
+    SaveObs(output_file, gname, Nbi, Nij, CM, Eavg);
   }
   return 0;
 }
 
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m,
-  const ComplexMatrixType &cm){
+  const ComplexMatrixType &cm, const ComplexType val){
   HDF5IO file(filename);
   file.saveStdVector(gname, "Nb", v);
   ComplexType Ntot = std::accumulate(v.begin(), v.end(), ComplexType(0.0, 0.0));
   file.saveNumber(gname, "Ntot", Ntot.real());
   file.saveMatrix(gname, "Nij", m);
   file.saveMatrix(gname, "OPCM", cm);
+  file.saveNumber(gname, "E", val);
 }
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N,
@@ -227,4 +232,10 @@ ComplexMatrixType OPCM( const std::vector<Basis> &Bases,
     state_id1 += 1;
   }
   return tmp + tmp.adjoint();
+}
+
+ComplexType Energy( const Hamiltonian<ComplexType> &ham,
+  const ComplexMatrixType &rho ){
+  ComplexSparseMatrixType h = ham.getTotalHamiltonian();
+  return (rho * h).trace();
 }
