@@ -20,7 +20,7 @@ if platform.system() == "Linux":
     if sys.argv[1] == "k":
       NodeName = "kagome.rcc.ucmerced.edu"
       qsub_cmd = "qsub -q short.q"
-      EXEC_DIR = "/home/chengyanlai/data/SSH-ED"
+      EXEC_DIR = "/home/chengyanlai/data/ED"
     elif sys.argv[1] == "c":
       NodeName = "condensate.rcc.ucmerced.edu"
       qsub_cmd = "qsub -q batch.q"
@@ -112,7 +112,7 @@ for Gamma in GammaList:
   for Val2 in Val2List:
     for U in Uin:
       Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["G", str(Gamma)]),
-        "".join([VtypeEqm, str(Val1)]), "".join([VtypeDyn, str(Val2)])])
+        "".join([VtypeEqm, str(Val1)]), "".join([VtypeDyn, str(Val2)]), SitesType])
       workdir = os.path.join(DATADIR, Job_Name)
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2

@@ -172,8 +172,6 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
   evals.clear();
   evals.push_back(d[0].real());
   evals.push_back(d[1].real());
-  std::cout << d[0] << std::endl;
-  std::cout << d[1] << std::endl;
   /* TODO: make complex eigenvector */
   memcpy(input_ptr, z, n * sizeof(ComplexType));
   delete [] workev;

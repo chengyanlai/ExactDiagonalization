@@ -93,10 +93,11 @@ int main(int argc, char const *argv[]) {
   ham.BuildHoppingHamiltonian(Bases, lattice);
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
-  INFO_NONEWLINE("Diagonalize Hamiltonian - ");
+  INFO("Diagonalize Hamiltonian - ");
   std::vector<RealType> Val;
   Hamiltonian<ComplexType>::VectorType Vec;
   ham.eigh(Val, Vec);
+  INFO("E_0 = " << Val.at(0) << ", E_1 = " << Val.at(1));
   INFO("DONE!");
   INFO("Build Initial Density Matrix - ");
   ComplexMatrixType Rho = Vec * Vec.adjoint();
@@ -129,7 +130,7 @@ int main(int argc, char const *argv[]) {
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     Lindblad_RK4( dt, gamma, Sites, Bases, ham, Rho );
     /* NOTE: Check trace of Rhos */
-    INFO("Trace = " << Rho.trace());
+    INFO("Time = " << cntT * dt << ", Trace = " << Rho.trace());
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Rho );
     Nij = NiNj( Bases, Rho );

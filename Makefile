@@ -91,7 +91,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TBWF.b build/TBLB.b build/SSLB.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SSWF.b build/TBWF.b build/TBLB.b build/SSLB.b
 # all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
@@ -106,28 +106,16 @@ build/SSH.b: build/SSH_boson.o $(OBJ)
 build/SSH.f: build/SSH_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/SourceSinkDyn.b: build/SourceSinkDyn_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
 build/TBWF.b: build/TBWF_boson.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/TBLB.b: build/TBLB_boson.o $(TB_OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
+build/SSWF.b: build/SSWF_boson.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
 build/SSLB.b: build/SSLB_boson.o $(DP_OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/test.fermion: build/test_fermion_complex.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/test.boson: build/test_boson_hamiltonian.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/test.lattice: build/test_lattice.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/test.node: build/test_node.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)

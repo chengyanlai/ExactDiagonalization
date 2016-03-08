@@ -21,7 +21,7 @@ if(platform.system() == "Linux"):
     if sys.argv[1] == "k":
       NodeName = "kagome.rcc.ucmerced.edu"
       qsub_cmd = "qsub -q short.q"
-      EXEC_DIR = "/home/chengyanlai/data/SSH-ED"
+      EXEC_DIR = "/home/chengyanlai/data/ED"
     elif sys.argv[1] == "c":
       NodeName = "condensate.rcc.ucmerced.edu"
       qsub_cmd = "qsub -q batch.q"
@@ -79,7 +79,7 @@ VtypeDyn = "SinkCenter"
 Val2List = [-3.0, -9.0, -27.0]
 
 APPs = []
-APPs.append(os.path.join(SRC_DIR, "build", "SourceSinkDyn.b"))
+APPs.append(os.path.join(SRC_DIR, "build", "SSWF_boson.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:
