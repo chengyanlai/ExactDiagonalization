@@ -21,16 +21,19 @@ void Lindblad_RK4( const RealType &dt, const RealType &gamma,
   ComplexMatrixType k1 = Rhos;
   Lindblad_Newton( dt, gamma, sites, bas, ham, k1);
 
-  ComplexMatrixType k2 = (Rhos + 0.50e0 * k1 );
+  ComplexMatrixType k2 = ( Rhos + 0.50e0 * k1 );
   Lindblad_Newton( dt, gamma, sites, bas, ham, k2);
 
-  ComplexMatrixType k3 = (Rhos + 0.50e0 * k2 );
+  ComplexMatrixType k3 = ( Rhos + 0.50e0 * k2 );
   Lindblad_Newton( dt, gamma, sites, bas, ham, k3);
 
-  ComplexMatrixType k4 = (Rhos + k3 );
+  ComplexMatrixType k4 = ( Rhos + k3 );
   Lindblad_Newton( dt, gamma, sites, bas, ham, k4);
 
   Rhos += ( k1 + 2.0e0 * (k2 + k3) + k4 ) / 6.0e0;
+  // std::cout << " " << std::endl;
+  // std::cout << Rhos << std::endl;
+  // std::cout << " " << std::endl;
 }
 
 void Lindblad_Newton( const RealType &dt, const RealType &gamma,
@@ -41,9 +44,9 @@ void Lindblad_Newton( const RealType &dt, const RealType &gamma,
   ComplexMatrixType LBmat1 = Lindblad1(sites, bas.at(0), Rhos);
   ComplexMatrixType LBmat2 = Lindblad2(sites, bas.at(0), Rhos);
   ComplexMatrixType Commutator = Rhos * h - h * Rhos;
-  std::cout << "Rhos " << Rhos.trace() << std::endl;
-  std::cout << "Commutator " << Commutator.trace() << std::endl;
-  std::cout << "Lindblad " << gamma * (LBmat1 - LBmat2).trace() << std::endl;
+// std::cout << "Commatator " << Commutator.trace() << std::endl;
+// std::cout << "LBmat1 " << LBmat1.trace() << std::endl;
+// std::cout << "LBmat2 " << LBmat2.trace() << std::endl;
   Rhos = dt * ( imagI * Commutator + gamma * (LBmat1 - LBmat2) );
 }
 
@@ -83,6 +86,6 @@ ComplexMatrixType Lindblad2( const std::vector<size_t> &sites, const Basis &bs,
     tmp.col(coff) *= val;
     coff++;
   }
-  ComplexMatrixType tmp2 = tmp.adjoint();
-  return 0.50e0 * ( tmp + tmp2 );
+  // ComplexMatrixType tmp2 = tmp.adjoint();
+  return 0.50e0 * ( tmp + tmp.adjoint() );
 }

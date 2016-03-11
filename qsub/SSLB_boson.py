@@ -70,8 +70,8 @@ L = 8
 # Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 # GammaList = [0.01, 0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 7.0, 9.0, 10.0, 15.0, 20.0, 25.0]
 # L = 9
-Uin = [0.0, ]#
-GammaList = [3.50, ]#
+Uin = [0.0, 1.0, 5.0]#
+GammaList = [5.0, 3.0, 1.0, 0.0]
 
 OBC = 1# 1:True
 # OBC = 0# 0:False
@@ -84,8 +84,8 @@ VtypeEqm = "Uniform"
 Val1 = 0.0
 Vin, Sin = SetV(L, Val1=Val1, vtype=VtypeEqm)
 VtypeDyn = "SinkCenter"
-# Val2List = [-3.0, -6.0, -9.0, -12.0, -18.0, -27.0]
-Val2List = [-27.0, ]
+# VtypeDyn = "SinkEdgeRight"
+Val2List = [-18.0, -9.0, -3.0,]
 
 # Dissapation sites
 SitesType = "All"
@@ -133,7 +133,7 @@ for Gamma in GammaList:
           dset = para.create_dataset("dt", data=dt)
           dset = para.create_dataset("Gamma", data=Gamma)
           dset = para.create_dataset("Veqm", data=Vin)
-          Vt, St = SetV(L, Val2=Val2, vtype=VtypeDyn)
+          Vt, St = SetV(L, Val1=Val1, Val2=Val2, vtype=VtypeDyn)
           dset = para.create_dataset("Vdyn", data=Vt)
           if SitesType == "Sink":
             dset = para.create_dataset("Sites", data=St)

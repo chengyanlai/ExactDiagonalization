@@ -44,7 +44,7 @@ ifeq ("$(OS)", "Darwin")
 	LAPACK_OMP = $(LAPACK)
 	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I$(HDF5ROOT)/include -I$(EIGENINC)
 else ifeq ("$(OS)", "Linux")
-	OPENMP =#-openmp
+	OPENMP = -openmp
 	#NOTE: the order of linker matters!
 	HDF5LIB = $(HDF5ROOT)/lib/libhdf5_cpp.a $(HDF5ROOT)/lib/libhdf5.a $(HDF5ROOT)/lib/libz.a
 	LAPACK = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
@@ -56,7 +56,7 @@ else ifeq ("$(OS)", "Linux")
 	$(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a -Wl,--start-group \
 	${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
 	${MKLROOT}/lib/intel64/libmkl_core.a \
-	${MKLROOT}/lib/intel64/libmkl_intel_thread.a -Wl,--end-group -lpthread -lm
+	${MKLROOT}/lib/intel64/libmkl_intel_thread.a -Wl,--end-group -lpthread -lm -larpack
 	CC = icpc $(OPENMP) -O3 -Wall -std=c++11 -I./ -I$(HDF5ROOT)/include -I$(EIGENINC) -DMKL
 endif
 
@@ -98,25 +98,25 @@ build/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
 build/1D.b: build/1D_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/SSH.b: build/SSH_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/SSH.f: build/SSH_fermion.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/TBWF.b: build/TBWF_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/TBLB.b: build/TBLB_boson.o $(TB_OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/SSWF.b: build/SSWF_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/SSLB.b: build/SSLB_boson.o $(DP_OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
 
