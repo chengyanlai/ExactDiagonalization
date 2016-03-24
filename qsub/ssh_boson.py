@@ -41,35 +41,55 @@ elif(platform.system() == "Darwin"):
   SRC_DIR = "/Volumes/Files/GitRepo/ExactDiagonalization"
   EXEC_DIR = os.path.join(SRC_DIR, "data")
 
-def SetV(L, vtype="Box"):
-  if vtype == "Box":
-    V = np.zeros(L, dtype=np.float64)
+def SetV(L, Val1=0.0, Val2=0.0, vtype="Uniform"):
+  if vtype == "Uniform":
+    V = np.ones(L, dtype=np.float64) * Val1
+  elif vtype == "SinkCenter":
+    V = np.ones(L, dtype=np.float64) * Val1
+    if L % 2 == 1:
+      V[np.int((L - 1) / 2)] = Val2
+    else:
+      V[np.int(L / 2)] = Val2
+  elif vtype == "SinkEdgeLeft":
+    V = np.ones(L, dtype=np.float64) * Val1
+    V[0] = Val2
+  elif vtype == "SinkEdgeRight":
+    V = np.ones(L, dtype=np.float64) * Val1
+    V[-1] = Val2
   else:
     print("Vtype is not existed!")
     sys.exit()
   return V
 
-NumThreads = 1
+NumThreads = 2
 
-L = 9
+L = 15
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
-J12ratio = [1.00, ]# NOTE: Prepare for Terminator Beam
-OBC = 1# 1:True # NOTE: Prepare for Terminator Beam
-# OBC = 0# 0:False
-if L % 2 == 1:
-  N = np.int((L + 1) / 2)
-else:
-  N = np.int( L / 2 )
-N = L - 1# NOTE: Prepare for Terminator Beam
-# Uin = [10.0, ]#0.5, 1.0, 5.0, 10.0]
-# Uin = [0.0, 1.0, 3.0, 5.0, 7.0, 9.0]
-Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]# NOTE: Prepare for Terminator Beam
+# NOTE: Prepare for Terminator Beam
+# J12ratio = [1.00, ]
+# OBC = 1# 1:True, 0:False
+# N = L - 1
+# Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
+# Vtype = "Uniform"
+# Vin = SetV(L, vtype=Vtype)
+# NOTE: Prepare for Terminator Beam
+# NOTE: Eqm. Sink
+J12ratio = [1.00, ]
+OBC = 1# 1:True, 0:False
+N = L - 2
+Uin = [1.0, ]
+# Uin = np.linspace(0.1, 5.0, 50)
+# Uin = np.linspace(0.0, 5.0, 51)
+# Vtype = "SinkCenter"
+Vtype = "SinkEdgeLeft"
+V1 = 0.0
+V2 = -5.0
+Vin = SetV(L, Val1=V1, Val2=V2, vtype=Vtype)
+# NOTE: Eqm. Sink
 if OBC:
   Phils = [0, ]
 else:
   Phils = np.linspace(0, L, 66)
-Vtype = "Box"
-Vin = SetV(L, vtype=Vtype)
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "SSH.b"))
@@ -81,6 +101,9 @@ else:
   LN1N2 = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
+job_id = 2597
+RUN_NOW = False
+QSUB = True
 for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)
   for J12 in J12ratio:
@@ -119,8 +142,18 @@ for nphi in Phils:
             f = open(Job_Name, "w")
             for i in APPs:
               print(i)
-              subprocess.call(i, shell=True, stdout=f)
+              # subprocess.call(i, shell=True, stdout=f)
             f.close()
           else:
-            qsub_script = " ".join([qsub_cmd, "qsub.ucmerced"])
-            subprocess.call(qsub_script, shell=True)
+            if RUN_NOW:
+              qsub_script = " ".join([qsub_cmd, "qsub.ucmerced"])
+              if QSUB: subprocess.call(qsub_script, shell=True)
+            elif job_id:
+              after_id = "".join(["depend=afterany:", str(job_id), ".", socket.gethostname()])
+              qsub_script = " ".join([qsub_cmd, "-W", after_id, "qsub.ucmerced"])
+              print("Run Command - ", qsub_script)
+              if QSUB: subprocess.call(qsub_script, shell=True)
+              job_id += 1
+              RUN_NOW = False
+            else:
+              print("Nothing Done.")

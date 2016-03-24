@@ -49,11 +49,11 @@ def SetV(L, vtype="Box"):
     sys.exit()
   return V
 
-NumThreads = 1
-L = 10
-# J12ratio = np.linspace(0.0, 1.0, 51)
-J12ratio = [1.00, ]
-# J12ratio = [0.10, ]
+NumThreads = 2
+L = 15
+J12ratio = np.linspace(0.1, 1.0, 10)
+# J12ratio = [1.00, ]
+# J12ratio = [0.0, ]
 # OBC = 1#1:True
 OBC = 1# 0:False
 if L % 2 == 1:
@@ -66,7 +66,9 @@ else:
   N2 = np.int(L / 2)
   # N1 = 8
   # N2 = 4
-Uin = [10.0, ]#0.0, ]#np.linspace(0.0, 10.0, 51)
+Uin = np.linspace(0.0, 10.0, 10)
+# Uin = np.linspace(1.0, 10.0, 10)
+# Uin = [0.0, ]
 if OBC:
   Phils = [0, ]
 else:
@@ -84,6 +86,9 @@ else:
   LN1N2 = "-".join(["FSSHP", "".join(["L", str(L)]), str(N1), str(N2)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
+job_id = 2659
+RUN_NOW = False
+QSUB = True
 for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)
   for J12 in J12ratio:
@@ -130,5 +135,13 @@ for nphi in Phils:
               subprocess.call(i, shell=True, stdout=f)
             f.close()
           else:
-            qsub_script = " ".join([qsub_cmd, "qsub.ucmerced"])
-            subprocess.call(qsub_script, shell=True)
+            if RUN_NOW:
+              qsub_script = " ".join([qsub_cmd, "qsub.ucmerced"])
+              if QSUB: subprocess.call(qsub_script, shell=True)
+            elif job_id:
+              after_id = "".join(["depend=afterany:", str(job_id), ".", socket.gethostname()])
+              qsub_script = " ".join([qsub_cmd, "-W", after_id, "qsub.ucmerced"])
+              print("Run Command - ", qsub_script)
+              subprocess.call(qsub_script, shell=True)
+              job_id += 1
+              RUN_NOW = False

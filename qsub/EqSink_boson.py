@@ -20,8 +20,7 @@ if(platform.system() == "Linux"):
     SRC_DIR = "/condensate1/GitRepo/ExactDiagonalization"
     if sys.argv[1] == "k":
       NodeName = "kagome.rcc.ucmerced.edu"
-      # qsub_cmd = "qsub -q short.q"
-      qsub_cmd = "qsub -q long.q"
+      qsub_cmd = "qsub -q short.q"
       EXEC_DIR = "/home/chengyanlai/data/ED"
     elif sys.argv[1] == "c":
       NodeName = "condensate.rcc.ucmerced.edu"
@@ -35,7 +34,7 @@ if(platform.system() == "Linux"):
   elif socket.gethostname() == 'atomtronics.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     NodeName = "atomtronics.ucmerced.edu"
-    qsub_cmd = "qsub -q LM.q"
+    qsub_cmd = "qsub -q batch"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
 elif(platform.system() == "Darwin"):
   QSUB = False
@@ -64,69 +63,53 @@ def SetV(L, Val1=0.0, Val2=0.0, vtype="Uniform"):
 
 NumThreads = 2
 
-L = 13
-OBC = 1# 1:True
-# OBC = 0# 0:False
+L = 15
 N = L - 2
-Uin = [0.0, 0.5, 1.0, 1.5, 2.0, ]
+OBC = 1# 1:True, 0:False
+Uin = [1.0, ]
+# Uin = [0.0, ]
+# Uin = np.linspace(0.1, 5.0, 50)
 # Uin = np.linspace(0.0, 5.0, 51)
-# Uin = [0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 5.0, 10.0]# Source-Sink
-VtypeEqm = "Uniform"
-# VtypeEqm = "SinkEdgeLeft"
-Val1 = 0.0
-# NOTE: Dynamics parameters
-Tsteps = 1000# Tstep * dt is final time
-dt = 0.01
-# VtypeDyn = "SinkCenter"
-VtypeDyn = "SinkEdgeRight"
-# Val2List = [-3.0, -9.0, -18.0, -27.0]
-Val2List = np.linspace(-0.2, -10.0, 50)
-# Val2List = np.linspace(-9.0, -9.8, 5)
-# Val2List = [-0.2, -0.4, -0.6, -0.8, -10.0]
+Vtype = "SinkEdgeLeft"
+V1 = 0.0
+# V2List = [0.0, ]
+V2List = np.arange(0.1, , 0.1)
+# V2List = [-10.0, ]#-20.0, -30.0, -40.0]
 
 APPs = []
-APPs.append(os.path.join(SRC_DIR, "build", "SSWF.b"))
+APPs.append(os.path.join(SRC_DIR, "build", "SSH.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:
-  LN1N2 = "-".join(["BSSO", "".join(["L", str(L)]), str(N)])
+  LN1N2 = "-".join(["EqmSink", "".join(["L", str(L)]), str(N)])
 else:
-  LN1N2 = "-".join(["BSSP", "".join(["L", str(L)]), str(N)])
+  LN1N2 = "-".join(["EqmSinkP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
 job_id = 0
 RUN_NOW = True
 QSUB = True
-for Val2 in Val2List:
+for V2 in V2List:
+  Vin = SetV(L, Val1=V1, Val2=V2, vtype=Vtype)
   for U in Uin:
-    Job_Name =  "-".join(["".join(["U", str(U)]),
-      "".join([VtypeEqm, str(Val1)]), "".join([VtypeDyn, str(Val2)])])
+    Job_Name =  "-".join(["".join(["U", str(U)]), "".join([Vtype, str(V2)]) ])
+
     workdir = os.path.join(DATADIR, Job_Name)
 
     os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
     with shp.cd(workdir):
-      if os.path.isfile('SourceSink.h5'):
-        pass
-      elif os.path.isfile('Eqm.h5') and os.path.isfile('Dyn.h5'):
-        print("".join([workdir, " is schaduled!?"]))
+      if os.path.isfile('BSSH.h5'):
         pass
       else:
-        f = h5py.File('Eqm.h5', 'w')
+        f = h5py.File('conf.h5', 'w')
         para = f.create_group("Parameters")
         dset = para.create_dataset("L", data=L)
+        dset = para.create_dataset("J12", data=1.0)
         dset = para.create_dataset("OBC", data=OBC)
         dset = para.create_dataset("N", data=N)
         dset = para.create_dataset("U", data=U)
-        Vin = SetV(L, Val1=Val1, Val2=Val2, vtype=VtypeEqm)
+        dset = para.create_dataset("phi", data=0)
         dset = para.create_dataset("V", data=Vin)
-        f.close()
-        f = h5py.File('Dyn.h5', 'w')
-        para = f.create_group("Parameters")
-        dset = para.create_dataset("Tsteps", data=Tsteps)
-        dset = para.create_dataset("dt", data=dt)
-        dset = para.create_dataset("U", data=U)
-        Vt = SetV(L, Val1=Val1, Val2=Val2, vtype=VtypeDyn)
-        dset = para.create_dataset("V", data=Vt)
         f.close()
 
         if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \
@@ -138,7 +121,7 @@ for Val2 in Val2List:
           f = open(Job_Name, "w")
           for i in APPs:
             print(i)
-            subprocess.call(i, shell=True, stdout=f)
+            # subprocess.call(i, shell=True, stdout=f)
           f.close()
         else:
           if RUN_NOW:
@@ -148,6 +131,8 @@ for Val2 in Val2List:
             after_id = "".join(["depend=afterany:", str(job_id), ".", socket.gethostname()])
             qsub_script = " ".join([qsub_cmd, "-W", after_id, "qsub.ucmerced"])
             print("Run Command - ", qsub_script)
-            subprocess.call(qsub_script, shell=True)
+            if QSUB: subprocess.call(qsub_script, shell=True)
             job_id += 1
             RUN_NOW = False
+          else:
+            print("Nothing Done.")

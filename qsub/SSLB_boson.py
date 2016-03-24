@@ -59,6 +59,10 @@ def SetV(L, Val1=0.0, Val2=0.0, vtype="Uniform"):
     V = np.ones(L, dtype=np.float64) * Val1
     V[-1] = Val2
     S = [L - 1, ]
+  elif vtype == "RaiseLeft":
+    V = np.ones(L, dtype=np.float64) * Val2
+    V[-1] = Val1
+    S = [L - 1, ]
   else:
     print("Vtype is not existed!")
     sys.exit()
@@ -70,8 +74,8 @@ L = 8
 # Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 # GammaList = [0.01, 0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 7.0, 9.0, 10.0, 15.0, 20.0, 25.0]
 # L = 9
-Uin = [0.0, 1.0, 5.0]#
-GammaList = [5.0, 3.0, 1.0, 0.0]
+Uin = [0.0, ]#1.0, 5.0]#
+GammaList = [10.0, ]#5.0, 3.0, 1.0, 0.0]
 
 OBC = 1# 1:True
 # OBC = 0# 0:False
@@ -86,17 +90,23 @@ Vin, Sin = SetV(L, Val1=Val1, vtype=VtypeEqm)
 VtypeDyn = "SinkCenter"
 # VtypeDyn = "SinkEdgeRight"
 Val2List = [-18.0, -9.0, -3.0,]
+# VtypeDyn = "RaiseLeft"
+# Val2List = [18.0, 9.0, 3.0,]
 
 # Dissapation sites
-SitesType = "All"
+# SitesType = "All"
 # SitesType = "Sink"
+SitesType = "OP"
 
 # NOTE: Dynamics parameters
 Tsteps = 2000# Tstep * dt is final time
 dt = 0.01
 
 APPs = []
-APPs.append(os.path.join(SRC_DIR, "build", "SSLB.b"))
+if SitesType == "OP":
+  APPs.append(os.path.join(SRC_DIR, "build", "SSOP.b"))
+else:
+  APPs.append(os.path.join(SRC_DIR, "build", "SSLB.b"))
 Exac_program = "\n".join(APPs)
 
 if OBC:

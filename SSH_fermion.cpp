@@ -11,7 +11,19 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
-// #define DTYPE 0//comment out this to compile complex
+#ifdef MKL
+  #include "mkl.h"
+#endif
+
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
+#ifndef NumCores
+#define NumCores 2
+#endif
+
+#define DTYPE 0//comment out this to real complex
 
 #ifndef DTYPE
 #define DT ComplexType
@@ -36,6 +48,11 @@ DTM NdnNdn( const std::vector<Basis> &Bases, const DTV &Vec,
   Hamiltonian<DT> &ham );
 
 int main(int argc, char const *argv[]) {
+  Eigen::setNbThreads(NumCores);
+#ifdef MKL
+  mkl_set_num_threads(NumCores);
+#endif
+  INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   int L;
   RealType J12ratio;
   int OBC;
@@ -247,8 +264,7 @@ DTM NupNdn( const std::vector<Basis> &Bases,
 
 DTM NupNup( const std::vector<Basis> &Bases,
   const DTV &Vec, Hamiltonian<DT> &ham ){
-  DTM out = DTM::Zero(
-    Bases.at(0).getL(), Bases.at(0).getL() );
+  DTM out = DTM::Zero(Bases.at(0).getL(), Bases.at(0).getL() );
   std::vector< int > f1 = Bases.at(0).getFStates();
   std::vector< int > f2 = Bases.at(1).getFStates();
   size_t f1id = 0, f2id = 0;

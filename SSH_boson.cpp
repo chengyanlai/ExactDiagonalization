@@ -11,12 +11,29 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
+#ifdef MKL
+  #include "mkl.h"
+#endif
+
+#ifndef DEBUG
+#define DEBUG 1
+#endif
+
+#ifndef NumCores
+#define NumCores 2
+#endif
+
 void LoadParameters( const std::string filename, int &L, RealType &J12ratio, int &OBC,
   int &N, RealType &Uloc, std::vector<RealType> &Vloc, RealType &phi);
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 
 int main(int argc, char const *argv[]) {
+  Eigen::setNbThreads(NumCores);
+#ifdef MKL
+  mkl_set_num_threads(NumCores);
+#endif
+  INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   int L;
   RealType J12ratio;
   int OBC;
