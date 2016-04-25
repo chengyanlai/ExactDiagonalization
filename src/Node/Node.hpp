@@ -3,12 +3,12 @@
 #include <vector>
 #include "src/EDType.hpp"
 
-template<typename Tnum = RealType>//, typename Tlabel = std::string>
+template<typename Tnum = RealType>
 class Node
 {
 public:
   Node();
-  Node(const size_t &item, Node<Tnum>* ptrnext = NULL, Tnum J = 1.0e0);
+  Node(const size_t &item, Node<Tnum>* ptrnext = NULL, Tnum J = 1.0e0, std::string sublattice = "A");
   virtual ~Node();
   size_t data;
   void LinkTo(Node<Tnum>* p, Tnum J);
@@ -17,7 +17,7 @@ public:
   inline std::vector< Tnum > getJval()const{return this->Jval;};
   inline std::vector< Node<Tnum>* > getNeighbors()const{return this->Neighbor;};
   inline bool VerifySite()const{
-    INFO("Site - " << this->data << " has " << this->NumLinks << " neighbors.");
+    INFO("Site - " << this->data << "(" << this->label << ") has " << this->NumLinks << " neighbors.");
     for (size_t cnt = 0; cnt < Neighbor.size(); cnt++) {
       INFO("\t Linked to " << Neighbor.at(cnt)->data <<
         " with hopping coefficient " << Jval.at(cnt) );
@@ -28,7 +28,7 @@ public:
 private:
   // static int NumNodes;
   int NumLinks;
-
+  std::string label;
   std::vector< Node<Tnum>* > Neighbor;
   std::vector< Tnum > Jval;
 };

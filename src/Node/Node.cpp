@@ -4,12 +4,14 @@ template<typename Tnum>
 Node<Tnum>::Node()
 {
   this->NumLinks = 0;
+  this->label = "A";
 }
 
 template<typename Tnum>
-Node<Tnum>::Node(const size_t &item, Node<Tnum>* p, Tnum J)
+Node<Tnum>::Node(const size_t &item, Node<Tnum>* p, Tnum J, std::string sublattice)
 {
   this->NumLinks = 0;
+  this->label = sublattice;
   // this->NumNodes++;
   this->data = item;
   if ( p != NULL ){
