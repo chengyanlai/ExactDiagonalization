@@ -29,7 +29,7 @@ if(platform.system() == "Linux"):
   elif socket.gethostname() == 'edgestate.rcc.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     NodeName = "edgestate.rcc.ucmerced.edu"
-    qsub_cmd = "qsub -q batch.q"
+    qsub_cmd = "qsub -q LM.q"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
   elif socket.gethostname() == 'atomtronics.ucmerced.edu':
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
@@ -51,9 +51,10 @@ def SetV(L, vtype="Box"):
 
 NumThreads = 2
 L = 15
-J12ratio = np.linspace(0.1, 1.0, 10)
+# J12ratio = np.linspace(0.1, 1.0, 10)
+J12ratio = np.linspace(0.92, 0.98,  4)
 # J12ratio = [1.00, ]
-# J12ratio = [0.0, ]
+# J12ratio = [0.01, ]
 # OBC = 1#1:True
 OBC = 1# 0:False
 if L % 2 == 1:
@@ -66,8 +67,8 @@ else:
   N2 = np.int(L / 2)
   # N1 = 8
   # N2 = 4
-Uin = np.linspace(0.0, 10.0, 10)
-# Uin = np.linspace(1.0, 10.0, 10)
+Uin = np.linspace(0.0, 10.0, 11)
+# Uin = np.linspace(0.0, 1.0, 11)
 # Uin = [0.0, ]
 if OBC:
   Phils = [0, ]
@@ -86,8 +87,8 @@ else:
   LN1N2 = "-".join(["FSSHP", "".join(["L", str(L)]), str(N1), str(N2)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
-job_id = 2659
-RUN_NOW = False
+job_id = 0
+RUN_NOW = True
 QSUB = True
 for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)

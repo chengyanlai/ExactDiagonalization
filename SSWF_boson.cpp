@@ -20,12 +20,14 @@
 #define NumCores 2
 #endif
 
+std::vector< std::vector<ComplexType> >  UpdateV(const std::vector<ComplexType> Veqm,
+  const std::vector<ComplexType> Vfin, const int cntT, const int T0step, const RealType dt);
 void SaveObs( const std::string filename, const std::string gname,
   const std::vector<ComplexType> &v, const ComplexMatrixType &m);
 void LoadEqmParameters( const std::string filename, int &L, int &OBC,
   int &N, RealType &Uloc, std::vector<RealType> &Vloc);
 void LoadDynParameters( const std::string filename, RealType &dt, int &Tsteps,
-  RealType &Uloc, std::vector<RealType> &Vloc);
+  RealType &Uloc, std::vector<RealType> &Vloc, int &T0step);
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 ComplexMatrixType NiNj( const std::vector<Basis> &Bases, const ComplexVectorType &Vec );
 
@@ -65,16 +67,16 @@ int main(int argc, char const *argv[]) {
   std::vector<Basis> Bases;
   Bases.push_back(B1);
   Hamiltonian<ComplexType> ham( Bases );
-  std::vector< std::vector<ComplexType> > Vloc;
+  std::vector< std::vector<ComplexType> > Veqm;
   std::vector<ComplexType> Vtmp;//(L, 1.0);
   for ( RealType &val : Vin ){
     Vtmp.push_back((ComplexType)val);
   }
-  Vloc.push_back(Vtmp);
+  Veqm.push_back(Vtmp);
   std::vector< std::vector<ComplexType> > Uloc;
   std::vector<ComplexType> Utmp(L, (ComplexType)Uin);
   Uloc.push_back(Utmp);
-  ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
+  ham.BuildLocalHamiltonian(Veqm, Uloc, Bases);
   ham.BuildHoppingHamiltonian(Bases, lattice);
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
@@ -104,28 +106,38 @@ int main(int argc, char const *argv[]) {
   SaveObs("SourceSink.h5", "Obs", Nbi, Nij);
   /* NOTE: Real-time dynamics */
   int Tsteps;
+  int T0step;
   RealType dt;
   Vin.clear();
-  LoadDynParameters( "Dyn.h5", dt, Tsteps, Uin, Vin);
+  LoadDynParameters( "Dyn.h5", dt, Tsteps, Uin, Vin, T0step);
   Vtmp.clear();
-  INFO("Quench the local potetnial to");
+  INFO("Final local potetnial set to");
   for ( RealType &val : Vin ){
     Vtmp.push_back((ComplexType)val);
     INFO_NONEWLINE(" " << val);
   }
-  Vloc.clear();
-  Vloc.push_back(Vtmp);
+  INFO("");
+  INFO(" with time scale " << T0step * dt);
+  std::vector< std::vector<ComplexType> > Vfin;
+  Vfin.push_back(Vtmp);
   INFO("");
   INFO("Quench the global interaction to " << Uin);
   Utmp.assign(L, (ComplexType)Uin);
   Uloc.clear();
   Uloc.push_back(Utmp);
-  INFO("Update the local/total Hamiltonian");
-  ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
-  ham.BuildTotalHamiltonian();
   INFO("Start Time-Evolution");
+  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-    ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+    if ( cntT == T0step ){
+      INFO("Update the local/total Hamiltonian (final).");
+      ham.BuildLocalHamiltonian(Vfin, Uloc, Bases);
+      ham.BuildTotalHamiltonian();
+    }else if ( cntT < T0step ){
+      INFO("Update the local/total Hamiltonian");
+      std::vector< std::vector<ComplexType> > Vwork = UpdateV(Veqm.at(0), Vfin.at(0), cntT, T0step, dt);
+      ham.BuildLocalHamiltonian(Vwork, Uloc, Bases);
+      ham.BuildTotalHamiltonian();
+    }
     ham.expH(Prefactor, Vec);
     /* NOTE: Expectation values */
     Nbi = Ni( Bases, Vec );
@@ -138,6 +150,22 @@ int main(int argc, char const *argv[]) {
   }
   INFO("End Program!!");
   return 0;
+}
+
+std::vector< std::vector<ComplexType> >  UpdateV(const std::vector<ComplexType> V1,
+  const std::vector<ComplexType> V2, const int cntT, const int T0step, const RealType dt){
+  std::vector< std::vector<ComplexType> > out;
+  std::vector<ComplexType> tmp;
+  RealType ratio = (RealType)cntT / (RealType)T0step;
+  for (size_t i = 0; i < V1.size(); i++) {
+    ComplexType val1 = V1.at(i) * (1.0 - ratio);
+    ComplexType val2 = V2.at(i) * ratio;
+    INFO_NONEWLINE(val1 + val2);
+    tmp.push_back(val1 + val2);
+  }
+  INFO("");
+  out.push_back(tmp);
+  return out;
 }
 
 void SaveObs( const std::string filename, const std::string gname,
@@ -160,12 +188,13 @@ void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N,
 }
 
 void LoadDynParameters( const std::string filename, RealType &dt, int &Tsteps,
-  RealType &Uloc, std::vector<RealType> &Vloc){
+  RealType &Uloc, std::vector<RealType> &Vloc, int &T0step){
     HDF5IO file(filename);
     dt = file.loadReal("Parameters", "dt");
     Tsteps = file.loadInt("Parameters", "Tsteps");
     Uloc = file.loadReal("Parameters", "U");
     file.loadStdVector("Parameters", "V", Vloc);
+    T0step = file.loadInt("Parameters", "T0step");
 }
 
 std::vector<ComplexType> Ni( const std::vector<Basis> &Bases,

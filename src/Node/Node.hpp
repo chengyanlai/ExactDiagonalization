@@ -3,7 +3,7 @@
 #include <vector>
 #include "src/EDType.hpp"
 
-template<typename Tnum = RealType>
+template<typename Tnum = RealType>//, typename Tlabel = std::string>
 class Node
 {
 public:
@@ -28,6 +28,7 @@ public:
 private:
   // static int NumNodes;
   int NumLinks;
+
   std::vector< Node<Tnum>* > Neighbor;
   std::vector< Tnum > Jval;
 };

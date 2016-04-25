@@ -41,7 +41,9 @@ ComplexMatrixType &Rhos ) {
   ComplexSparseMatrixType h = ham.getTotalHamiltonian();
   ComplexMatrixType OpH = Op.adjoint();
   ComplexMatrixType LBmat1 = OpH * Rhos * Op;
-  ComplexMatrixType LBmat2 = 0.50e0 * ( OpH * Op * Rhos + Rhos * OpH * Op);
+  // ComplexMatrixType LBmat2 = 0.50e0 * ( OpH * Op * Rhos + Rhos * OpH * Op);
+  /* NOTE: I use a short cut here, OpH = Op, to reduce time. */
+  ComplexMatrixType LBmat2 = 0.50e0 * ( Op * Rhos + Rhos * Op );
   ComplexMatrixType Commutator = Rhos * h - h * Rhos;
   Rhos = dt * ( imagI * Commutator + gamma * (LBmat1 - LBmat2) );
 }
