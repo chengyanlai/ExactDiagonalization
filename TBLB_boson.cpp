@@ -13,7 +13,7 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
-#include "src/TerminatorBeam/TB.hpp"
+#include "src/Lindblad-TB/TB.hpp"
 
 #ifdef MKL
   #include "mkl.h"

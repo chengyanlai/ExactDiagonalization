@@ -44,7 +44,7 @@ ifeq ("$(OS)", "Darwin")
 	LAPACK_OMP = $(LAPACK)
 	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I$(HDF5ROOT)/include -I$(EIGENINC)
 else ifeq ("$(OS)", "Linux")
-	OPENMP = -openmp
+	OPENMP = -qopenmp
 	#NOTE: the order of linker matters!
 	HDF5LIB = $(HDF5ROOT)/lib/libhdf5_cpp.a $(HDF5ROOT)/lib/libhdf5.a $(HDF5ROOT)/lib/libz.a
 	LAPACK = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
@@ -65,22 +65,27 @@ SRC_DIR   := $(addprefix src/,$(MODULES))
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
 
-TB_MODULES   := TerminatorBeam
+TB_MODULES   := Lindblad-TB
 TB_SRC_DIR   := $(addprefix src/,$(MODULES) $(TB_MODULES))
 TB_SRC       := $(foreach sdir,$(TB_SRC_DIR),$(wildcard $(sdir)/*.cpp))
 TB_OBJ       := $(patsubst src/%.cpp,build/%.o,$(TB_SRC))
 
-DP_MODULES   := Dephasing
+DP_MODULES   := Lindblad-DP
 DP_SRC_DIR   := $(addprefix src/,$(MODULES) $(DP_MODULES))
 DP_SRC       := $(foreach sdir,$(DP_SRC_DIR),$(wildcard $(sdir)/*.cpp))
 DP_OBJ       := $(patsubst src/%.cpp,build/%.o,$(DP_SRC))
 
-OP_MODULES   := Lindblad
+OP_MODULES   := Lindblad-OP
 OP_SRC_DIR   := $(addprefix src/,$(MODULES) $(OP_MODULES))
 OP_SRC       := $(foreach sdir,$(OP_SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OP_OBJ       := $(patsubst src/%.cpp,build/%.o,$(OP_SRC))
 
-BUILD_DIR := $(addprefix build/,$(MODULES) $(TB_MODULES) $(DP_MODULES) $(OP_MODULES))
+SS_MODULES   := Lindblad-SS
+SS_SRC_DIR   := $(addprefix src/,$(MODULES) $(SS_MODULES))
+SS_SRC       := $(foreach sdir,$(SS_SRC_DIR),$(wildcard $(sdir)/*.cpp))
+SS_OBJ       := $(patsubst src/%.cpp,build/%.o,$(SS_SRC))
+
+BUILD_DIR := $(addprefix build/,$(MODULES) $(TB_MODULES) $(DP_MODULES) $(OP_MODULES) $(SS_MODULES))
 
 # INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  := -I./
@@ -89,6 +94,7 @@ vpath %.cpp $(SRC_DIR)
 vpath %.cpp $(TB_SRC_DIR)
 vpath %.cpp $(DP_SRC_DIR)
 vpath %.cpp $(OP_SRC_DIR)
+vpath %.cpp $(SS_SRC_DIR)
 
 define make-goal
 $1/%.o: %.cpp
@@ -97,7 +103,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SSWF.b build/TBWF.b build/TBLB.b build/SSLB.b build/SSOP.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SSWF.b build/TBWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 # all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
 
 build/%.o: %.cpp
@@ -125,6 +131,9 @@ build/SSLB.b: build/SSLB_boson.o $(DP_OBJ)
 	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 build/SSOP.b: build/SSOP_boson.o $(OP_OBJ)
+	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+
+build/SSt.b: build/SSt_boson.o $(SS_OBJ)
 	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)

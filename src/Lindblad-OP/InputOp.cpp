@@ -1,4 +1,4 @@
-#include "src/Lindblad/InputOp.hpp"
+#include "src/Lindblad-OP/InputOp.hpp"
 
 /* NOTE: 4-th order Runge-Kutta integration.
 
@@ -18,6 +18,7 @@ x[i] is the Mat(\Rhos)
 void Lindblad_RK4( const RealType &dt, const RealType &gamma,
   const ComplexMatrixType &Op, const Hamiltonian<ComplexType> &ham,
   ComplexMatrixType &Rhos ) {
+    /* NOTE: This is only for quench */
   ComplexMatrixType k1 = Rhos;
   Lindblad_Newton( dt, gamma, Op, ham, k1);
 

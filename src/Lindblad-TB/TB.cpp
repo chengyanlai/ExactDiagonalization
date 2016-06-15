@@ -1,4 +1,4 @@
-#include "src/TerminatorBeam/TB.hpp"
+#include "src/Lindblad-TB/TB.hpp"
 
 /* NOTE: 4-th order Runge-Kutta integration.
 
@@ -20,6 +20,7 @@ void Lindblad_RK4( const RealType &dt, const RealType &gamma,
   const std::vector<Hamiltonian<ComplexType> > &ham,
   const std::vector<std::vector<size_t> > &CIdx,
   std::vector<ComplexMatrixType> &Rhos) {
+    /* NOTE: This is only for quench */
   std::vector<ComplexMatrixType> k1 = Rhos;
   Lindblad_Newton( dt, gamma, TBloc, bas, ham, CIdx, k1);
 

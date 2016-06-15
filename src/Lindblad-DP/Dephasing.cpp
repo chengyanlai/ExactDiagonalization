@@ -1,4 +1,4 @@
-#include "src/Dephasing/Dephasing.hpp"
+#include "src/Lindblad-DP/Dephasing.hpp"
 
 /* NOTE: 4-th order Runge-Kutta integration.
 
@@ -18,6 +18,7 @@ x[i] is the Mat(\Rhos)
 void Lindblad_RK4( const RealType &dt, const RealType &gamma,
   const std::vector<size_t> &sites, const std::vector<Basis> &bas,
   const Hamiltonian<ComplexType> &ham, ComplexMatrixType &Rhos){
+    /* NOTE: This is only for quench */
   ComplexMatrixType k1 = Rhos;
   Lindblad_Newton( dt, gamma, sites, bas, ham, k1);
 
