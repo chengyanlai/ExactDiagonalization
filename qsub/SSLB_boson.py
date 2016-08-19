@@ -74,9 +74,10 @@ L = 8
 # Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
 # GammaList = [0.01, 0.1, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 7.0, 9.0, 10.0, 15.0, 20.0, 25.0]
 # L = 9
-Uin = [0.0, 1.0, 5.0]#1.0, 5.0]#
-# GammaList = [1.0, 3.0, ]
-GammaList = [5.0, 7.0, ]
+# Uin = [1.0,]#
+Uin = [0.0, 1.0, 3.0, 5.0]#
+GammaList = [1.0, ]
+# GammaList = [0.0, 0.1, 0.3, 0.5, 0.7, 1.0, 3.0, 5.0, 7.0, ]
 
 OBC = 1# 1:True
 # OBC = 0# 0:False
@@ -90,7 +91,8 @@ Val1 = 0.0
 Vin, Sin = SetV(L, Val1=Val1, vtype=VtypeEqm)
 # VtypeDyn = "SinkCenter"
 VtypeDyn = "SinkEdgeRight"
-Val2List = [-18.0, ]#-15.0, -12.0, -9.0, -6.0, -3.0,]
+Val2List = [-9.0, ]
+# Val2List = [-3.0, -6.0, -9.0, -18.0, -27.0]
 # VtypeDyn = "RaiseLeft"
 # Val2List = [18.0, 9.0, 3.0,]
 
@@ -98,8 +100,8 @@ Val2List = [-18.0, ]#-15.0, -12.0, -9.0, -6.0, -3.0,]
 # SitesType = "All"
 # SitesType = "Sink"
 # SitesType = "OP"
-# SitesType = "HOP"
-SitesType = "HOP2"
+SitesType = "HOP"
+# SitesType = "HOP2"
 # SitesType = "HOP3"
 
 # NOTE: Dynamics parameters

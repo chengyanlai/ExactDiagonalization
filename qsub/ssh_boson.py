@@ -41,8 +41,8 @@ elif(platform.system() == "Darwin"):
   SRC_DIR = "/Volumes/Files/GitRepo/ExactDiagonalization"
   EXEC_DIR = os.path.join(SRC_DIR, "data")
 
-def SetV(L, Val1=0.0, Val2=0.0, vtype="Uniform"):
-  if vtype == "Uniform":
+def SetV(L, Val1=0.0, Val2=0.0, vtype="Box"):
+  if vtype == "Box":
     V = np.ones(L, dtype=np.float64) * Val1
   elif vtype == "SinkCenter":
     V = np.ones(L, dtype=np.float64) * Val1
@@ -63,28 +63,29 @@ def SetV(L, Val1=0.0, Val2=0.0, vtype="Uniform"):
 
 NumThreads = 2
 
-L = 15
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
 # NOTE: Prepare for Terminator Beam
-# J12ratio = [1.00, ]
-# OBC = 1# 1:True, 0:False
-# N = L - 1
-# Uin = [0.0, 0.5, 1.0, 3.0, 5.0, 7.0, 9.0]
-# Vtype = "Uniform"
-# Vin = SetV(L, vtype=Vtype)
+L = 9
+N = 6
+J12ratio = [1.00, ]
+OBC = True
+Uin = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0,]
+Vtype = "Box"
+Vin = SetV(L, vtype=Vtype)
 # NOTE: Prepare for Terminator Beam
 # NOTE: Eqm. Sink
-J12ratio = [1.00, ]
-OBC = 1# 1:True, 0:False
-N = L - 2
-Uin = [1.0, ]
-# Uin = np.linspace(0.1, 5.0, 50)
-# Uin = np.linspace(0.0, 5.0, 51)
-# Vtype = "SinkCenter"
-Vtype = "SinkEdgeLeft"
-V1 = 0.0
-V2 = -5.0
-Vin = SetV(L, Val1=V1, Val2=V2, vtype=Vtype)
+# L = 15
+# N = L - 2
+# J12ratio = [1.00, ]
+# OBC = 1# 1:True, 0:False
+# Uin = [1.0, ]
+# # Uin = np.linspace(0.1, 5.0, 50)
+# # Uin = np.linspace(0.0, 5.0, 51)
+# # Vtype = "SinkCenter"
+# Vtype = "SinkEdgeLeft"
+# V1 = 0.0
+# V2 = -5.0
+# Vin = SetV(L, Val1=V1, Val2=V2, vtype=Vtype)
 # NOTE: Eqm. Sink
 if OBC:
   Phils = [0, ]
@@ -101,8 +102,8 @@ else:
   LN1N2 = "-".join(["BSSHP", "".join(["L", str(L)]), str(N)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
-job_id = 2597
-RUN_NOW = False
+job_id = 0
+RUN_NOW = True
 QSUB = True
 for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)

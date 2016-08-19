@@ -49,9 +49,9 @@ void Lindblad_Newton( const RealType &dt,
 	ComplexMatrixType LBmat2 = Lindblad2(Idx2, Gammas, bas.at(0), Rhos);
 	ComplexMatrixType Commutator = Rhos * h - h * Rhos;
 	// std::cout << "Commatator " << Commutator.trace() << std::endl;
-	std::cout.precision(18);
-	std::cout << "LBmat1 " << LBmat1.trace() << std::endl;
-	std::cout << "LBmat2 " << LBmat2.trace() << std::endl;
+	// std::cout.precision(18);
+	// std::cout << "LBmat1 " << LBmat1.trace() << std::endl;
+	// std::cout << "LBmat2 " << LBmat2.trace() << std::endl;
 	Rhos = dt * ( imagI * Commutator +	LBmat1 - LBmat2 );
 }
 
