@@ -16,24 +16,16 @@ ifeq ("$(OS)", "Darwin")
 	MKLROOT =
 else ifeq ("$(NODE)", "kagome.rcc.ucmerced.edu")
 	EIGENINC = /usr/local/include
-	HDF5ROOT = /condensate1/hdf5/HDF_Group/HDF5/1.8.15-patch1
-	MKLROOT = /condensate1/intel/composer_xe_2015.2.164/mkl
+	HDF5ROOT = /condensate1/hdf5/HDF_Group/HDF5/1.8.17
+	MKLROOT = /opt/intel/compilers_and_libraries_2016.2.181/linux/mkl
 else ifeq ("$(NODE)", "edgestate.rcc.ucmerced.edu")
 	EIGENINC = /usr/local/include
-	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.15-patch1
-	MKLROOT = /opt/intel/composer_xe_2015.2.164/mkl
+	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.17
+	MKLROOT = /opt/intel/compilers_and_libraries_2016.2.181/linux/mkl
 else ifeq ("$(NODE)", "atomtronics.ucmerced.edu")
 	EIGENINC = /usr/local/include
-	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.15-patch1
-	MKLROOT = /opt/intel/composer_xe_2015.2.164/mkl
-else ifneq (, $(filter "$(NODE)", "comet-ln1.sdsc.edu" "comet-ln2.sdsc.edu" "comet-ln3.sdsc.edu" "comet-ln4.sdsc.edu"))
-	EIGENINC = /opt/eigen/include
-	HDF5ROOT = /home/chenyen/hdf5/HDF_Group/HDF5/1.8.15-patch1
-	MKLROOT = /opt/intel/composer_xe_2015.2.164/mkl
-else ifneq (, $(filter "$(NODE)", "login1.stampede.tacc.utexas.edu" "login2.stampede.tacc.utexas.edu" "login3.stampede.tacc.utexas.edu" "login4.stampede.tacc.utexas.edu"))
-	EIGENINC = /home1/03731/chenyen/eigen
-	HDF5ROOT = /home1/03731/chenyen/HDF_Group/HDF5/1.8.15-patch1
-	MKLROOT = /opt/apps/intel/15/composer_xe_2015.2.164/mkl
+	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.17
+	MKLROOT = /opt/intel/compilers_and_libraries_2016.2.181/linux/mkl
 endif
 
 
