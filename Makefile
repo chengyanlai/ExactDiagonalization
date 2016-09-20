@@ -36,9 +36,9 @@ ifeq ("$(OS)", "Darwin")
 	LAPACK_OMP = $(LAPACK)
 	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I$(HDF5ROOT)/include -I$(EIGENINC)
 else ifeq ("$(OS)", "Linux")
-	OPENMP = -qopenmp
+	OPENMP = -openmp
 	#NOTE: the order of linker matters!
-	HDF5LIB = $(HDF5ROOT)/lib/libhdf5_cpp.a $(HDF5ROOT)/lib/libhdf5.a $(HDF5ROOT)/lib/libz.a
+	HDF5LIB = $(HDF5ROOT)/lib/libhdf5_cpp.a $(HDF5ROOT)/lib/libhdf5.a $(HDF5ROOT)/lib/libz.a $(HDF5ROOT)/lib/libszip.a
 	LAPACK = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
 	$(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a -Wl,--start-group \
 	$(MKLROOT)/lib/intel64/libmkl_intel_lp64.a \
