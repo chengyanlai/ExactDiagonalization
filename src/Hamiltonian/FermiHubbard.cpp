@@ -4,8 +4,8 @@
 #include "src/bitwise.h"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::FermionIntraLocalPart( const size_t species_id,
+template<typename Tnum>
+void Hamiltonian<Tnum>::FermionIntraLocalPart( const size_t species_id,
   const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc )
 {
   int state_id = 0;
@@ -36,8 +36,8 @@ void Hamiltonian<Tnum, Tlabel>::FermionIntraLocalPart( const size_t species_id,
   }
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::FermionInterLocalPart(
+template<typename Tnum>
+void Hamiltonian<Tnum>::FermionInterLocalPart(
   const std::vector<int> species_id, const Tnum &Uloc,
   const std::vector<Basis> &bs, std::vector<Triplet> &hloc )
 {
@@ -117,6 +117,7 @@ void Hamiltonian<Tnum, Tlabel>::FermionInterLocalPart(
       hloc.push_back(Triplet(id, id, g));
     }
   }
+  /*NOTE: for detatil difference*/
   for (size_t i = 0; i < bs.at(0).getL(); i++) {
     for (size_t up = 0; up < point1; up++) {
       for (size_t dn = 0; dn < point2; dn++) {
@@ -141,20 +142,20 @@ void Hamiltonian<Tnum, Tlabel>::FermionInterLocalPart(
   }
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::FermionIntraHoppingPart( const size_t species_id,
-  const std::vector< Node<Tnum, Tlabel>* > &lt,
+template<typename Tnum>
+void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
+  const std::vector< Node<Tnum>* > &lt,
   const Basis &bs, std::vector<Triplet> &hhop )
 {
   size_t rid, cid;
   size_t bid = 0, pid = 0;//l and p's index
   for ( int b : bs.FStates ){
-    for ( Node<Tnum, Tlabel>* l : lt ) {
-      Tlabel site_i = l->data;
-      std::vector< Node<Tnum, Tlabel>* > nn = l->getNeighbors();
+    for ( Node<Tnum>* l : lt ) {
+      size_t site_i = l->data;
+      std::vector< Node<Tnum>* > nn = l->getNeighbors();
       std::vector< Tnum > nnJ = l->getJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
-        Tlabel site_j = nn.at(cnt)->data;// hopping between site-j - site-i
+        size_t site_j = nn.at(cnt)->data;// hopping from site-j to site-i
         /* see if hopping exist */
         if ( btest(b, site_j) && !(btest(b, site_i)) ) {
           /* if yes, no particle in i and one particle in j. */
@@ -183,8 +184,8 @@ void Hamiltonian<Tnum, Tlabel>::FermionIntraHoppingPart( const size_t species_id
             cid = DetermineTotalIndex( cids );
             Tnum value = (Tnum)(-1.0e0) * nnJ.at(cnt);
             hhop.push_back(Triplet(rid, cid, value));
-            hhop.push_back(Triplet(cid, rid, value));
-            // INFO(rid << " " << cid << " " << value);
+            // hhop.push_back(Triplet(cid, rid, value));
+            // INFO( rid << " " <<  cid << " " <<  value );
           }
         }
       }
@@ -192,5 +193,5 @@ void Hamiltonian<Tnum, Tlabel>::FermionIntraHoppingPart( const size_t species_id
   }
 }
 
-template class Hamiltonian<RealType, int>;
-template class Hamiltonian<ComplexType, int>;
+template class Hamiltonian<RealType>;
+template class Hamiltonian<ComplexType>;

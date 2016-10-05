@@ -1,8 +1,8 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
-#include "src/Lanczos/lanczos.hpp"
+#include "src/Lanczos/krylov.hpp"
 
-template<typename Tnum, typename Tlabel>
-Hamiltonian<Tnum, Tlabel>::Hamiltonian( const std::vector<Basis> &bs )
+template<typename Tnum>
+Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 {
   // get each hilbert space
   HilbertSpaces.clear();
@@ -19,11 +19,11 @@ Hamiltonian<Tnum, Tlabel>::Hamiltonian( const std::vector<Basis> &bs )
   H_hop.reserve(2*TotalDim);
 }
 
-template<typename Tnum, typename Tlabel>
-Hamiltonian<Tnum, Tlabel>::~Hamiltonian(){}
+template<typename Tnum>
+Hamiltonian<Tnum>::~Hamiltonian(){}
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::BuildLocalHamiltonian(
+template<typename Tnum>
+void Hamiltonian<Tnum>::BuildLocalHamiltonian(
   const std::vector< std::vector<Tnum> > &Vloc,
   const std::vector< std::vector<Tnum> > &Uloc,
   const std::vector<Basis> &bs )
@@ -63,9 +63,9 @@ void Hamiltonian<Tnum, Tlabel>::BuildLocalHamiltonian(
   // INFO(H_local);
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::BuildHoppingHamiltonian(
-  const std::vector<Basis> &bs, const std::vector< Node<Tnum, Tlabel>* > &lt )
+template<typename Tnum>
+void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
+  const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt )
 {
   /* NOTE: This functiuon assume all bases live in the same lattice
   and have the same hopping amplitude. */
@@ -87,19 +87,47 @@ void Hamiltonian<Tnum, Tlabel>::BuildHoppingHamiltonian(
   // INFO(H_hop);
 }
 
-template<typename Tnum, typename Tlabel>
-void Hamiltonian<Tnum, Tlabel>::eigh( RealType &Val, VectorType &Vec,
+template<typename Tnum>
+void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec,
   const bool FullDiagonalization)
 {
-  Vec = VectorType::Random(getTotalHilbertSpace());
-  size_t max_iter = 200;
-  RealType err_tol = 1.0e-9;
+  size_t dim = getTotalHilbertSpace();
+  Vec = VectorType::Random(dim);
   if( !(FullDiagonalization) ){
-    bool converge = LanczosEV(getTotalHilbertSpace(), H_total,
-      Vec, Val, max_iter, err_tol);
-    if ( !(converge) ) INFO("Lanczos is not converged!");
+    Tnum* input_ptr = Vec.data();
+    arpackDiagonalize(dim, input_ptr, Val, /*nev*/2, /*tol*/0.0e0);
+    Vec = Eigen::Map<VectorType>(input_ptr, dim);
   }
 }
 
-template class Hamiltonian<RealType, int>;
-template class Hamiltonian<ComplexType, int>;
+template<>
+void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
+  ComplexVectorType &Vec, const size_t Kmax )
+{
+  krylov(H_total, Vec, Prefactor, Kmax);
+}
+
+/* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y
+ * @param x the input vector
+ * @param y the output vector
+ * @param alpha the scaling value
+ */
+template<>
+void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)const {
+  size_t dim = getTotalHilbertSpace();
+  Eigen::Map<RealVectorType> Vin(x, dim);
+  Eigen::Map<RealVectorType> Vout(y, dim);
+  Vout = H_total * Vin + alpha * Vout;
+  memcpy(y, Vout.data(), dim * sizeof(RealType) );
+}
+template<>
+void Hamiltonian<ComplexType>::mvprod(ComplexType* x, ComplexType* y, RealType alpha)const {
+  size_t dim = getTotalHilbertSpace();
+  Eigen::Map<ComplexVectorType> Vin(x, dim);
+  Eigen::Map<ComplexVectorType> Vout(y, dim);
+  Vout = H_total * Vin + alpha * Vout;
+  memcpy(y, Vout.data(), dim * sizeof(ComplexType) );
+}
+
+template class Hamiltonian<RealType>;
+template class Hamiltonian<ComplexType>;

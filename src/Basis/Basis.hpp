@@ -18,14 +18,17 @@ inline RandomIt binary_locate(RandomIt first, RandomIt last, const T& val) {
 
 class Basis
 {
-template<typename Tnum, typename Tlabel>
+template<typename Tnum>
   friend class Hamiltonian;
 public:
   Basis(const bool _isFermion = false);
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
   void Boson();
+  void BosonTB( const size_t TBloc, const bool HARD_CUT = false );
   void Fermion();
+  void Save( const std::string filename, const std::string gname );
+  void Load( const std::string filename, const std::string gname );
   inline bool getType()const{return isFermion;};
   inline size_t getL()const{return L;};
   inline size_t getN()const{return N;};
@@ -44,7 +47,12 @@ public:
   inline size_t getIndexFromTag( const RealType tg )const{
     assert( !(isFermion) );
     auto it = binary_locate(BTags.begin(), BTags.end(), tg);
-    return std::distance(BTags.begin(), it);
+    size_t idx = std::distance(BTags.begin(), it);
+    if ( std::abs(BTags.at(idx) - tg) < 1.0e-12 ){
+      return idx;
+    } else{
+      return getHilbertSpace();
+    }
   };//for Boson
 private:
   size_t L;
