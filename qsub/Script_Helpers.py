@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # coding=utf-8
-
 import os
 
 class cd:
@@ -17,62 +16,23 @@ class cd:
   def __exit__(self, etype, value, traceback):
     os.chdir(self.savedPath)
 
-
-def WriteQsubSGE(
-  fname,
-  Job_Name,
-  EXAC_Name,
-  whentomail='n',
-  mailto="chengyanlai@gmail.com",
-  NumCore=1):
-  f = open(fname, 'w')
-  job_string = """#!/bin/bash
-# The job is located in the current working directory.
-#$ -cwd
-#$ -V
-#$ -j y
-#$ -S /bin/bash
-# Job name.
-#$ -N %s
-# Send email to user.
-#$ -M %s
-# When will email be sent? begin, end, abort, suspend, none.
-#$ -m %s
-echo "------------------------------------------------------------------------"
-echo "Job started on" `date`
-echo "------------------------------------------------------------------------"
-%s
-echo "------------------------------------------------------------------------"
-echo "Job ended on" `date`
-echo "------------------------------------------------------------------------"
-exit 0
-""" % (NumCore, Job_Name, mailto, whentomail, EXAC_Name)
-  f.write(job_string)
-  f.close()
-  return
-
-
 def WriteQsubPBS(
   fname,
   Job_Name,
   EXAC_Name,
   Folder_Name,
-  whentomail='n',
-  mailto="chengyanlai@gmail.com",
-  NodeName="kagome.rcc.ucmerced.edu",
-  NumCore=1):
-  f = open(fname, 'w')
+  Nodes='1',
+  NumCore=1,
+  WallTime='48:00:00'):
   job_string = """#!/bin/bash
-# Pass the current environment variables to the job.
 #PBS -V
 #PBS -l nodes=%s:ppn=%d
-#PBS -l walltime=720:00:00
+#PBS -l walltime=%s
 #PBS -j oe
+#PBS -M clai24@ucmerced.edu
 #PBS -d %s
-# Job name.
 #PBS -N %s
-# Change to current working directory (directory where qsub was executed)
-# within PBS job (workaround for SGE option "-cwd")
+export OMP_NUM_THREADS=%d
 cd $PBS_O_WORKDIR
 echo "------------------------------------------------------------------------"
 echo "Job started on" `date`
@@ -82,7 +42,8 @@ echo "------------------------------------------------------------------------"
 echo "Job ended on" `date`
 echo "------------------------------------------------------------------------"
 exit 0
-""" % (NodeName, NumCore, Folder_Name, Job_Name, EXAC_Name)
+""" % (Nodes, NumCore, WallTime, Folder_Name, Job_Name, NumCore, EXAC_Name)
+  f = open(fname, 'w')
   f.write(job_string)
   f.close()
   return
@@ -92,8 +53,7 @@ def WriteQsubSBATCH(
   Job_Name,
   EXAC_Name,
   Folder_Name,
-  whentomail='n',
-  mailto="chengyanlai@gmail.com",
+  Nodes='1',
   NumCore=1,
   WallTime='48:00:00',
   partition='compute',
@@ -103,14 +63,13 @@ def WriteQsubSBATCH(
 #SBATCH -A %s
 #SBATCH --job-name=%s
 #SBATCH --partition=%s
-#SBATCH --nodes=1
+#SBATCH --nodes=%s
 #SBATCH --ntasks-per-node=%d
 #SBATCH --export=ALL
 #SBATCH -t %s
-
-#SET the number of openmp threads
+#SBATCH --mail-user=clai24@ucmerced.edu
+#SBATCH --mail-type=end
 export OMP_NUM_THREADS=%d
-
 echo "------------------------------------------------------------------------"
 echo "Job started on" `date`
 echo "------------------------------------------------------------------------"
@@ -119,8 +78,43 @@ echo "------------------------------------------------------------------------"
 echo "Job ended on" `date`
 echo "------------------------------------------------------------------------"
 exit 0
-""" % (ProjectName, Job_Name, partition, NumCore, WallTime, NumCore, \
-       EXAC_Name)
+""" % (ProjectName, Job_Name, partition, Nodes, NumCore, WallTime, NumCore, EXAC_Name)
+  f.write(job_string)
+  f.close()
+  return
+
+def WriteQsubSGE(
+  fname,
+  Job_Name,
+  EXAC_Name,
+  Folder_Name,
+  Nodes='1',
+  NumCore=1,
+  WallTime='24:00:00'):
+  f = open(fname, 'w')
+  job_string = """#!/bin/bash
+# The job is located in the current working directory.
+#$ -V
+#$ -j y
+#$ -S /bin/bash
+#$ -pe smp %d
+#$ -l h_rt=%s
+# Job name.
+#$ -N %s
+# Send email to user.
+#$ -M clai24@ucmerced.com
+#$ -cwd
+cd %s
+export OMP_NUM_THREADS=%d
+echo "------------------------------------------------------------------------"
+echo "Job started on" `date`
+echo "------------------------------------------------------------------------"
+%s
+echo "------------------------------------------------------------------------"
+echo "Job ended on" `date`
+echo "------------------------------------------------------------------------"
+exit 0
+""" % (NumCore, WallTime, Job_Name, Folder_Name, NumCore, EXAC_Name)
   f.write(job_string)
   f.close()
   return

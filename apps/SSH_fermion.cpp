@@ -153,7 +153,9 @@ int main(int argc, char const *argv[]) {
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
   ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
+  INFO(" - BuildLocalHamiltonian DONE!");
   ham.BuildHoppingHamiltonian(Bases, lattice);
+  INFO(" - BuildHoppingHamiltonian DONE!");
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");

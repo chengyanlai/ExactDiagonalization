@@ -11,45 +11,46 @@ NODE = $(shell uname -n)
 endif
 
 ifeq ("$(OS)", "Darwin")
-	EIGENINC = /Volumes/Files/GitHub/eigen
-	HDF5ROOT = /usr/local/opt/hdf5
-	MKLROOT =
-else ifeq ("$(NODE)", "kagome.rcc.ucmerced.edu")
-	EIGENINC = /usr/local/include
-	HDF5ROOT = /condensate1/hdf5/HDF_Group/HDF5/1.8.17
-	MKLROOT = /opt/intel/compilers_and_libraries_2016.2.181/linux/mkl
-else ifeq ("$(NODE)", "edgestate.rcc.ucmerced.edu")
-	EIGENINC = /usr/local/include
-	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.17
-	MKLROOT = /opt/intel/compilers_and_libraries_2016.2.181/linux/mkl
-else ifeq ("$(NODE)", "atomtronics.ucmerced.edu")
-	EIGENINC = /usr/local/include
-	HDF5ROOT = /opt/HDF_Group/HDF5/1.8.17
-	MKLROOT = /opt/intel/compilers_and_libraries_2016.2.181/linux/mkl
-endif
-
-
-ifeq ("$(OS)", "Darwin")
-	OPENMP =#-fopenmp
-	HDF5LIB = -L$(HDF5ROOT)/lib -lhdf5 -lhdf5_cpp
+	EIGENHOME = /Volumes/Files/PublicRepo/eigen
+	HDF5HOME = /usr/local/opt/hdf5
+	NumCores = 1
+	HDF5LIB = -L$(HDF5HOME)/lib -lhdf5 -lhdf5_cpp
 	LAPACK = -lblas -llapack -lm -larpack
-	LAPACK_OMP = $(LAPACK)
-	CC = clang++ $(OPENMP) -O3 -m64 -std=c++11 -stdlib=libc++ -I$(HDF5ROOT)/include -I$(EIGENINC)
-else ifeq ("$(OS)", "Linux")
-	OPENMP = -openmp
-	#NOTE: the order of linker matters!
-	HDF5LIB = $(HDF5ROOT)/lib/libhdf5_cpp.a $(HDF5ROOT)/lib/libhdf5.a $(HDF5ROOT)/lib/libz.a $(HDF5ROOT)/lib/libszip.a
+	CC = clang++ -O3 -m64 -std=c++11 -stdlib=libc++ -Isrc/ -I$(HDF5HOME)/include -I$(EIGENHOME)
+else
+	ifeq ("$(NODE)", "kagome.ucmerced.edu")
+		OPENMP = -qopenmp
+		NumCores = 16
+		ARPACK = -L$(ARPACKHOME)/lib -larpack
+	else ifeq ("$(NODE)", "braid.cnsi.ucsb.edu")
+		OPENMP = -openmp
+		NumCores = 20
+		ARPACK = -larpack
+	else ifeq ("$(NODE)", "atomtronics.ucmerced.edu")
+		OPENMP = -openmp
+		NumCores = 4
+		ARPACK = /home/chengyanlai/Downloads/arpack-ng/build/lib/libarpack.so
+	else ifeq ("$(NODE)", "merced.cluster")
+		OPENMP = -openmp
+		NumCores = 20
+		ARPACK = -L/home/clai24/apps/arpack-ng/lib -larpack
+	else ifneq (, $(filter "$(NODE)", "comet-ln1.sdsc.edu" "comet-ln2.sdsc.edu" "comet-ln3.sdsc.edu" "comet-ln4.sdsc.edu"))
+		OPENMP = -openmp
+		NumCores = 24
+		ARPACK = -larpack
+	else ifneq (, $(filter "$(NODE)", "login1.stampede.tacc.utexas.edu" "login2.stampede.tacc.utexas.edu" "login3.stampede.tacc.utexas.edu" "login4.stampede.tacc.utexas.edu"))
+		OPENMP = -openmp
+		NumCores = 16
+		ARPACK = -larpack
+	endif
+	# NOTE: the order of linker matters!
+	HDF5LIB = $(HDF5HOME)/lib/libhdf5_cpp.a $(HDF5HOME)/lib/libhdf5.a $(HDF5HOME)/lib/libz.a $(HDF5HOME)/lib/libszip.a
 	LAPACK = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
-	$(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a -Wl,--start-group \
-	$(MKLROOT)/lib/intel64/libmkl_intel_lp64.a \
-	$(MKLROOT)/lib/intel64/libmkl_sequential.a $(MKLROOT)/lib/intel64/libmkl_core.a \
-	-Wl,--end-group -lpthread -lm -larpack
-	LAPACK_OMP = $(MKLROOT)/lib/intel64/libmkl_blas95_lp64.a \
 	$(MKLROOT)/lib/intel64/libmkl_lapack95_lp64.a -Wl,--start-group \
 	${MKLROOT}/lib/intel64/libmkl_intel_lp64.a \
 	${MKLROOT}/lib/intel64/libmkl_core.a \
-	${MKLROOT}/lib/intel64/libmkl_intel_thread.a -Wl,--end-group -lpthread -lm -larpack
-	CC = icpc $(OPENMP) -O3 -Wall -std=c++11 -I./ -I$(HDF5ROOT)/include -I$(EIGENINC) -DMKL
+	${MKLROOT}/lib/intel64/libmkl_intel_thread.a -Wl,--end-group -lpthread -lm $(ARPACK)
+	CC = icpc $(OPENMP) -DNumCores=$(NumCores) -O3 -Wall -std=c++11 -Isrc/ -I$(HDF5HOME)/include -I$(EIGENHOME) -DMKL
 endif
 
 MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io
@@ -77,7 +78,7 @@ SS_SRC_DIR   := $(addprefix src/,$(MODULES) $(SS_MODULES))
 SS_SRC       := $(foreach sdir,$(SS_SRC_DIR),$(wildcard $(sdir)/*.cpp))
 SS_OBJ       := $(patsubst src/%.cpp,build/%.o,$(SS_SRC))
 
-BUILD_DIR := $(addprefix build/,$(MODULES) $(TB_MODULES) $(DP_MODULES) $(OP_MODULES) $(SS_MODULES))
+BUILD_DIR := $(addprefix build/,$(MODULES) $(TB_MODULES) $(DP_MODULES) $(OP_MODULES) $(SS_MODULES) apps)
 
 # INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  := -I./
@@ -87,6 +88,7 @@ vpath %.cpp $(TB_SRC_DIR)
 vpath %.cpp $(DP_SRC_DIR)
 vpath %.cpp $(OP_SRC_DIR)
 vpath %.cpp $(SS_SRC_DIR)
+vpath %.cpp apps/
 
 define make-goal
 $1/%.o: %.cpp
@@ -95,38 +97,34 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/SSWF.b build/TBWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
-# all: checkdirs build/SSH.f build/SSH.b build/SourceSinkDyn.b build/TB.b build/test.fermion build/test.boson build/test.lattice build/test.node
+all: checkdirs build/1D.b build/SSH.f build/SSH.b# build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
-build/%.o: %.cpp
+build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
-build/1D.b: build/1D_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/1D.b: build/apps/1D_boson.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/SSH.b: build/SSH_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/SSH.b: build/apps/SSH_boson.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/SSH.f: build/SSH_fermion.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/SSH.f: build/apps/SSH_fermion.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/TBWF.b: build/TBWF_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/TBLB.b: build/apps/TBLB_boson.o $(TB_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/TBLB.b: build/TBLB_boson.o $(TB_OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/SSWF.b: build/apps/SSWF_boson.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/SSWF.b: build/SSWF_boson.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/SSLB.b: build/apps/SSLB_boson.o $(DP_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/SSLB.b: build/SSLB_boson.o $(DP_OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/SSOP.b: build/apps/SSOP_boson.o $(OP_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/SSOP.b: build/SSOP_boson.o $(OP_OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
-
-build/SSt.b: build/SSt_boson.o $(SS_OBJ)
-	$(CC) $^ -o $@ $(LAPACK_OMP) $(HDF5LIB)
+build/SSt.b: build/apps/SSt_boson.o $(SS_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
 
