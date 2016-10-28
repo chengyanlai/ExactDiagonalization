@@ -23,7 +23,7 @@
 #define NumCores 2
 #endif
 
-#define DTYPE 0//comment out this to real complex
+// #define DTYPE 0//comment out this to use complex
 
 #ifndef DTYPE
 #define DT ComplexType
@@ -37,7 +37,22 @@
 
 void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
   int &OBC, int &N1, int &N2, RealType &Uloc,
-  std::vector<RealType> &Vloc, RealType &phi);
+  std::vector<RealType> &Vloc, RealType &phi,
+  int &dynamics, int &Tsteps, RealType &dt){
+    HDF5IO file(filename);
+    L = file.loadInt("Parameters", "L");
+    J12ratio = file.loadReal("Parameters", "J12");
+    OBC = file.loadInt("Parameters", "OBC");
+    N1 = file.loadInt("Parameters", "N1");
+    N2 = file.loadInt("Parameters", "N2");
+    Uloc = file.loadReal("Parameters", "U");
+    phi = file.loadReal("Parameters", "phi");
+    file.loadStdVector("Parameters", "V", Vloc);
+    dynamics = file.loadInt("Parameters", "dynamics");
+    Tsteps = file.loadInt("Parameters", "Tsteps");
+    dt = file.loadReal("Parameters", "dt");
+}
+
 std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec,
   Hamiltonian<DT> &ham );
 DTM NupNdn( const std::vector<Basis> &Bases, const DTV &Vec,
@@ -56,12 +71,12 @@ int main(int argc, char const *argv[]) {
   int L;
   RealType J12ratio;
   int OBC;
-  int N1;
-  int N2;
-  RealType Uin, phi;
+  int N1, N2;
+  int dynamics, Tsteps;
+  RealType Uin, phi, dt;
   std::vector<RealType> Vin;
-  LoadParameters( "conf.h5", L, J12ratio, OBC, N1, N2, Uin, Vin, phi);
-  HDF5IO file("FSSH.h5");
+  LoadParameters( "conf.h5", L, J12ratio, OBC, N1, N2, Uin, Vin, phi, dynamics, Tsteps, dt);
+  HDF5IO *file = new HDF5IO("FSSH.h5");
   // const int L = 5;
   // const bool OBC = true;
   // const RealType J12ratio = 0.010e0;
@@ -101,8 +116,8 @@ int main(int argc, char const *argv[]) {
   }
   INFO("");
   const std::vector< Node<DT>* > lattice = NN_1D_Chain(L, J, OBC);
-  file.saveNumber("1DChain", "L", L);
-  file.saveStdVector("1DChain", "J", J);
+  file->saveNumber("1DChain", "L", L);
+  file->saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
   }
@@ -128,12 +143,12 @@ int main(int argc, char const *argv[]) {
   //   F2.printFermionBasis(st2.at(cnt));
   //   INFO("- " << tg2.at(st2.at(cnt)));
   // }
-  file.saveNumber("Basis", "N1", N1);
-  file.saveStdVector("Basis", "F1States", st1);
-  file.saveStdVector("Basis", "F1Tags", tg1);
-  file.saveNumber("Basis", "N2", N2);
-  file.saveStdVector("Basis", "F2States", st2);
-  file.saveStdVector("Basis", "F2Tags", tg2);
+  file->saveNumber("Basis", "N1", N1);
+  file->saveStdVector("Basis", "F1States", st1);
+  file->saveStdVector("Basis", "F1Tags", tg1);
+  file->saveNumber("Basis", "N2", N2);
+  file->saveStdVector("Basis", "F2States", st2);
+  file->saveStdVector("Basis", "F2Tags", tg2);
   INFO("DONE!");
   INFO_NONEWLINE("Build Hamiltonian - ");
   std::vector<Basis> Bases;
@@ -163,8 +178,8 @@ int main(int argc, char const *argv[]) {
   Hamiltonian<DT>::VectorType Vec;
   ham.eigh(Val, Vec);
   INFO("GS energy = " << Val.at(0));
-  file.saveVector("GS", "EVec", Vec);
-  file.saveStdVector("GS", "EVal", Val);
+  file->saveVector("GS", "EVec", Vec);
+  file->saveStdVector("GS", "EVal", Val);
   INFO("DONE!");
   std::vector< DTV > Nfi = Ni( Bases, Vec, ham );
   INFO(" Up Spin - ");
@@ -172,8 +187,8 @@ int main(int argc, char const *argv[]) {
   INFO(" Down Spin - ");
   INFO(Nfi.at(1));
   INFO(" N_i - ");
-  DTV Ni = Nfi.at(0) + Nfi.at(1);
-  INFO(Ni);
+  DTV Niall = Nfi.at(0) + Nfi.at(1);
+  INFO(Niall);
   DTM Nud = NupNdn( Bases, Vec, ham );
   INFO(" Correlation NupNdn");
   INFO(Nud);
@@ -186,26 +201,42 @@ int main(int argc, char const *argv[]) {
   INFO(" N_i^2 - ");
   DTM Ni2 = Nuu.diagonal() + Ndd.diagonal() + 2.0e0 * Nud.diagonal();
   INFO(Ni2);
-  file.saveVector("Obs", "Nup", Nfi.at(0));
-  file.saveVector("Obs", "Ndn", Nfi.at(1));
-  file.saveMatrix("Obs", "NupNdn", Nud);
-  file.saveMatrix("Obs", "NupNup", Nuu);
-  file.saveMatrix("Obs", "NdnNdn", Ndd);
+  file->saveVector("Obs", "Nup", Nfi.at(0));
+  file->saveVector("Obs", "Ndn", Nfi.at(1));
+  file->saveMatrix("Obs", "NupNdn", Nud);
+  file->saveMatrix("Obs", "NupNup", Nuu);
+  file->saveMatrix("Obs", "NdnNdn", Ndd);
+  delete file;
+  if ( dynamics ){
+    ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+    std::cout << "Begin dynamics......" << std::endl;
+    std::cout << "Cut the boundary." << std::endl;
+    J.pop_back();
+    std::vector< Node<DT>* > lattice2 = NN_1D_Chain(L, J, true);// cut to open
+    ham.BuildHoppingHamiltonian(Bases, lattice2);
+    INFO(" - Update Hopping Hamiltonian DONE!");
+    ham.BuildTotalHamiltonian();
+    INFO(" - Update Total Hamiltonian DONE!");
+    for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
+      ham.expH(Prefactor, Vec);
+      if ( cntT % 2 == 0 ){
+        HDF5IO file2("DYN.h5");
+        std::string gname = "Obs-";
+        gname.append(std::to_string((unsigned long long)cntT));
+        gname.append("/");
+        Nfi = Ni( Bases, Vec, ham );
+        Nud = NupNdn( Bases, Vec, ham );
+        Nuu = NupNup( Bases, Vec, ham );
+        Ndd = NdnNdn( Bases, Vec, ham );
+        file2.saveVector(gname, "Nup", Nfi.at(0));
+        file2.saveVector(gname, "Ndn", Nfi.at(1));
+        file2.saveMatrix(gname, "NupNdn", Nud);
+        file2.saveMatrix(gname, "NupNup", Nuu);
+        file2.saveMatrix(gname, "NdnNdn", Ndd);
+      }
+    }
+  }
   return 0;
-}
-
-void LoadParameters( const std::string filename, int &L, RealType &J12ratio,
-  int &OBC, int &N1, int &N2, RealType &Uloc,
-  std::vector<RealType> &Vloc, RealType &phi){
-    HDF5IO file(filename);
-    L = file.loadInt("Parameters", "L");
-    J12ratio = file.loadReal("Parameters", "J12");
-    OBC = file.loadInt("Parameters", "OBC");
-    N1 = file.loadInt("Parameters", "N1");
-    N2 = file.loadInt("Parameters", "N2");
-    Uloc = file.loadReal("Parameters", "U");
-    phi = file.loadReal("Parameters", "phi");
-    file.loadStdVector("Parameters", "V", Vloc);
 }
 
 std::vector< DTV > Ni( const std::vector<Basis> &Bases,

@@ -31,7 +31,7 @@ else
 		NumCores = 4
 		ARPACK = /home/chengyanlai/Downloads/arpack-ng/build/lib/libarpack.so
 	else ifeq ("$(NODE)", "merced.cluster")
-		OPENMP = -openmp
+		OPENMP = -qopenmp
 		NumCores = 20
 		ARPACK = -L/home/clai24/apps/arpack-ng/lib -larpack
 	else ifneq (, $(filter "$(NODE)", "comet-ln1.sdsc.edu" "comet-ln2.sdsc.edu" "comet-ln3.sdsc.edu" "comet-ln4.sdsc.edu"))

@@ -17,16 +17,16 @@ def SetV(L, vtype="Box"):
     sys.exit()
   return V
 
-NumThreads = 1
+NumThreads = 10
 WallTime = '24:0:0'
 
-L = 16
+L = 12
 # J12ratio = np.linspace(0.1, 1.0, 10)
 # J12ratio = np.linspace(0.92, 0.98,  4)
-J12ratio = [1.00, ]
-# J12ratio = [0.01, ]
+# J12ratio = [1.00, ]
+J12ratio = [0.1, ]
 # OBC = 1#1:True
-OBC = 1# 0:False
+OBC = 0# 0:False
 if L % 2 == 1:
   N1 = np.int((L + 1) / 2)
   N2 = np.int((L - 1) / 2)
@@ -36,12 +36,14 @@ else:
 # Uin = np.linspace(0.0, 10.0, 11)
 # Uin = np.linspace(0.0, 10.0, 51)
 Uin = [10.0,]
-if OBC:
-  Phils = [0, ]
-else:
-  Phils = np.linspace(0, L, 66)
+Phils = [0, ]
+# Phils = np.linspace(0, L, 66)
 Vtype = "Box"
 Vin = SetV(L, vtype=Vtype)
+
+dynamics = 1
+Tsteps = 4000
+dt = 0.005
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "SSH.f"))
@@ -85,6 +87,9 @@ for nphi in Phils:
           dset = para.create_dataset("U", data=U)
           dset = para.create_dataset("phi", data=phi)
           dset = para.create_dataset("V", data=Vin)
+          dset = para.create_dataset("dynamics", data=dynamics)
+          dset = para.create_dataset("Tsteps", data=Tsteps)
+          dset = para.create_dataset("dt", data=dt)
           f.close()
 
           if Cluster == "Comet" or Cluster == "Stampede":
