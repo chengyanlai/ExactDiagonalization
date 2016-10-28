@@ -54,13 +54,8 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(
   if ( bs.size() == 2 && bs.at(0).getType() && bs.at(1).getType() ){
     FermionInterLocalPart(sid, Uloc.at(0).at(0), bs, hloc);
   }
-  /*test**/
-  // hloc.push_back(hloc.at(0));
-  // hloc.push_back(hloc.at(0));
-  // hloc.push_back(hloc.at(0));
-  // INFO(hloc.size());
   H_local.setFromTriplets(hloc.begin(), hloc.end());
-  // INFO(H_local);
+  std::cout << "Non-zero matrix elements = " << hloc.size() << std::endl;
 }
 
 template<typename Tnum>
@@ -84,7 +79,7 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
     cnt++;
   }
   H_hop.setFromTriplets(hhop.begin(), hhop.end());
-  // INFO(H_hop);
+  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
 }
 
 template<typename Tnum>

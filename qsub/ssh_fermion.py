@@ -1,15 +1,21 @@
 #!/usr/bin/env python
 # coding=utf-8
+<<<<<<< HEAD
 
 import os
 import sys
 import subprocess
 import platform
 import socket
+=======
+import subprocess
+import os
+>>>>>>> dev
 import numpy as np
 import h5py
 import Script_Helpers as shp
 
+<<<<<<< HEAD
 if(platform.system() == "Linux"):
   QSUB = True
   if socket.gethostname() == 'stargate.phys.nthu.edu.tw':
@@ -40,6 +46,10 @@ elif(platform.system() == "Darwin"):
   QSUB = False
   SRC_DIR = "/Volumes/Files/GitRepo/ExactDiagonalization"
   EXEC_DIR = os.path.join(SRC_DIR, "data")
+=======
+# Get all platform settings
+from Clusters import *
+>>>>>>> dev
 
 def SetV(L, vtype="Box"):
   if vtype == "Box":
@@ -49,6 +59,7 @@ def SetV(L, vtype="Box"):
     sys.exit()
   return V
 
+<<<<<<< HEAD
 NumThreads = 2
 L = 9
 # J12ratio = np.linspace(0.1, 1.0, 10)
@@ -77,6 +88,36 @@ else:
 Vtype = "Box"
 Vin = SetV(L, vtype=Vtype)
 
+=======
+NumThreads = 10
+WallTime = '24:0:0'
+
+L = 12
+# J12ratio = np.linspace(0.1, 1.0, 10)
+# J12ratio = np.linspace(0.92, 0.98,  4)
+# J12ratio = [1.00, ]
+J12ratio = [0.1, ]
+# OBC = 1#1:True
+OBC = 0# 0:False
+if L % 2 == 1:
+  N1 = np.int((L + 1) / 2)
+  N2 = np.int((L - 1) / 2)
+else:
+  N1 = np.int(L / 2)
+  N2 = np.int(L / 2)
+# Uin = np.linspace(0.0, 10.0, 11)
+# Uin = np.linspace(0.0, 10.0, 51)
+Uin = [10.0,]
+Phils = [0, ]
+# Phils = np.linspace(0, L, 66)
+Vtype = "Box"
+Vin = SetV(L, vtype=Vtype)
+
+dynamics = 1
+Tsteps = 4000
+dt = 0.005
+
+>>>>>>> dev
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "SSH.f"))
 Exac_program = "\n".join(APPs)
@@ -87,9 +128,12 @@ else:
   LN1N2 = "-".join(["FSSHP", "".join(["L", str(L)]), str(N1), str(N2)])
 DATADIR = os.path.join(EXEC_DIR, LN1N2)
 
+<<<<<<< HEAD
 job_id = 0
 RUN_NOW = True
 QSUB = True
+=======
+>>>>>>> dev
 for nphi in Phils:
   phi = nphi * 2.0 * np.pi / np.float64(L)
   for J12 in J12ratio:
@@ -122,6 +166,7 @@ for nphi in Phils:
           dset = para.create_dataset("U", data=U)
           dset = para.create_dataset("phi", data=phi)
           dset = para.create_dataset("V", data=Vin)
+<<<<<<< HEAD
           f.close()
 
           if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \
@@ -146,3 +191,23 @@ for nphi in Phils:
               subprocess.call(qsub_script, shell=True)
               job_id += 1
               RUN_NOW = False
+=======
+          dset = para.create_dataset("dynamics", data=dynamics)
+          dset = para.create_dataset("Tsteps", data=Tsteps)
+          dset = para.create_dataset("dt", data=dt)
+          f.close()
+
+          if Cluster == "Comet" or Cluster == "Stampede":
+            shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, \
+              NumCore=NumThreads, WallTime=WallTime, partition=Partition)
+          elif Cluster == "Merced":
+            shp.WriteQsubSGE("job", Job_Name, Exac_program, workdir, \
+              NumCore=NumThreads, WallTime=WallTime)
+          else:
+            shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
+              NumCore=NumThreads, WallTime=WallTime)
+
+          if QSUB:
+            qsub_script = " ".join([qsub_cmd, "job"])
+            subprocess.call(qsub_script, shell=True)
+>>>>>>> dev
