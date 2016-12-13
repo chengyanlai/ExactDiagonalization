@@ -161,8 +161,8 @@ void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
           /* if yes, no particle in i and one particle in j. */
           size_t p = ibset(b,site_i);
           p = ibclr(p,site_j);
-          bid = bs.FTags.at(b);
-          pid = bs.FTags.at(p);
+          bid = bs.FTags.at(b);// Find their indices
+          pid = bs.FTags.at(p);// Find their indices
           // INFO(lid << " " << pid);
           size_t count;
           if ( species_id == 0 ) {
