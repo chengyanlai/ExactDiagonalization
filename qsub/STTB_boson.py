@@ -11,20 +11,19 @@ import h5py
 import Script_Helpers as shp
 from Clusters import *
 
-NumThreads = 2
+NumThreads = 12
 
 QSUB = True
 
-L = 6
-N = 6
+L = 8
+N = 8
 jaa = 1.0
 jab = np.sqrt(2.)
 TBloc = 0
 # Uin = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0,]
 Uin = [0.1, 5.0]
-# TBloc = L - 1
-# GammaList = [1., 0.1, 0.5, 2., 1.5, 4., ]
-GammaList = [0, 5., 8., 10., 20.]
+# GammaList = [0, 5., 8., 10., 20.]
+GammaList = [1., 3., 5., 7., 9.]
 # GammaList = [0,]
 
 Vin = 0.0
@@ -36,16 +35,16 @@ for U in Uin:
     for Gamma in GammaList:
         APPs = []
         if Gamma:
-            GSfolder = "-".join(["STP", "".join(["L", str(L)]), str(N)])
+            GSfolder = "-".join(["STP", "".join(["J", str(jaa)]), "".join(["L", str(L)]), str(N)])
             OldJobName =  "-".join(["".join(["U", str(U)]), "".join(["V", str(Vin)])])
             GSfile = os.path.join(EXEC_DIR, GSfolder, OldJobName, "GS.h5")
-            LN1N2 = "-".join(["STTB", "".join(["L", str(L)]), str(N)])
+            LN1N2 = "-".join(["STTB", "".join(["J", str(jaa)]), "".join(["L", str(L)]), str(N)])
             Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["V", str(Vin)]),
                                   "".join(["G", str(Gamma)]), "".join(["TB", str(TBloc)])] )
             APPs.append(os.path.join(SRC_DIR, "build", "STTB.b"))
             Exac_program = "\n".join(APPs)
         else:
-            LN1N2 = "-".join(["STP", "".join(["L", str(L)]), str(N)])
+            LN1N2 = "-".join(["STP", "".join(["J", str(jaa)]), "".join(["L", str(L)]), str(N)])
             Job_Name =  "-".join(["".join(["U", str(U)]), "".join(["V", str(Vin)])])
             APPs.append(os.path.join(SRC_DIR, "build", "ST.b"))
             Exac_program = "\n".join(APPs)

@@ -18,32 +18,30 @@ def SetV(L, vtype="Box"):
     sys.exit()
   return V
 
-NumThreads = 12
-WallTime = '480:0:0'
+NumThreads = 10
+WallTime = '24:0:0'
 
 L = 14
-# J12ratio = np.linspace(0.1, 1.0, 10)
-# J12ratio = np.linspace(0.92, 0.98,  4)
 J12ratio = [1.00, ]
-# J12ratio = [0.1, ]
-OBC = 1#1:True
-# OBC = 0# 0:False
+# J12ratio = [2.0, ]
+# OBC = 1# 1:True
+OBC = 0# 0:False (PBC)
 if L % 2 == 1:
   N1 = np.int((L + 1) / 2)
   N2 = np.int((L - 1) / 2)
 else:
   N1 = np.int(L / 2)
   N2 = np.int(L / 2)
-# Uin = np.linspace(0.0, 10.0, 11)
 # Uin = np.linspace(0.0, 10.0, 51)
-Uin = [5.0, 10.0, 20.0]
+# Uin = [0.0, 1.0, 5.0]
+Uin = [0.0, ]#0.20, 0.40]
 Phils = [0, ]
 # Phils = np.linspace(0, L, 66)
 Vtype = "Box"
 Vin = SetV(L, vtype=Vtype)
 
-dynamics = 1
-Tsteps = 0
+dynamics = 0
+Tsteps = 10000
 dt = 0.005
 
 APPs = []
