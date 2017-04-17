@@ -1,14 +1,11 @@
 #!/usr/bin/env python
 # coding=utf-8
-
-import os
-import sys
 import subprocess
-import platform
-import socket
+import os
 import numpy as np
 import h5py
 import Script_Helpers as shp
+from Clusters import *
 
 if(platform.system() == "Linux"):
   QSUB = True
@@ -61,17 +58,27 @@ def SetV(L, Val1=0.0, Val2=0.0, vtype="Box"):
     sys.exit()
   return V
 
-NumThreads = 2
+NumThreads = 12
+WallTime = '24:0:0'
 
 # J12ratio = [0.10, ]#0.20, 0.40, 0.60, 0.80, 1.00]
-# NOTE: Prepare for Terminator Beam
-L = 9
-N = 6
+# NOTE: Testing
+L = 14
+N = 14
 J12ratio = [1.00, ]
 OBC = True
-Uin = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0,]
+Uin = [5.0, 10.0, 20.0, ]
 Vtype = "Box"
 Vin = SetV(L, vtype=Vtype)
+# NOTE: Testing
+# NOTE: Prepare for Terminator Beam
+# L = 9
+# N = 7
+# J12ratio = [1.00, ]
+# OBC = True
+# Uin = [0.0, 0.1, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0,]
+# Vtype = "Box"
+# Vin = SetV(L, vtype=Vtype)
 # NOTE: Prepare for Terminator Beam
 # NOTE: Eqm. Sink
 # L = 15
@@ -134,11 +141,10 @@ for nphi in Phils:
           dset = para.create_dataset("V", data=Vin)
           f.close()
 
-          if socket.gethostname() == 'kagome.rcc.ucmerced.edu' or \
-             socket.gethostname() == 'edgestate.rcc.ucmerced.edu' or \
+          if socket.gethostname() == 'kagome.ucmerced.edu' or \
              socket.gethostname() == 'atomtronics.ucmerced.edu':
-            shp.WriteQsubPBS("qsub.ucmerced", Job_Name, Exac_program, workdir,
-                             NodeName=NodeName, NumCore=NumThreads)
+            shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
+              NumCore=NumThreads, WallTime=WallTime)
           if not QSUB:
             f = open(Job_Name, "w")
             for i in APPs:
@@ -147,11 +153,11 @@ for nphi in Phils:
             f.close()
           else:
             if RUN_NOW:
-              qsub_script = " ".join([qsub_cmd, "qsub.ucmerced"])
+              qsub_script = " ".join([qsub_cmd, "job"])
               if QSUB: subprocess.call(qsub_script, shell=True)
             elif job_id:
               after_id = "".join(["depend=afterany:", str(job_id), ".", socket.gethostname()])
-              qsub_script = " ".join([qsub_cmd, "-W", after_id, "qsub.ucmerced"])
+              qsub_script = " ".join([qsub_cmd, "-W", after_id, "job"])
               print("Run Command - ", qsub_script)
               if QSUB: subprocess.call(qsub_script, shell=True)
               job_id += 1

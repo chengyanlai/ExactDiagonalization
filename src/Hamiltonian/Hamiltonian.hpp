@@ -15,6 +15,7 @@ public:
     SparseMatrixType;
   typedef Eigen::Matrix<Tnum, Eigen::Dynamic, 1, Eigen::AutoAlign> VectorType;
   typedef Eigen::Triplet<Tnum> Triplet;
+  typedef Eigen::Map<MatrixType> MapMatrix;
   Hamiltonian( const std::vector<Basis> &bs );
   virtual ~Hamiltonian();
   inline size_t getTotalHilbertSpace()const{
@@ -25,12 +26,19 @@ public:
     return tmp;
   };
   inline void BuildTotalHamiltonian(){H_total = H_hop + H_local;};
+  // inline void CheckTotalHamiltonian(){H_total.isApprox(H_total)};
   void BuildLocalHamiltonian(
     const std::vector< std::vector<Tnum> > &Vloc,
     const std::vector< std::vector<Tnum> > &Uloc,
     const std::vector<Basis> &bs );
   void BuildHoppingHamiltonian(
     const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt );
+  void BuildHoppingHamiltonian(
+    const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt );
+  void BuildXXZHamiltonian(const Tnum Delta, const std::vector<Basis> &bs,
+    const std::vector< Node<Tnum>* > &lt );
+  void BuildTIsingHamiltonian(const Tnum hz, const std::vector<Basis> &bs,
+    const std::vector< Node<Tnum>* > &lt );
   /* vvvvvvv Boson Functions vvvvvvv */
   void BosonIntraLocalPart( const size_t species_id,
     const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
@@ -48,8 +56,17 @@ public:
     const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Fermion Functions ^^^^^^^ */
-  void eigh( std::vector<RealType> &Val, VectorType &Vec, const bool FullDiagonalization = false );
+  /* vvvvvvv Spin Functions vvvvvvv */
+  void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt,
+    const Basis &bs, std::vector<Triplet> &hhop);
+  void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt,
+    const Basis &bs, std::vector<Triplet> &hhop );
+  /* ^^^^^^^ Spin Functions ^^^^^^^ */
+  void eigh( std::vector<RealType> &Val, VectorType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
+  void diag( RealVectorType &Val, RealMatrixType &Vec);
+  void diag( RealVectorType &Val, ComplexMatrixType &Vec);
+  RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
   inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){

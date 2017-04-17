@@ -97,7 +97,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b# build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/ST.b build/STTB.b# build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -112,6 +112,12 @@ build/SSH.f: build/apps/SSH_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/TBLB.b: build/apps/TBLB_boson.o $(TB_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/ST.b: build/apps/ST_boson.o $(TB_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/STTB.b: build/apps/STTB_boson.o $(TB_OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/SSWF.b: build/apps/SSWF_boson.o $(OBJ)

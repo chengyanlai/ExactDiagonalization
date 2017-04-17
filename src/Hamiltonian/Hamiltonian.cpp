@@ -1,5 +1,6 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/Lanczos/krylov.hpp"
+#include "src/numeric/lapack.h"
 
 template<typename Tnum>
 Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
@@ -46,8 +47,10 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(
     }
     cnt++;
   }
-  /* For inter-species local terms*/
-  //NOTE: Only support two species fermion
+  /* For inter-species local terms
+     NOTE: Only support two species fermion and uniform interactions
+           due to FermionInterLocalPart
+  */
   std::vector<int> sid;
   sid.push_back(0);
   sid.push_back(1);
@@ -83,16 +86,61 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec,
-  const bool FullDiagonalization)
+void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
+  const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt )
+{
+  /* NOTE: This functiuon assume bases live in its own lattice
+          ONLY for fermion now */
+  assert( bs.size() == lt.size() );
+  assert( bs.size() == 2);//NOTE: Only support this right now due to FermionIntraHoppingPart.
+  std::vector<Triplet> hhop;
+  hhop.clear();
+  int cnt = 0;
+  for ( size_t i = 0; i < bs.size(); i++ ){
+    assert( bs.at(i).getL() == lt.at(i).size() );
+    if( bs.at(i).getType() ){//fermion
+      FermionIntraHoppingPart( i, lt.at(i), bs.at(i), hhop );
+    }
+    cnt++;
+  }
+  H_hop.setFromTriplets(hhop.begin(), hhop.end());
+  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+}
+
+template<typename Tnum>
+void Hamiltonian<Tnum>::BuildXXZHamiltonian(const Tnum Delta,
+  const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt )
+{
+  std::vector<Triplet> hhop;
+  hhop.clear();
+  for ( auto &b : bs ){
+    SpinOneHalfXXZ( Delta, lt, b, hhop );
+  }
+  H_hop.setFromTriplets(hhop.begin(), hhop.end());
+  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+}
+
+template<typename Tnum>
+void Hamiltonian<Tnum>::BuildTIsingHamiltonian(const Tnum hz,
+  const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt )
+{
+  std::vector<Triplet> hhop;
+  hhop.clear();
+  for ( auto &b : bs ){
+    TIsing( hz, lt, b, hhop );
+  }
+  H_hop.setFromTriplets(hhop.begin(), hhop.end());
+  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+}
+
+template<typename Tnum>
+void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec)
 {
   size_t dim = getTotalHilbertSpace();
   Vec = VectorType::Random(dim);
-  if( !(FullDiagonalization) ){
-    Tnum* input_ptr = Vec.data();
-    arpackDiagonalize(dim, input_ptr, Val, /*nev*/2, /*tol*/0.0e0);
-    Vec = Eigen::Map<VectorType>(input_ptr, dim);
-  }
+  Tnum* input_ptr = Vec.data();
+  arpackDiagonalize(dim, input_ptr, Val, /*nev*/4, /*tol*/0.0e0);
+  Vec = Eigen::Map<VectorType>(input_ptr, dim);
 }
 
 template<>
@@ -100,6 +148,42 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
   ComplexVectorType &Vec, const size_t Kmax )
 {
   krylov(H_total, Vec, Prefactor, Kmax);
+}
+
+template<>
+void Hamiltonian<RealType>::diag( RealVectorType &Vals, RealMatrixType &Vecs)
+{
+  size_t dim = getTotalHilbertSpace();
+  // convert H_total to dense matrix
+  RealMatrixType dMat = MatrixType(H_total);
+  // working space
+  RealType* EigVec = (RealType*)malloc( dim * dim * sizeof(RealType) );
+  RealType* Eig = (RealType*)malloc( dim * sizeof(RealType) );
+  syDiag(dMat.data(), dim, Eig, EigVec);
+  Vecs = MapMatrix(EigVec, dim, dim);
+  Vals = dMapVector(Eig, dim);
+}
+
+template<>
+void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Vecs)
+{
+  size_t dim = getTotalHilbertSpace();
+  // convert H_total to dense matrix
+  ComplexMatrixType dMat = MatrixType(H_total);
+  // working space
+  ComplexType* EigVec = (ComplexType*)malloc( dim * dim * sizeof(ComplexType) );
+  RealType* Eig = (RealType*)malloc( dim * sizeof(RealType) );
+  syDiag(dMat.data(), dim, Eig, EigVec);
+  Vecs = MapMatrix(EigVec, dim, dim);
+  Vals = dMapVector(Eig, dim);
+}
+
+template<>
+RealVectorType Hamiltonian<RealType>::expVals( const RealType Prefactor,
+  const RealVectorType Vec){
+  RealVectorType out = Prefactor * Vec;
+  Eigen::ArrayXd work = out.array().exp();
+  return work.matrix();
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y

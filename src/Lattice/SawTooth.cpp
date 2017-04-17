@@ -39,3 +39,41 @@ std::vector< Node<RealType>* > SawTooth(const int &L,
   assert( lattice.size() == L );
   return lattice;
 }
+
+std::vector< Node<ComplexType>* > SawTooth(const int &L,
+  const std::vector<ComplexType> JAB, const std::vector<ComplexType> JAA,
+  const bool OBC){
+  if ( OBC ){
+    assert( L % 2 == 1 );
+    assert( JAB.size() == L - 1);
+    assert( JAA.size() == (L - 1) / 2);
+  }else{
+    assert( L % 2 == 0 );
+    assert( JAB.size() == L );
+    assert( JAA.size() == L/2 );
+  }
+  std::vector< Node<ComplexType>* > lattice;
+  int cnt = 0;
+  int cntAA = 0;
+  while ( cnt < L ) {
+    if ( lattice.size() == 0 ) {
+      Node<ComplexType> *A = new Node<ComplexType>(cnt);
+      lattice.push_back(A);
+    } else if ( cnt % 2 == 1 ) {
+      Node<ComplexType> *B = new Node<ComplexType>(cnt, lattice[cnt-1], JAB[cnt-1]);
+      lattice.push_back(B);
+    } else {
+      Node<ComplexType> *A = new Node<ComplexType>(cnt, lattice[cnt-1], JAB[cnt-1]);
+      A->LinkTo(lattice[cnt-2], JAA[cntAA]);
+      lattice.push_back(A);
+      cntAA++;
+    }
+    cnt++;
+  }
+  if ( !(OBC) ){
+    lattice[0]->LinkTo( lattice[L-1], JAB[L-1] );
+    lattice[0]->LinkTo( lattice[L-2], JAA[L/2-1] );
+  }
+  assert( lattice.size() == L );
+  return lattice;
+}

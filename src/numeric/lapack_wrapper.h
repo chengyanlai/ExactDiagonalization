@@ -28,6 +28,9 @@ void dgesvd_( const char* jobu, const char* jobvt, const int32_t* m,
 void dsyev_( const char* jobz, const char* uplo, const int32_t* n, double* a,
              const int32_t* lda, double* w, double* work, const int32_t* lwork,
              int32_t* info );
+void zheev_( const char* jobz, const char* uplo, const int32_t* n, std::complex<double>* a,
+             const int32_t* lda, double* w, std::complex<double>* work, const int32_t* lwork,
+             const double* rwork, int32_t* info );
 
 void dstev_( const char* jobz, const int32_t* n, const double* d, const double* e, const double* z,
              const int32_t* ldaz, const double* work, int32_t* info );
@@ -57,6 +60,11 @@ inline void dsyev( const char* jobz, const char* uplo, const int32_t* n, double*
              const int32_t* lda, double* w, double* work, const int32_t* lwork,
              int32_t* info )
 { dsyev_(  jobz,  uplo,  n,  a, lda, w,  work,  lwork, info ); }
+
+inline void zheev( const char* jobz, const char* uplo, const int32_t* n, std::complex<double>* a,
+             const int32_t* lda, double* w, std::complex<double>* work, const int32_t* lwork,
+             const double* rwork, int32_t* info )
+{ zheev_(  jobz,  uplo,  n,  a, lda, w,  work,  lwork, rwork, info ); }
 
 inline void dgesvd( const char* jobu, const char* jobvt, const int32_t* m,
               const int32_t* n, double* a, const int32_t* lda, double* s,

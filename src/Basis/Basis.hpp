@@ -27,6 +27,8 @@ public:
   void Boson();
   void BosonTB( const size_t TBloc, const bool HARD_CUT = false );
   void Fermion();
+  void SpinOneHalf();
+  void TIsing();
   void Save( const std::string filename, const std::string gname );
   void Load( const std::string filename, const std::string gname );
   inline bool getType()const{return isFermion;};
@@ -38,10 +40,12 @@ public:
     } else {
       return BStates.size();
     }
-  }
-  inline std::vector<int> getFStates()const{return FStates;};//for Fermion
-  inline std::vector<size_t> getFTags()const{return FTags;};//for Fermion
+  };
+  inline std::vector<int> getFStates()const{return FStates;};//for Fermion and SpinOneHalf
+  inline std::vector<size_t> getFTags()const{return FTags;};//for Fermion and SpinOneHalf
+  inline int getSzTotal(const size_t idx)const{return SzTotal.at(idx);};//for Ising spin
   void printFermionBasis( const int state )const;
+  void printSpinOneHalfBasis( const int state )const;
   inline std::vector< std::vector<int> > getBStates()const{return BStates;};//for Boson
   inline std::vector<RealType> getBTags()const{return BTags;};//for Boson
   inline size_t getIndexFromTag( const RealType tg )const{
@@ -60,8 +64,9 @@ private:
   bool isFermion;
   std::vector< std::vector<int> > BStates;//for Boson
   std::vector<RealType> BTags;//for Boson
-  std::vector<int> FStates;//for Fermion
-  std::vector<size_t> FTags;//for Fermion
+  std::vector<int> FStates;//for Fermion, and SpinOneHalf.
+  std::vector<size_t> FTags;//for Fermion, and SpinOneHalf.
+  std::vector<int> SzTotal;//for Transverse Ising
 };
 
 RealType BosonBasisTag( const std::vector<int> vec );

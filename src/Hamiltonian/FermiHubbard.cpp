@@ -151,14 +151,32 @@ void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
   size_t bid = 0, pid = 0;//l and p's index
   for ( int b : bs.FStates ){
     for ( Node<Tnum>* l : lt ) {
-      size_t site_i = l->data;
+      int site_i = l->data;
       std::vector< Node<Tnum>* > nn = l->getNeighbors();
       std::vector< Tnum > nnJ = l->getJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
-        size_t site_j = nn.at(cnt)->data;// hopping from site-j to site-i
+        int site_j = nn.at(cnt)->data;// hopping from site-j to site-i
         /* see if hopping exist */
         if ( btest(b, site_j) && !(btest(b, site_i)) ) {
           /* if yes, no particle in i and one particle in j. */
+          int CrossFermionNumber = 0;
+          Tnum tsign = (Tnum)(1.0e0);
+          if ( std::labs(site_i - site_j) > 1 ){
+            // possible cross fermions and sign change.
+            if ( site_i > site_j ){
+              for ( int k = site_j+1; k < site_i; k++){
+                CrossFermionNumber += btest(b, k);
+              }
+            }else if ( site_i < site_j ){
+              for ( int k = site_i+1; k < site_j; k++){
+                CrossFermionNumber += btest(b, k);
+              }
+            }else{
+              std::cout << "Something wrong in hopping sign......" << std::endl;
+            }
+            std::cout << "Sign change " << site_i << " " << site_j << " " << CrossFermionNumber << std::endl;
+          }
+          if (CrossFermionNumber % 2 == 1) tsign = (Tnum)(-1.0e0);
           size_t p = ibset(b,site_i);
           p = ibclr(p,site_j);
           bid = bs.FTags.at(b);// Find their indices
@@ -182,10 +200,8 @@ void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
             }
             rid = DetermineTotalIndex( rids );
             cid = DetermineTotalIndex( cids );
-            Tnum value = (Tnum)(-1.0e0) * nnJ.at(cnt);
+            Tnum value = (Tnum)(-1.0e0) * tsign * nnJ.at(cnt);
             hhop.push_back(Triplet(rid, cid, value));
-            // hhop.push_back(Triplet(cid, rid, value));
-            // INFO( rid << " " <<  cid << " " <<  value );
           }
         }
       }

@@ -20,7 +20,7 @@
 #endif
 
 #ifndef NumCores
-#define NumCores 2
+#define NumCores 12
 #endif
 
 // #define DTYPE 0//comment out this to use complex
@@ -85,25 +85,13 @@ int main(int argc, char const *argv[]) {
   if ( OBC ){
     // J = std::vector<DT>(L - 1, 0.0);// NOTE: Atomic limit testing
     J = std::vector<DT>(L - 1, 1.0);
-    if ( J12ratio > 1.0e0 ) {
-      for (size_t cnt = 1; cnt < L-1; cnt+=2) {
-        J.at(cnt) /= J12ratio;
-      }
-    } else{
-      for (size_t cnt = 0; cnt < L-1; cnt+=2) {
-        J.at(cnt) *= J12ratio;
-      }
+    for (size_t cnt = 0; cnt < L-1; cnt+=2) {
+      J.at(cnt) *= J12ratio;
     }
   } else{
     J = std::vector<DT>(L, 1.0);
-    if ( J12ratio > 1.0e0 ) {
-      for (size_t cnt = 1; cnt < L; cnt+=2) {
-        J.at(cnt) /= J12ratio;
-      }
-    } else{
-      for (size_t cnt = 0; cnt < L; cnt+=2) {
-        J.at(cnt) *= J12ratio;
-      }
+    for (size_t cnt = 0; cnt < L; cnt+=2) {
+      J.at(cnt) *= J12ratio;
     }
 #ifndef DTYPE
     if ( std::abs(phi) > 1.0e-10 ){

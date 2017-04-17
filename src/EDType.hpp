@@ -3,6 +3,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <complex>
+#include <cmath>
 
 #define INFO(MSG)             std::cout << MSG << std::endl
 #define INFO_NONEWLINE(MSG)   std::cout << MSG << std::flush
@@ -20,4 +21,5 @@ typedef double RealType;
 /** Complex type. */
 typedef std::complex<double> ComplexType;
 
+const RealType PI = std::atan(1.0)*4.0;
 #endif//__EDTYPE_H__

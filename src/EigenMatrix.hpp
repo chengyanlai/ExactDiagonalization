@@ -23,6 +23,12 @@ typedef Eigen::Matrix<int, Eigen::Dynamic, 1, Eigen::AutoAlign> IntVectorType;
 // typedef Eigen::SelfAdjointEigenSolver<MatrixType> Dia;
 // typedef Eigen::JacobiSVD<MatrixType> SVD;
 
+/** Map from C/C++ array*/
+typedef Eigen::Map<RealVectorType> dMapVector;
+typedef Eigen::Map<ComplexVectorType> zMapVector;
+typedef Eigen::Map<RealMatrixType, Eigen::RowMajor> dMapMatrix;
+typedef Eigen::Map<ComplexMatrixType, Eigen::RowMajor> zMapMatrix;
+
 /** Sparse complex matrix. */
 typedef Eigen::SparseMatrix<ComplexType, Eigen::AutoAlign|Eigen::RowMajor> ComplexSparseMatrixType;
 /** Sparse real matrix. */
