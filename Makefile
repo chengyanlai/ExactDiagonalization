@@ -53,7 +53,7 @@ else
 	CC = icpc $(OPENMP) -DNumCores=$(NumCores) -O3 -Wall -std=c++11 -Isrc/ -I$(HDF5HOME)/include -I$(EIGENHOME) -DMKL
 endif
 
-MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io
+MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io numeric
 SRC_DIR   := $(addprefix src/,$(MODULES))
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
@@ -97,7 +97,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/ST.b build/STTB.b# build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/ST.b build/STTB.b build/TIsing build/Benzene build/CreutzLadder.XXZ# build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -130,6 +130,15 @@ build/SSOP.b: build/apps/SSOP_boson.o $(OP_OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/SSt.b: build/apps/SSt_boson.o $(SS_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/TIsing: build/apps/1D_TIsing.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/Benzene: build/apps/Benzene.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/CreutzLadder.XXZ: build/apps/CreutzLadder_XXZ.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
