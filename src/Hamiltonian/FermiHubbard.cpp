@@ -50,10 +50,12 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
   std::vector< std::vector<size_t> > IndexU2;
   size_t point1, point2;
   int TotalN = bs.at(0).getN() + bs.at(1).getN();
-  /*NOTE: Build the IndexU1 and IndexU2. */
+  /*NOTE: Build the IndexU1 and IndexU2.
+          IndexU has all index of species-1 which has occupied particle at site-i (if filling is less than half)
+  */
   for (size_t i = 0; i < bs.at(0).getL(); i++) {
     std::vector<size_t> work;
-    point1 = 0;
+    point1 = 0;// point1 will be the same for all i
     for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(species_id.at(0)); cnt_up++) {
       if ( TotalN <= bs.at(0).getL() ) {
         if ( btest(bs.at(0).FStates.at(cnt_up), i) ) {
@@ -76,9 +78,9 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
     IndexU2 = IndexU1;
   }
   else{
-    for (size_t i = 0; i < bs.at(0).getL(); i++) {
+    for (size_t i = 0; i < bs.at(1).getL(); i++) {
       std::vector<size_t> work;
-      point2 = 0;
+      point2 = 0;// point2 will be the same for all i
       for (size_t cnt_dn = 0; cnt_dn < HilbertSpaces.at(species_id.at(1)); cnt_dn++) {
         if ( TotalN <= bs.at(1).getL() ) {
           if ( btest(bs.at(1).FStates.at(cnt_dn), i) ) {
@@ -103,6 +105,7 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
     g = Uloc * (Tnum)( TotalN - bs.at(0).getL() );
     for (size_t cnt = 0; cnt < getTotalHilbertSpace(); cnt++) {
       hloc.push_back(Triplet(cnt, cnt, g));
+      // std::cout << "1 " << cnt << " " << cnt << " " << g << std::endl;
     }
   }
   if ( bs.at(0).getN() == bs.at(1).getN() ) {
@@ -128,15 +131,75 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
             ids.at(1) = IndexU2.at(i).at(dn);
             size_t id = DetermineTotalIndex( ids );
             hloc.push_back(Triplet(id, id, Uloc));
+            // std::cout << "2 " << id << " " << id << " " << Uloc << std::endl;
           }
-        }
-        else {
+        }else {
           std::vector<size_t> ids(2,0);
           ids.at(0) = IndexU1.at(i).at(up);
           ids.at(1) = IndexU2.at(i).at(dn);
           size_t id = DetermineTotalIndex( ids );
           hloc.push_back(Triplet(id, id, Uloc));
         }
+      }
+    }
+  }
+}
+
+template<typename Tnum>
+void Hamiltonian<Tnum>::FermionInterLocalPart(
+  const std::vector<int> species_id, const std::vector<Tnum> &Uloc,
+  const std::vector<Basis> &bs, std::vector<Triplet> &hloc )
+{
+  /*NOTE: Calculate interaction between any two input bases.
+          Assume two input bases has the same L. */
+  assert( bs.size() == 2 );
+  assert( bs.at(0).getL() == bs.at(1).getL() );
+  std::vector< std::vector<size_t> > IndexU1;
+  std::vector< std::vector<size_t> > IndexU2;
+  size_t point1, point2;
+  /*NOTE: Build the IndexU1 and IndexU2.
+          IndexU has all index of species-1 which has occupied particle at site-i
+  */
+  for (size_t i = 0; i < bs.at(0).getL(); i++) {
+    std::vector<size_t> work;
+    point1 = 0;// point1 will be the same for all i
+    for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(species_id.at(0)); cnt_up++) {
+      if ( btest(bs.at(0).FStates.at(cnt_up), i) ) {
+        point1++;
+        work.push_back(cnt_up);
+      }
+    }
+    IndexU1.push_back(work);
+    work.clear();
+  }
+  if ( bs.at(0).getN() == bs.at(1).getN() ) {
+    point2 = point1;
+    IndexU2 = IndexU1;
+  }
+  else{
+    for (size_t i = 0; i < bs.at(1).getL(); i++) {
+      std::vector<size_t> work;
+      point2 = 0;// point2 will be the same for all i
+      for (size_t cnt_dn = 0; cnt_dn < HilbertSpaces.at(species_id.at(1)); cnt_dn++) {
+        if ( btest(bs.at(1).FStates.at(cnt_dn), i) ) {
+          point2++;
+          work.push_back(cnt_dn);
+        }
+      }
+      IndexU2.push_back(work);
+      work.clear();
+    }
+  }
+  // Calculate the interactions
+  for (size_t i = 0; i < bs.at(0).getL(); i++) {
+    for (size_t up = 0; up < point1; up++) {
+      for (size_t dn = 0; dn < point2; dn++) {
+        std::vector<size_t> ids(2,0);
+        ids.at(0) = IndexU1.at(i).at(up);
+        ids.at(1) = IndexU2.at(i).at(dn);
+        size_t id = DetermineTotalIndex( ids );
+        hloc.push_back(Triplet(id, id, Uloc.at(i)));
+        // std::cout << "2 " << id << " " << id << " " << Uloc << std::endl;
       }
     }
   }

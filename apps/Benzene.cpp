@@ -53,14 +53,14 @@ ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vec
         if ( btest(b, j) && !(btest(b, i)) ) {
           /* c^\dagger_i c_j if yes, no particle in i and one particle in j. */
           int CrossFermionNumber = 0;
-          ComplexType tsign = (ComplexType)(1.0e0);
+          ComplexType tsign = ComplexType(1.0e0, 0.0e0);
           if ( j - i > 1 ){
             // possible cross fermions and sign change.
             for ( int k = i+1; k < j; k++){
               CrossFermionNumber += btest(b, k);
             }
           }
-          if (CrossFermionNumber % 2 == 1) tsign = (ComplexType)(-1.0e0);
+          if (CrossFermionNumber % 2 == 1) tsign = ComplexType(-1.0e0, 0.0e0);
           int p = ibset(b, i);
           p = ibclr(p, j);
           size_t pid = tg.at(p);// Find their indices
@@ -104,8 +104,9 @@ int main(int argc, char const *argv[]) {
 #endif
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   const int L = 6;
-  const RealType lambda = 2.0e0 * PI / 2.0e0;
-  const int N1 = 3, N2 = 3;
+  const RealType lambda = 1.0e0;
+  const RealType phi = 0.20e0 * PI;
+  const int N1 = 4, N2 = 4;
   const int dynamics = 0, Tsteps = 0;
   const RealType Uin = 0.0, dt = 0.0;
   const std::vector<RealType> Vin(L, 0.0e0);
@@ -117,27 +118,28 @@ int main(int argc, char const *argv[]) {
   file->saveStdVector("1DChain", "J", J);
   std::vector< Node<ComplexType>* > latticeUP = NN_1D_Chain(L, J, false);// must be PBC
   // Add the SOC links
-  ComplexType vSOC = exp(ComplexType(0.0e0, 1.0e0) * lambda);
-  ComplexType SOC = vSOC;
-  if ( std::abs(vSOC.real()) < 1.0e-12 ) SOC = ComplexType(0.0e0, vSOC.imag());
-  if ( std::abs(vSOC.imag()) < 1.0e-12 ) SOC = ComplexType(vSOC.real(), 0.0e0);
+  const ComplexType SOC = lambda * exp(ComplexType(0.0e0, 1.0e0) * phi);
+  // ComplexType vSOC = lambda * exp(ComplexType(0.0e0, 1.0e0) * phi);
+  // ComplexType SOC = vSOC;
+  // if ( std::abs(vSOC.real()) < 1.0e-12 ) SOC = ComplexType(0.0e0, vSOC.imag());
+  // if ( std::abs(vSOC.imag()) < 1.0e-12 ) SOC = ComplexType(vSOC.real(), 0.0e0);
   latticeUP.at(0)->LinkTo(latticeUP.at(2), SOC);
-  latticeUP.at(2)->LinkTo(latticeUP.at(4), SOC);
-  latticeUP.at(4)->LinkTo(latticeUP.at(0), SOC);
-  latticeUP.at(1)->LinkTo(latticeUP.at(3), SOC);
-  latticeUP.at(3)->LinkTo(latticeUP.at(5), SOC);
-  latticeUP.at(5)->LinkTo(latticeUP.at(1), SOC);
+  // latticeUP.at(2)->LinkTo(latticeUP.at(4), SOC);
+  // latticeUP.at(4)->LinkTo(latticeUP.at(0), SOC);
+  // latticeUP.at(1)->LinkTo(latticeUP.at(3), SOC);
+  // latticeUP.at(3)->LinkTo(latticeUP.at(5), SOC);
+  // latticeUP.at(5)->LinkTo(latticeUP.at(1), SOC);
   for ( auto &lt : latticeUP ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong latticeUP setup!");
   }
   std::vector< Node<ComplexType>* > latticeDN = NN_1D_Chain(L, J, false);// must be PBC
   // Add the SOC links
   latticeDN.at(0)->LinkTo(latticeDN.at(2),-SOC);
-  latticeDN.at(2)->LinkTo(latticeDN.at(4),-SOC);
-  latticeDN.at(4)->LinkTo(latticeDN.at(0),-SOC);
-  latticeDN.at(1)->LinkTo(latticeDN.at(3),-SOC);
-  latticeDN.at(3)->LinkTo(latticeDN.at(5),-SOC);
-  latticeDN.at(5)->LinkTo(latticeDN.at(1),-SOC);
+  // latticeDN.at(2)->LinkTo(latticeDN.at(4),-SOC);
+  // latticeDN.at(4)->LinkTo(latticeDN.at(0),-SOC);
+  // latticeDN.at(1)->LinkTo(latticeDN.at(3),-SOC);
+  // latticeDN.at(3)->LinkTo(latticeDN.at(5),-SOC);
+  // latticeDN.at(5)->LinkTo(latticeDN.at(1),-SOC);
   for ( auto &lt : latticeDN ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong latticeDN setup!");
   }
@@ -192,8 +194,9 @@ int main(int argc, char const *argv[]) {
   file->saveVector("GS", "EValAll", AllVal);
   file->saveMatrix("GS", "EVecAll", AllVec);
   Val.push_back(AllVal(0));
-  Vec = AllVec.col(0);
-  std::cout << "Eigenenergies = " << AllVal << std::endl;
+  Vec = AllVec.row(0);
+  // std::cout << "Eigenenergies = " << AllVal << std::endl;
+  std::cout << "Eigenenergies = " << AllVal(0) << " " << AllVal(1) << std::endl;
   // INFO("GS energy = " << Val.at(0));
   file->saveVector("GS", "EVec", Vec);
   file->saveStdVector("GS", "EVal", Val);
@@ -233,35 +236,6 @@ int main(int argc, char const *argv[]) {
   file->saveMatrix("Obs", "CMup", CMup);
   file->saveMatrix("Obs", "CMdn", CMdn);
   delete file;
-  // if ( dynamics ){
-  //   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-  //   std::cout << "Begin dynamics......" << std::endl;
-  //   std::cout << "Cut the boundary." << std::endl;
-  //   J.pop_back();
-  //   std::vector< Node<ComplexType>* > lattice2 = NN_1D_Chain(L, J, true);// cut to open
-  //   ham.BuildHoppingHamiltonian(Bases, lattice2);
-  //   INFO(" - Update Hopping Hamiltonian DONE!");
-  //   ham.BuilComplexTypeotalHamiltonian();
-  //   INFO(" - Update Total Hamiltonian DONE!");
-  //   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-  //     ham.expH(Prefactor, Vec);
-  //     if ( cntT % 2 == 0 ){
-  //       HDF5IO file2("DYN.h5");
-  //       std::string gname = "Obs-";
-  //       gname.append(std::to_string((unsigned long long)cntT));
-  //       gname.append("/");
-  //       Nfi = Ni( Bases, Vec, ham );
-  //       Nud = NupNdn( Bases, Vec, ham );
-  //       Nuu = NupNup( Bases, Vec, ham );
-  //       Ndd = NdnNdn( Bases, Vec, ham );
-  //       file2.saveVector(gname, "Nup", Nfi.at(0));
-  //       file2.saveVector(gname, "Ndn", Nfi.at(1));
-  //       file2.saveMatrix(gname, "NupNdn", Nud);
-  //       file2.saveMatrix(gname, "NupNup", Nuu);
-  //       file2.saveMatrix(gname, "NdnNdn", Ndd);
-  //     }
-  //   }
-  // }
   return 0;
 }
 

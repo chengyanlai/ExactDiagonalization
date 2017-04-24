@@ -107,6 +107,11 @@ int main(int argc, char const *argv[]) {
   S12.SpinOneHalf();
   std::vector<int> st1 = S12.getFStates();
   std::vector<size_t> tg1 = S12.getFTags();
+  for ( auto st : st1 ){
+    std::cout << st << " - " << std::flush;
+    S12.printFermionBasis(st);
+    std::cout << std::endl;
+  }
   file->saveNumber("Basis", "Sup", N);
   file->saveStdVector("Basis", "SStates", st1);
   file->saveStdVector("Basis", "STags", tg1);

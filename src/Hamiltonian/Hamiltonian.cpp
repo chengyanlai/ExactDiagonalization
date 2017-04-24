@@ -55,7 +55,8 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(
   sid.push_back(0);
   sid.push_back(1);
   if ( bs.size() == 2 && bs.at(0).getType() && bs.at(1).getType() ){
-    FermionInterLocalPart(sid, Uloc.at(0).at(0), bs, hloc);
+    FermionInterLocalPart(sid, Uloc.at(0), bs, hloc);
+    // FermionInterLocalPart(sid, Uloc.at(0).at(0), bs, hloc);
   }
   H_local.setFromTriplets(hloc.begin(), hloc.end());
   std::cout << "Non-zero matrix elements = " << hloc.size() << std::endl;

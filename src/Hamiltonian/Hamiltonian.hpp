@@ -52,6 +52,8 @@ public:
     const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc );
   void FermionInterLocalPart( const std::vector<int> species_id, const Tnum &Uloc,
       const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
+  void FermionInterLocalPart( const std::vector<int> species_id, const std::vector<Tnum> &Uloc,
+      const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
   void FermionIntraHoppingPart( const size_t species_id,
     const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );

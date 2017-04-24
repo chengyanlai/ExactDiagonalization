@@ -15,8 +15,8 @@ WallTime = '24:0:0'
 
 L = 6
 Nup = 3# Ndn = L - Nup
-# OBC = 1# 1:True
-OBC = 0# 0:False (PBC)
+OBC = 1# 1:True
+# OBC = 0# 0:False (PBC)
 
 JAA = 1.0
 JBB = 1.0 * JAA

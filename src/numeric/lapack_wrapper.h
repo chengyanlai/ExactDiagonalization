@@ -2,6 +2,7 @@
 #define LAPACK_WRAPPER_H
 #include <stdexcept>
 #include <cstdint>
+#include <complex>
 extern "C" {
 // BLAS functions
 void dgemm_(const char *transa, const char *transb, const int32_t *m, const int32_t *n, const int32_t *k,

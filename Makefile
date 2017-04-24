@@ -97,7 +97,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/ST.b build/STTB.b build/TIsing build/Benzene build/CreutzLadder.XXZ# build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/TIsing build/Benzene build/CreutzLadder.XXZ build/xas.f# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -139,6 +139,9 @@ build/Benzene: build/apps/Benzene.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/CreutzLadder.XXZ: build/apps/CreutzLadder_XXZ.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/xas.f: build/apps/XAS_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)

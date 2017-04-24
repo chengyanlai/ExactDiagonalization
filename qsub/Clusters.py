@@ -22,7 +22,7 @@ if platform.system() == "Linux":
     Cluster = "Merced"
     MaxNumThreads = 20
     MaxWallTime = '24:0:0'
-    qsub_cmd = "qsub"
+    qsub_cmd = "qsub -q std.q"
     if len(sys.argv) > 1:
       qsub_cmd = ' '.join([ qsub_cmd, ' '.join(sys.argv[1:]) ])
     SRC_DIR = "/home/clai24/GitRepo/ExactDiagonalization"

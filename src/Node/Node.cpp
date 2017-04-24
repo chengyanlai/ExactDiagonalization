@@ -12,7 +12,6 @@ Node<Tnum>::Node(const size_t &item, Node<Tnum>* p, Tnum J, std::string sublatti
 {
   this->NumLinks = 0;
   this->label = sublattice;
-  // this->NumNodes++;
   this->data = item;
   if ( p != NULL ){
     LinkTo(p, J);
