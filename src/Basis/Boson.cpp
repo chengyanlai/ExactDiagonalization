@@ -92,6 +92,7 @@ void Basis::BosonTB( const size_t TBloc, const bool HARD_CUT )
   assert( BStates.size() == BTags.size() );
 }
 
+/* This has to be unique number to tag boson basis state. */
 RealType BosonBasisTag( const std::vector<int> vec ){
   RealType tag = 0.0e0;
   int cnt = 0;

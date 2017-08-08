@@ -11,11 +11,15 @@ NODE = $(shell uname -n)
 endif
 
 ifeq ("$(OS)", "Darwin")
-	EIGENHOME = /Volumes/Files/PublicRepo/eigen
-	HDF5HOME = /usr/local/opt/hdf5
+	EIGENHOME = /Users/chengyanlai/.bin/eigen
+	HDF5HOME = /Users/chengyanlai/.bin/HDF5/1.10.1
+	# EIGENHOME = /Volumes/Files/PublicRepo/eigen
+	# HDF5HOME = /usr/local/opt/hdf5
 	NumCores = 1
-	HDF5LIB = -L$(HDF5HOME)/lib -lhdf5 -lhdf5_cpp
-	LAPACK = -lblas -llapack -lm -larpack
+	HDF5LIB = $(HDF5HOME)/lib/libhdf5_cpp.a $(HDF5HOME)/lib/libhdf5.a $(HDF5HOME)/lib/libz.a $(HDF5HOME)/lib/libszip.a
+	LAPACK = -lblas -llapack -lm -L/Users/chengyanlai/.bin/lib -larpack
+	# HDF5LIB = -L$(HDF5HOME)/lib -lhdf5 -lhdf5_cpp
+	# LAPACK = -lblas -llapack -lm -larpack
 	CC = clang++ -O3 -m64 -std=c++11 -stdlib=libc++ -Isrc/ -I$(HDF5HOME)/include -I$(EIGENHOME)
 else
 	ifeq ("$(NODE)", "kagome.ucmerced.edu")
