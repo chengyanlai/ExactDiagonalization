@@ -14,7 +14,7 @@ if platform.system() == "Linux":
     qsub_cmd = "qsub"
     if len(sys.argv) > 1:
       qsub_cmd = ' '.join([ qsub_cmd, ' '.join(sys.argv[1:]) ])
-      if any("fast" in s for s in sys.argv):
+      if any("short" in s for s in sys.argv):
         MaxNumThreads = 12
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"

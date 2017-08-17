@@ -48,7 +48,7 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(
     cnt++;
   }
   /* For inter-species local terms
-     NOTE: Only support two species fermion and uniform interactions
+     NOTE: Only support two species fermion
            due to FermionInterLocalPart
   */
   std::vector<int> sid;
@@ -88,8 +88,7 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
-  const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt )
-{
+  const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt ){
   /* NOTE: This functiuon assume bases live in its own lattice
           ONLY for fermion now */
   assert( bs.size() == lt.size() );

@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <complex>
 #include <cmath>
+#include <vector>
 
 #define INFO(MSG)             std::cout << MSG << std::endl
 #define INFO_NONEWLINE(MSG)   std::cout << MSG << std::flush
@@ -22,4 +23,14 @@ typedef double RealType;
 typedef std::complex<double> ComplexType;
 
 const RealType PI = std::atan(1.0)*4.0;
+
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1) ;
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  return A ;
+}
 #endif//__EDTYPE_H__

@@ -6,8 +6,7 @@
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::FermionIntraLocalPart( const size_t species_id,
-  const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc )
-{
+  const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc ){
   int state_id = 0;
   for ( int b : bs.FStates ){
     Tnum val = (Tnum)0.0;
@@ -39,8 +38,7 @@ void Hamiltonian<Tnum>::FermionIntraLocalPart( const size_t species_id,
 template<typename Tnum>
 void Hamiltonian<Tnum>::FermionInterLocalPart(
   const std::vector<int> species_id, const Tnum &Uloc,
-  const std::vector<Basis> &bs, std::vector<Triplet> &hloc )
-{
+  const std::vector<Basis> &bs, std::vector<Triplet> &hloc ){
   /*NOTE: Calculate interaction between any two input bases.
   Assume two input bases has the same L.
   Assume the interaction is uniform in space.*/
@@ -148,8 +146,7 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
 template<typename Tnum>
 void Hamiltonian<Tnum>::FermionInterLocalPart(
   const std::vector<int> species_id, const std::vector<Tnum> &Uloc,
-  const std::vector<Basis> &bs, std::vector<Triplet> &hloc )
-{
+  const std::vector<Basis> &bs, std::vector<Triplet> &hloc ){
   /*NOTE: Calculate interaction between any two input bases.
           Assume two input bases has the same L. */
   assert( bs.size() == 2 );
@@ -208,8 +205,7 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
 template<typename Tnum>
 void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
   const std::vector< Node<Tnum>* > &lt,
-  const Basis &bs, std::vector<Triplet> &hhop )
-{
+  const Basis &bs, std::vector<Triplet> &hhop ){
   size_t rid, cid;
   size_t bid = 0, pid = 0;//l and p's index
   for ( int b : bs.FStates ){
@@ -237,11 +233,16 @@ void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
             }else{
               std::cout << "Something wrong in hopping sign......" << std::endl;
             }
-            std::cout << "Sign change " << site_i << " " << site_j << " " << CrossFermionNumber << std::endl;
+            // std::cout << "Sign change " << site_i << " " << site_j << " " << CrossFermionNumber << std::endl;
           }
           if (CrossFermionNumber % 2 == 1) tsign = (Tnum)(-1.0e0);
           size_t p = ibset(b,site_i);
           p = ibclr(p,site_j);
+          // std::cout << site_i << " " << site_j << " " << b << " " << p << " " << bs.FTags.size() << std::endl;
+          // bs.printFermionBasis(b);
+          // std::cout << "->" << std::flush;
+          // bs.printFermionBasis(p);
+          // std::cout << "." << std::endl;
           bid = bs.FTags.at(b);// Find their indices
           pid = bs.FTags.at(p);// Find their indices
           // INFO(lid << " " << pid);
