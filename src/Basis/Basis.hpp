@@ -25,6 +25,7 @@ public:
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
   void Boson();
+  void Boson( const int MinB );
   void BosonTB( const size_t TBloc, const bool HARD_CUT = false );
   void Fermion();
   void SpinOneHalf();
@@ -48,6 +49,7 @@ public:
   void printSpinOneHalfBasis( const int state )const;
   inline std::vector< std::vector<int> > getBStates()const{return BStates;};//for Boson
   inline std::vector<RealType> getBTags()const{return BTags;};//for Boson
+  void printBosonBasis( const std::vector<int> state )const;//for Boson
   inline size_t getIndexFromTag( const RealType tg )const{
     assert( !(isFermion) );
     auto it = binary_locate(BTags.begin(), BTags.end(), tg);

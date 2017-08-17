@@ -107,7 +107,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/TIsing build/Benzene build/CreutzLadder.XXZ build/xas.f build/loop.f# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
+all: checkdirs build/loop.f build/xas.f# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@

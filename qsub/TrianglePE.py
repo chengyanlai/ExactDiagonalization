@@ -17,7 +17,8 @@ t23 = 1.0
 Vin = 0.0
 Uin = [0.0, 1.0, 0.1, 5.0, 10.0]
 # GammaList = np.logspace(-0.3, 1.8, num=50)
-GammaList = np.logspace(0., 1.2, num=20)
+# GammaList = np.logspace(0., 1.2, num=20)
+GammaList = [0.1,]# Small gamma search for j13 = 0.1
 
 # NOTE: Dynamics parameters
 Tsteps = 8000# Tstep * dt is final time
@@ -37,7 +38,8 @@ for U in Uin:
     cntG = 0
     for GammaL in GammaList:
       GammaR = GammaL
-      Job_Name =  "".join(["G", str(cntG),])
+      # Job_Name =  "".join(["G", str(cntG),])
+      Job_Name =  "".join(["Search", str(cntG),])
       workdir = os.path.join(DATADIR, Job_Name)
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2

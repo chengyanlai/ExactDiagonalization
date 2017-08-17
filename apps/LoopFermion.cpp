@@ -23,7 +23,7 @@
 #define NumCores 1
 #endif
 
-#define FIXJ13 0
+#define FIXJ13 1
 
 const int L = 3;
 const int N1 = L;// Open system has no upper limit
@@ -277,15 +277,26 @@ int main(int argc, char const *argv[]) {
 
   std::cout << "Dynamics begins..." << std::endl;
   size_t MaxTry = 0;
-#if FIXJ13
-  RealType FinalJ13 = 1.0e10, PrevJ13 = 0.0e0;
-  const RealType Target13 = 0.10e0;
-  const RealType J13Tol = 1.0e-10;
-  while ( (std::abs(TargetJ13 - FinalJ13) > J13Tol) && MaxTry < 1000 ){
-#endif
   std::vector<RealType> tls;
   std::vector<ComplexType> Na, Nb, Nc, n12, n13, n23, NaUp;
   std::vector<ComplexType> j12, j23, j13;
+#if FIXJ13
+  RealType FinalJ13 = 1.0e10, PrevJ13 = 0.0e0;
+  const RealType TargetJ13 = 0.10e0;
+  const RealType J13Tol = 1.0e-10;
+  while ( (std::abs(TargetJ13 - FinalJ13) > J13Tol) && MaxTry < 1000 ){
+#endif
+  tls.clear();
+  Na.clear();
+  Nb.clear();
+  Nc.clear();
+  n12.clear();
+  n13.clear();
+  n23.clear();
+  NaUp.clear();
+  j12.clear();
+  j23.clear();
+  j13.clear();
   tls.push_back(0.0e0);
   ComplexMatrixType CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
   ComplexMatrixType CM1 = SingleParticleDensityMatrix( 1, Bases, Rhos, Hams);
@@ -328,7 +339,7 @@ int main(int argc, char const *argv[]) {
   }
 #if FIXJ13
   PrevJ13  = FinalJ13;
-  FinalJ13 = j13.at(j13.size()-1);
+  FinalJ13 = j13.at(j13.size()-1).imag();
   if ( PrevJ13 > FinalJ13 ){//Operates at small gamma's
   // if ( PrevJ13 < FinalJ13 ){//Operates at large gamma's
     Gammas.clear();
@@ -350,6 +361,7 @@ int main(int argc, char const *argv[]) {
   MaxTry++;
   }
 #endif
+std::cout << MaxTry << std::endl;
   if ( MaxTry < 1000 ){
   /* NOTE: H5 group name */
   HDF5IO file = HDF5IO("TriFermi.h5");

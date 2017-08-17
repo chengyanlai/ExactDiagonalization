@@ -42,6 +42,51 @@ void Basis::Boson()
   assert( BStates.size() == BTags.size() );
 }
 
+void Basis::Boson( const int MinB )
+{
+  /* Build bosonic basis from minimum boson number to maximum boson number. */
+  assert( !(isFermion) );
+  std::vector< std::vector<int> > work;
+  int k, Nres;
+  /* NOTE: Include all U(1) sector which has particle number larger than MinB and smaller than MaxB */
+  std::vector<int> Ivec(L,0);
+  // work.push_back( Ivec );
+  // BTags.push_back( BosonBasisTag(Ivec) );
+  for (ptrdiff_t cntN = N; cntN > MinB-1; cntN--) {
+    Ivec.assign(L, 0);
+    Ivec.at(0) = cntN;
+    work.push_back( Ivec );
+    BTags.push_back( BosonBasisTag(Ivec) );
+    while ( Ivec[L - 1] < cntN ) {
+      for (ptrdiff_t cnt = L - 2; cnt > -1; cnt--) {
+        if ( Ivec[cnt] != 0 ){
+          k = cnt;
+          break;//break for-loop
+        }
+      }
+      Ivec[k] = Ivec[k] - 1;
+      Nres = std::accumulate(Ivec.begin(), Ivec.begin() + k + 1, 0);
+      Ivec.at(k+1) = (int)(cntN - Nres);
+      if ( k < L - 2 ){
+        for (ptrdiff_t cnt = k + 2; cnt < L; cnt++) {
+          Ivec.at(cnt) = 0;
+        }
+      }
+      work.push_back( Ivec );
+      BTags.push_back( BosonBasisTag(Ivec) );
+      Nres = std::accumulate(Ivec.begin(), Ivec.end(), 0);
+      assert( cntN == Nres );
+    }
+  }
+  // sort BTags
+  std::vector<size_t> NewIdx = SortBTags( BTags );
+  // put work in order.
+  for ( auto i : NewIdx ){
+    BStates.push_back( work.at(i) );
+  }
+  assert( BStates.size() == BTags.size() );
+}
+
 void Basis::BosonTB( const size_t TBloc, const bool HARD_CUT )
 {
   assert( !(isFermion) );
@@ -121,6 +166,14 @@ std::vector<size_t> SortBTags( std::vector<T> &v ) {
   v = new_v;
   assert( v.size() == idx.size() );
   return idx;
+}
+
+void Basis::printBosonBasis( const std::vector<int> state )const
+{
+  for( auto i : state ){
+    std::cout << i << ", " << std::flush;
+  }
+  std::cout << std::endl;
 }
 
 template std::vector<size_t> SortBTags( std::vector<RealType> &v );
