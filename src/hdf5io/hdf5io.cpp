@@ -32,21 +32,16 @@ HDF5IO::HDF5IO (const std::string& fn) :
 FileName(fn),
 H5File(fn.c_str(), fileExists(fn) ? H5F_ACC_RDWR : H5F_ACC_TRUNC),
 ComplexDataType(initCompexDataType())
-{
-  INFO("Opened HDF5 file " << FileName);
-}
+{}
 
 HDF5IO::HDF5IO (const std::string& fn, const bool force):
 FileName(fn),
 H5File(fn.c_str(), H5F_ACC_TRUNC),
 ComplexDataType(initCompexDataType())
-{
-  INFO("Force opened HDF5 file " << FileName);
-}
+{}
 
 HDF5IO::~HDF5IO(void)
 {
-  INFO("Closed HDF5 file " << getFileName());
   this->close();
 }
 

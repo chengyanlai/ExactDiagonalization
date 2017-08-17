@@ -24,15 +24,16 @@
 #endif
 
 void LoadParameters( const std::string filename, int &L,
-  int &OBC, int &N1, int &N2, std::vector<RealType> &Uloc,
-  std::vector<RealType> &Vloc, int &CHloc,
-  int &dynamics, int &Tsteps, RealType &RealType){
+  int &OBC, int &N1, int &N2, std::vector<RealType> &Uinit,
+  std::vector<RealType> &Uloc, std::vector<RealType> &Vloc,
+  int &CHloc, int &dynamics, int &Tsteps, RealType &RealType){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
     N1 = file.loadInt("Parameters", "N1");
     N2 = file.loadInt("Parameters", "N2");
     CHloc = file.loadInt("Parameters", "CHloc");
+    file.loadStdVector("Parameters", "Uinit", Uinit);
     file.loadStdVector("Parameters", "U", Uloc);
     file.loadStdVector("Parameters", "V", Vloc);
     dynamics = file.loadInt("Parameters", "dynamics");
@@ -130,8 +131,8 @@ int main(int argc, char const *argv[]) {
   int N1, N2;
   int dynamics, Tsteps;
   RealType dt;
-  std::vector<RealType> Vin, Uin;
-  LoadParameters( "conf.h5", L, OBC, N1, N2, Uin, Vin, CHloc, dynamics, Tsteps, dt);
+  std::vector<RealType> Uinit, Vin, Uin;
+  LoadParameters( "conf.h5", L, OBC, N1, N2, Uinit, Uin, Vin, CHloc, dynamics, Tsteps, dt);
   HDF5IO *file = new HDF5IO("XASEQM.h5");
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
@@ -176,7 +177,10 @@ int main(int argc, char const *argv[]) {
   std::vector<std::vector<ComplexType> > Vloc;
   Vloc.push_back(Vtmp);
   Vloc.push_back(Vtmp);
-  std::vector<ComplexType> Utmp(L, ComplexType(0.0e0, 0.0e0) );
+  std::vector<ComplexType> Utmp;
+  for ( auto val : Uinit ){
+    Utmp.push_back(ComplexType(val));
+  }
   std::vector<std::vector<ComplexType> > Uloc;
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
@@ -198,16 +202,17 @@ int main(int argc, char const *argv[]) {
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
   file->saveVector("Obs", "Nup", Nfi.at(0));
   file->saveVector("Obs", "Ndn", Nfi.at(1));
+  std::cout << "Build core-hole Basis" << std::endl;
   /* Build New Basis */
-  // Basis nF1(L, N1, true);
   Basis nF1(L, N1+1, true);
   nF1.Fermion();
   Basis nF2(L, N2, true);
-  // Basis nF2(L, N2+1, true);
   nF2.Fermion();
   std::vector<Basis> nBases;
   nBases.push_back(nF1);
   nBases.push_back(nF2);
+  /* Update the new Hamiltonian */
+  std::cout << "Build core-hole Hamiltonian" << std::endl;
   Hamiltonian<ComplexType> nHam( nBases );
   Vtmp.clear();
   for ( auto val : Vin ){
@@ -227,11 +232,8 @@ int main(int argc, char const *argv[]) {
   nHam.BuildHoppingHamiltonian(nBases, lattice);
   nHam.BuildTotalHamiltonian();
   /* Apply the operator */
+  std::cout << "Create core-hole state" << std::endl;
   ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc, 0, ham, nHam);
-  // ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc, 1, ham, nHam);
-  // ComplexVectorType VecInitUp = OperateCdagger( Bases, Vec, nBases, CHloc, 0, ham, nHam);
-  // ComplexVectorType VecInitDn = OperateCdagger( Bases, Vec, nBases, CHloc, 1, ham, nHam);
-  // ComplexVectorType VecInit = VecInitUp + VecInitDn;
   VecInit.normalize();
   ComplexVectorType VecT = VecInit;
   Nfi = Ni( nBases, VecT, nHam );
@@ -239,11 +241,6 @@ int main(int argc, char const *argv[]) {
   file->saveVector("Obs", "NewNup", Nfi.at(0));
   file->saveVector("Obs", "NewNdn", Nfi.at(1));
   delete file;
-  /* Update the new Hamiltonian */
-  // ham.BuildHoppingHamiltonian(Bases, lattice2);
-  // INFO(" - Update Hopping Hamiltonian DONE!");
-  // ham.BuilRealTypeotalHamiltonian();
-  // INFO(" - Update Total Hamiltonian DONE!");
   if ( dynamics ){
     ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
     std::cout << "Begin dynamics......" << std::endl;

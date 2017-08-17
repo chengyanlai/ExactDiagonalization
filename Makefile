@@ -78,13 +78,19 @@ SS_SRC_DIR   := $(addprefix src/,$(MODULES) $(SS_MODULES))
 SS_SRC       := $(foreach sdir,$(SS_SRC_DIR),$(wildcard $(sdir)/*.cpp))
 SS_OBJ       := $(patsubst src/%.cpp,build/%.o,$(SS_SRC))
 
-BUILD_DIR := $(addprefix build/,$(MODULES) $(TB_MODULES) $(DP_MODULES) $(OP_MODULES) $(SS_MODULES) apps)
+PE_MODULES   := Lindblad-PE
+PE_SRC_DIR   := $(addprefix src/,$(MODULES) $(PE_MODULES))
+PE_SRC       := $(foreach sdir,$(PE_SRC_DIR),$(wildcard $(sdir)/*.cpp))
+PE_OBJ       := $(patsubst src/%.cpp,build/%.o,$(PE_SRC))
+
+BUILD_DIR := $(addprefix build/,$(MODULES) $(PE_MODULES) $(TB_MODULES) $(DP_MODULES) $(OP_MODULES) $(SS_MODULES) apps)
 
 # INCLUDES  := $(addprefix -I,$(SRC_DIR))
 INCLUDES  := -I./
 
 vpath %.cpp $(SRC_DIR)
 vpath %.cpp $(TB_SRC_DIR)
+vpath %.cpp $(PE_SRC_DIR)
 vpath %.cpp $(DP_SRC_DIR)
 vpath %.cpp $(OP_SRC_DIR)
 vpath %.cpp $(SS_SRC_DIR)
@@ -97,7 +103,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/1D.b build/SSH.f build/SSH.b build/TIsing build/Benzene build/CreutzLadder.XXZ build/xas.f# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
+all: checkdirs build/1D.b build/SSH.f build/SSH.b build/TIsing build/Benzene build/CreutzLadder.XXZ build/xas.f build/loop.f# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -142,6 +148,9 @@ build/CreutzLadder.XXZ: build/apps/CreutzLadder_XXZ.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/xas.f: build/apps/XAS_fermion.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
