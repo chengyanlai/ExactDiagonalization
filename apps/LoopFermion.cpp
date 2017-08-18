@@ -24,6 +24,7 @@
 #endif
 
 #define FIXJ13 1
+#define SmallGammaRegime 1
 
 const int L = 3;
 const int N1 = L;// Open system has no upper limit
@@ -32,7 +33,7 @@ const RealType t12 = 1.0e0;
 
 void LoadParameters( const std::string filename, RealType &t23,  RealType &t13,
   std::vector<RealType> &Uloc, std::vector<RealType> &Vloc,
-  RealType &gammaL, RealType &gammaR, int &Tsteps, RealType &dt){
+  RealType &gammaL, RealType &gammaR, int &Tsteps, RealType &dt, RealType &TargetJ13){
     HDF5IO file(filename);
     t23 = t12 * file.loadReal("Parameters", "t23");
     t13 = t12 * file.loadReal("Parameters", "t13");
@@ -42,6 +43,7 @@ void LoadParameters( const std::string filename, RealType &t23,  RealType &t13,
     gammaR = file.loadReal("Parameters", "gammaR");
     Tsteps = file.loadInt("Parameters", "Tsteps");
     dt = file.loadReal("Parameters", "dt");
+    TargetJ13 = file.loadReal("Parameters", "TargetJ13");
 }
 
 RealType TraceRhos(const std::vector<ComplexMatrixType> &Rhos){
@@ -138,9 +140,9 @@ int main(int argc, char const *argv[]) {
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   RealType t23, t13;
   int Tsteps;
-  RealType dt, gammaL, gammaR;
+  RealType dt, gammaL, gammaR, TargetJ13;
   std::vector<RealType> Uin, Vin;
-  LoadParameters( "conf.h5", t23, t13, Uin, Vin, gammaL, gammaR, Tsteps, dt);
+  LoadParameters( "conf.h5", t23, t13, Uin, Vin, gammaL, gammaR, Tsteps, dt, TargetJ13);
 
   INFO("Build 3-site Triangle - ");
   std::vector< Node<ComplexType>* > LOOP;
@@ -216,7 +218,7 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
 
   INFO("Build Initial Density Matrix - ");
-  std::vector<ComplexMatrixType> Rhos;
+  std::vector<ComplexMatrixType> OriginalRhos;
   int cnt = 0;
   ComplexMatrixType Rho;
   for ( auto &bs : Bases ){
@@ -227,7 +229,7 @@ int main(int argc, char const *argv[]) {
     }else{
       Rho = ComplexMatrixType::Zero(hb, hb);
     }
-    Rhos.push_back(Rho);
+    OriginalRhos.push_back(Rho);
     cnt += 1;
   }
   INFO("DONE!");
@@ -281,11 +283,20 @@ int main(int argc, char const *argv[]) {
   std::vector<ComplexType> Na, Nb, Nc, n12, n13, n23, NaUp;
   std::vector<ComplexType> j12, j23, j13;
 #if FIXJ13
-  RealType FinalJ13 = 1.0e10, PrevJ13 = 0.0e0;
-  const RealType TargetJ13 = 0.10e0;
-  const RealType J13Tol = 1.0e-10;
-  while ( (std::abs(TargetJ13 - FinalJ13) > J13Tol) && MaxTry < 1000 ){
+  const RealType MinGamma = 0.10e0, MidGamma = 5.0e0, MaxGamma = 2.50e1;
+  RealType CurrentGamma = Gammas.at(0);
+  RealType CurrentJ13 = 1.0e10;
+#if SmallGammaRegime
+  RealType SmallGamma = MinGamma, LargeGamma = MidGamma;// For small gamma regime
+  RealType SmallJ13 = -1.0e10, LargeJ13 = 1.0e10;// For small gamma regime
+#else
+  RealType SmallGamma = MidGamma, LargeGamma = MaxGamma;// For large gamma regime
+  RealType SmallJ13 = 1.0e10, LargeJ13 = -1.0e10;// For large gamma regime
 #endif
+  const RealType J13Tol = 1.0e-9;
+  while ( (std::abs(TargetJ13 - CurrentJ13) > J13Tol * TargetJ13 || MaxTry < 10) && MaxTry < 1000 ){
+#endif
+  std::vector<ComplexMatrixType> Rhos = OriginalRhos;
   tls.clear();
   Na.clear();
   Nb.clear();
@@ -317,8 +328,8 @@ int main(int argc, char const *argv[]) {
     FRK4( dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Bases, Hams, Rhos);
     if ( cntT % 20 == 0 ){
       /* NOTE: Check trace of Rhos */
-      RealType tr = TraceRhos(Rhos);
-      INFO("Trace = " << tr);
+      // RealType tr = TraceRhos(Rhos);
+      // INFO("Trace = " << tr);
       /* NOTE: Expectation values */
       CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
       CM1 = SingleParticleDensityMatrix( 1, Bases, Rhos, Hams);
@@ -338,25 +349,44 @@ int main(int argc, char const *argv[]) {
     }
   }
 #if FIXJ13
-  PrevJ13  = FinalJ13;
-  FinalJ13 = j13.at(j13.size()-1).imag();
-  if ( PrevJ13 > FinalJ13 ){//Operates at small gamma's
-  // if ( PrevJ13 < FinalJ13 ){//Operates at large gamma's
-    Gammas.clear();
-    gammaL *= 0.990e0;
-    gammaR *= 0.990e0;
-    Gammas.push_back(gammaL);
-    Gammas.push_back(gammaL);
-    Gammas.push_back(gammaR);
-    Gammas.push_back(gammaR);
+  CurrentGamma = Gammas.at(0);
+  CurrentJ13 = j13.at(j13.size()-1).imag();
+  std::cout << SmallGamma << " " << SmallJ13 << " " << CurrentGamma << " " << CurrentJ13 << " " << LargeGamma << " " << LargeJ13 << std::endl;
+  if ( CurrentJ13 > TargetJ13 ){
+#if SmallGammaRegime
+    // Replace Large in small gamma regime
+    LargeGamma = CurrentGamma;
+    LargeJ13 = CurrentJ13;
+#else
+    // Replace Small in large gamma regime
+    SmallGamma = CurrentGamma;
+    SmallJ13 = CurrentJ13;
+#endif
   }else{
-    Gammas.clear();
-    gammaL *= 1.010e0;
-    gammaR *= 1.010e0;
-    Gammas.push_back(gammaL);
-    Gammas.push_back(gammaL);
-    Gammas.push_back(gammaR);
-    Gammas.push_back(gammaR);
+#if SmallGammaRegime
+    // Replace Small in small gamma regime
+    SmallGamma = CurrentGamma;
+    SmallJ13 = CurrentJ13;
+#else
+    // Replace Large in large gamma regime
+    LargeGamma = CurrentGamma;
+    LargeJ13 = CurrentJ13;
+#endif
+  }
+  gammaL = 0.50e0 * ( SmallGamma + LargeGamma);
+  gammaR = gammaL;
+  Gammas.clear();
+  Gammas.push_back(gammaL);
+  Gammas.push_back(gammaL);
+  Gammas.push_back(gammaR);
+  Gammas.push_back(gammaR);
+#if SmallGammaRegime
+  if ( gammaL - MinGamma < 1.0e-10 || MidGamma - gammaL < 1.0e-10 ){
+#else
+  if ( gammaL - MidGamma < 1.0e-10 || MaxGamma - gammaL < 1.0e-10 ){
+#endif
+    std::cout << "Fail - " << gammaL << std::endl;
+    break;
   }
   MaxTry++;
   }

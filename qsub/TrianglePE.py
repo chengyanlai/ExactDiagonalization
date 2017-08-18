@@ -11,14 +11,29 @@ import h5py
 import Script_Helpers as shp
 from Clusters import *
 
-# t13List = np.linspace(0.9, 1.1, 5)
-t13List = np.linspace(0.1, 1.9, 19)
+# Remain const.
 t23 = 1.0
 Vin = 0.0
-Uin = [0.0, 1.0, 0.1, 5.0, 10.0]
-# GammaList = np.logspace(-0.3, 1.8, num=50)
+
+# cntGStart = 0
+# t13List = np.linspace(0.1, 1.9, 19)
+# Uin = [0.0, 1.0, 0.1, 5.0, 10.0]
 # GammaList = np.logspace(0., 1.2, num=20)
-GammaList = [0.1,]# Small gamma search for j13 = 0.1
+
+t13List = np.linspace(0.9, 1.2, 31)# For searching
+# For searching fix J13
+# cntGStart = 0
+# GammaList = [1.0,]# Small gamma search
+cntGStart = 1
+GammaList = [9.0,]# Large gamma search
+Uin = [0.,]
+TargetJ13 = 0.2# for searching U = 0.0
+# Uin = [0.1,]
+# TargetJ13 = 0.19# for searching U = 0.1
+# Uin = [1.0,]
+# TargetJ13 = 0.19# for searching U = 1.0
+# Uin = [5.0,]
+# TargetJ13 = 0.13# for searching U = 5.0
 
 # NOTE: Dynamics parameters
 Tsteps = 8000# Tstep * dt is final time
@@ -34,12 +49,14 @@ WallTime = MaxWallTime
 
 for U in Uin:
   for t13 in t13List:
-    DATADIR = os.path.join( EXEC_DIR, "TriPX", "".join(["TriU", str(U), "-t", str(t13)]) )
-    cntG = 0
+    if len(GammaList) == 1:
+      DATADIR = os.path.join( EXEC_DIR, "TriPXSearch", "".join(["TriU", str(U), "-t", str(t13)]) )
+    else:
+      DATADIR = os.path.join( EXEC_DIR, "TriPX", "".join(["TriU", str(U), "-t", str(t13)]) )
+    cntG = cntGStart
     for GammaL in GammaList:
       GammaR = GammaL
-      # Job_Name =  "".join(["G", str(cntG),])
-      Job_Name =  "".join(["Search", str(cntG),])
+      Job_Name =  "".join(["G", str(cntG),])
       workdir = os.path.join(DATADIR, Job_Name)
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
@@ -62,6 +79,7 @@ for U in Uin:
           dset = para.create_dataset("gammaR", data=GammaR)
           dset = para.create_dataset("Tsteps", data=Tsteps)
           dset = para.create_dataset("dt", data=dt)
+          dset = para.create_dataset("TargetJ13", data=TargetJ13)
           f.close()
 
           if Cluster == "Comet" or Cluster == "Stampede":
