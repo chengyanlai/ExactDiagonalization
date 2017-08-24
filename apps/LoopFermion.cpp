@@ -23,7 +23,7 @@
 #define NumCores 1
 #endif
 
-#define FIXJ13 1
+#define FIXJ 1
 #define SmallGammaRegime 1
 
 const int L = 3;
@@ -33,7 +33,7 @@ const RealType t12 = 1.0e0;
 
 void LoadParameters( const std::string filename, RealType &t23,  RealType &t13,
   std::vector<RealType> &Uloc, std::vector<RealType> &Vloc,
-  RealType &gammaL, RealType &gammaR, int &Tsteps, RealType &dt, RealType &TargetJ13){
+  RealType &gammaL, RealType &gammaR, int &Tsteps, RealType &dt, RealType &TargetJ){
     HDF5IO file(filename);
     t23 = t12 * file.loadReal("Parameters", "t23");
     t13 = t12 * file.loadReal("Parameters", "t13");
@@ -43,7 +43,7 @@ void LoadParameters( const std::string filename, RealType &t23,  RealType &t13,
     gammaR = file.loadReal("Parameters", "gammaR");
     Tsteps = file.loadInt("Parameters", "Tsteps");
     dt = file.loadReal("Parameters", "dt");
-    TargetJ13 = file.loadReal("Parameters", "TargetJ13");
+    TargetJ = file.loadReal("Parameters", "TargetJ");
 }
 
 RealType TraceRhos(const std::vector<ComplexMatrixType> &Rhos){
@@ -140,9 +140,9 @@ int main(int argc, char const *argv[]) {
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
   RealType t23, t13;
   int Tsteps;
-  RealType dt, gammaL, gammaR, TargetJ13;
+  RealType dt, gammaL, gammaR, TargetJ;
   std::vector<RealType> Uin, Vin;
-  LoadParameters( "conf.h5", t23, t13, Uin, Vin, gammaL, gammaR, Tsteps, dt, TargetJ13);
+  LoadParameters( "conf.h5", t23, t13, Uin, Vin, gammaL, gammaR, Tsteps, dt, TargetJ);
 
   INFO("Build 3-site Triangle - ");
   std::vector< Node<ComplexType>* > LOOP;
@@ -282,19 +282,19 @@ int main(int argc, char const *argv[]) {
   std::vector<RealType> tls;
   std::vector<ComplexType> Na, Nb, Nc, n12, n13, n23, NaUp;
   std::vector<ComplexType> j12, j23, j13;
-#if FIXJ13
+#if FIXJ
   const RealType MinGamma = 0.10e0, MidGamma = 5.0e0, MaxGamma = 2.50e1;
   RealType CurrentGamma = Gammas.at(0);
-  RealType CurrentJ13 = 1.0e10;
+  RealType CurrentJ = 1.0e10;
 #if SmallGammaRegime
   RealType SmallGamma = MinGamma, LargeGamma = MidGamma;// For small gamma regime
-  RealType SmallJ13 = -1.0e10, LargeJ13 = 1.0e10;// For small gamma regime
+  RealType SmallJ = -1.0e10, LargeJ = 1.0e10;// For small gamma regime
 #else
   RealType SmallGamma = MidGamma, LargeGamma = MaxGamma;// For large gamma regime
-  RealType SmallJ13 = 1.0e10, LargeJ13 = -1.0e10;// For large gamma regime
+  RealType SmallJ = 1.0e10, LargeJ = -1.0e10;// For large gamma regime
 #endif
-  const RealType J13Tol = 1.0e-9;
-  while ( (std::abs(TargetJ13 - CurrentJ13) > J13Tol * TargetJ13 || MaxTry < 10) && MaxTry < 1000 ){
+  const RealType JTol = 1.0e-9;
+  while ( (std::abs(TargetJ - CurrentJ) > JTol * TargetJ || MaxTry < 10) && MaxTry < 1000 ){
 #endif
   std::vector<ComplexMatrixType> Rhos = OriginalRhos;
   tls.clear();
@@ -348,29 +348,30 @@ int main(int argc, char const *argv[]) {
       tls.push_back(cntT * dt);
     }
   }
-#if FIXJ13
+#if FIXJ
   CurrentGamma = Gammas.at(0);
-  CurrentJ13 = j13.at(j13.size()-1).imag();
-  std::cout << SmallGamma << " " << SmallJ13 << " " << CurrentGamma << " " << CurrentJ13 << " " << LargeGamma << " " << LargeJ13 << std::endl;
-  if ( CurrentJ13 > TargetJ13 ){
+  // CurrentJ = j13.at(j13.size()-1).imag();
+  CurrentJ = j12.at(j12.size()-1).imag();
+  std::cout << SmallGamma << " " << SmallJ << " " << CurrentGamma << " " << CurrentJ << " " << LargeGamma << " " << LargeJ << std::endl;
+  if ( CurrentJ > TargetJ ){
 #if SmallGammaRegime
     // Replace Large in small gamma regime
     LargeGamma = CurrentGamma;
-    LargeJ13 = CurrentJ13;
+    LargeJ = CurrentJ;
 #else
     // Replace Small in large gamma regime
     SmallGamma = CurrentGamma;
-    SmallJ13 = CurrentJ13;
+    SmallJ = CurrentJ;
 #endif
   }else{
 #if SmallGammaRegime
     // Replace Small in small gamma regime
     SmallGamma = CurrentGamma;
-    SmallJ13 = CurrentJ13;
+    SmallJ = CurrentJ;
 #else
     // Replace Large in large gamma regime
     LargeGamma = CurrentGamma;
-    LargeJ13 = CurrentJ13;
+    LargeJ = CurrentJ;
 #endif
   }
   gammaL = 0.50e0 * ( SmallGamma + LargeGamma);
@@ -391,27 +392,27 @@ int main(int argc, char const *argv[]) {
   MaxTry++;
   }
 #endif
-std::cout << MaxTry << std::endl;
+  std::cout << MaxTry << std::endl;
   if ( MaxTry < 1000 ){
-  /* NOTE: H5 group name */
-  HDF5IO file = HDF5IO("TriFermi.h5");
-  file.saveNumber("Obs", "GammaL", gammaL);
-  file.saveNumber("Obs", "GammaR", gammaR);
-  file.saveNumber("Obs", "t12", t12);
-  file.saveNumber("Obs", "t23", t23);
-  file.saveNumber("Obs", "t13", t13);
-  file.saveStdVector("Obs", "tls", tls);
-  file.saveStdVector("Obs", "NaUp", NaUp);
-  file.saveStdVector("Obs", "Na", Na);
-  file.saveStdVector("Obs", "Nb", Nb);
-  file.saveStdVector("Obs", "Nc", Nc);
-  file.saveStdVector("Obs", "n12", n12);
-  file.saveStdVector("Obs", "n23", n23);
-  file.saveStdVector("Obs", "n13", n13);
-  file.saveStdVector("Obs", "j12", j12);
-  file.saveStdVector("Obs", "j23", j23);
-  file.saveStdVector("Obs", "j13", j13);
-  std::cout << "DONE!" << std::endl;
+    /* NOTE: H5 group name */
+    HDF5IO file = HDF5IO("TriFermi.h5");
+    file.saveNumber("Obs", "GammaL", gammaL);
+    file.saveNumber("Obs", "GammaR", gammaR);
+    file.saveNumber("Obs", "t12", t12);
+    file.saveNumber("Obs", "t23", t23);
+    file.saveNumber("Obs", "t13", t13);
+    file.saveStdVector("Obs", "tls", tls);
+    file.saveStdVector("Obs", "NaUp", NaUp);
+    file.saveStdVector("Obs", "Na", Na);
+    file.saveStdVector("Obs", "Nb", Nb);
+    file.saveStdVector("Obs", "Nc", Nc);
+    file.saveStdVector("Obs", "n12", n12);
+    file.saveStdVector("Obs", "n23", n23);
+    file.saveStdVector("Obs", "n13", n13);
+    file.saveStdVector("Obs", "j12", j12);
+    file.saveStdVector("Obs", "j23", j23);
+    file.saveStdVector("Obs", "j13", j13);
+    std::cout << "DONE!" << std::endl;
   }
   return 0;
 }

@@ -22,12 +22,12 @@ Vin = 0.0
 
 t13List = np.linspace(0.9, 1.2, 31)# For searching
 # For searching fix J13
-# cntGStart = 0
-# GammaList = [1.0,]# Small gamma search
-cntGStart = 1
-GammaList = [9.0,]# Large gamma search
-Uin = [0.,]
-TargetJ13 = 0.2# for searching U = 0.0
+cntGStart = 0
+GammaList = [1.0,]# Small gamma search
+# cntGStart = 1
+# GammaList = [9.0,]# Large gamma search
+Uin = [0.0,]
+TargetJ = 0.2# for searching U = 0.0
 # Uin = [0.1,]
 # TargetJ13 = 0.19# for searching U = 0.1
 # Uin = [1.0,]
@@ -79,7 +79,7 @@ for U in Uin:
           dset = para.create_dataset("gammaR", data=GammaR)
           dset = para.create_dataset("Tsteps", data=Tsteps)
           dset = para.create_dataset("dt", data=dt)
-          dset = para.create_dataset("TargetJ13", data=TargetJ13)
+          dset = para.create_dataset("TargetJ", data=TargetJ)
           f.close()
 
           if Cluster == "Comet" or Cluster == "Stampede":
@@ -99,6 +99,6 @@ for U in Uin:
               # subprocess.call(i, shell=True, stdout=f)
             f.close()
           elif QSUB:
-            qsub_script = " ".join([qsub_cmd, "job"])
+            qsub_script = " ".join([qsub_cmd, "job;sleep 1"])
             if QSUB: subprocess.call(qsub_script, shell=True)
       cntG += 1
