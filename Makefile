@@ -107,7 +107,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/loop.f build/xas.f# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
+all: checkdirs build/loop.f build/xas.f build/BFMix1# build/ST.b build/STTB.b build/SSWF.b build/TBLB.b build/SSLB.b build/SSOP.b build/SSt.b
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -155,6 +155,9 @@ build/xas.f: build/apps/XAS_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/BFMix1: build/apps/FermionBosonMix.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)

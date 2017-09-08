@@ -31,6 +31,30 @@ void Basis::Fermion()
   FTags = windex;
 }
 
+void Basis::Fermion( const int MinF )
+{
+  // This will include all possible fermion numbers, the input parameter has no meaning for now.
+  assert( isFermion );
+  // assert( L % 2 == 0 );
+  size_t minrange = 0;
+  size_t maxrange = pow(2, L);
+  NfTotal.clear();
+  for (size_t cnt1 = minrange; cnt1 < maxrange; cnt1++) {
+    FStates.push_back(cnt1);
+    FTags.push_back(cnt1);
+    int nbit = 0;
+    for (size_t cnt2 = 0; cnt2 < L; cnt2++) {
+      if ( btest(cnt1, cnt2) ){
+        nbit += 1;
+      }
+    }
+    // std::cout << cnt1 << " " << std::flush;
+    // printSpinOneHalfBasis(cnt1);
+    // std::cout << nbit - (int)L/2 << "." << std::endl;
+    NfTotal.push_back(nbit);
+  }
+}
+
 void Basis::printFermionBasis( const int state )const{
   for (size_t cnt = 0; cnt < L; cnt++) {
     INFO_NONEWLINE( btest(state, cnt) << ", " );

@@ -42,17 +42,16 @@ void Basis::Boson()
   assert( BStates.size() == BTags.size() );
 }
 
-void Basis::Boson( const int MinB )
+void Basis::Boson( const int MinB, const int MaxB )
 {
-  /* Build bosonic basis from minimum boson number to maximum boson number. */
+  /* Build bosonic basis from minimum boson number to maximum boson number allowed locally.
+    There is no total boson number constrain! */
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;
   int k, Nres;
   /* NOTE: Include all U(1) sector which has particle number larger than MinB and smaller than MaxB */
   std::vector<int> Ivec(L,0);
-  // work.push_back( Ivec );
-  // BTags.push_back( BosonBasisTag(Ivec) );
-  for (ptrdiff_t cntN = N; cntN > MinB-1; cntN--) {
+  for (ptrdiff_t cntN = MaxB; cntN > MinB-1; cntN--) {
     Ivec.assign(L, 0);
     Ivec.at(0) = cntN;
     work.push_back( Ivec );
