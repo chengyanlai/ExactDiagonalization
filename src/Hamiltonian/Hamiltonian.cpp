@@ -3,9 +3,14 @@
 #include "src/numeric/lapack.h"
 
 template<typename Tnum>
+Hamiltonian<Tnum>::~Hamiltonian(){}
+
+template<typename Tnum>
 Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 {
-  // get each hilbert space
+  /* Get each hilbert space and calculate total Hilbert space.
+     This has nothing to do with Fermion / Boson modeling.
+  */
   HilbertSpaces.clear();
   for ( auto &b : bs ){
     HilbertSpaces.push_back(b.getHilbertSpace());
@@ -19,9 +24,6 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
   H_hop.resize(TotalDim, TotalDim);
   H_hop.reserve(2*TotalDim);
 }
-
-template<typename Tnum>
-Hamiltonian<Tnum>::~Hamiltonian(){}
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::BuildLocalHamiltonian(
@@ -39,8 +41,11 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(
     assert( b.getL() == Vloc.at(cnt).size() );
     assert( b.getL() == Uloc.at(cnt).size() );
     if( !(b.getType()) ){//boson
-      assert( bs.size() == 1);//NOTE: Only support this right now.
-      BosonIntraLocalPart( cnt, Vloc.at(cnt), Uloc.at(cnt), b, hloc );
+      if ( bs.size() == 1 ){
+        BosonIntraLocalPart( Vloc.at(cnt), Uloc.at(cnt), b, hloc );
+      }else{
+        BosonIntraLocalPart( cnt, Vloc.at(cnt), Uloc.at(cnt), b, hloc );
+      }
     }else{//fermion only has potential
       assert( bs.size() < 3 );//NOTE: Only support this right now.
       FermionIntraLocalPart( cnt, Vloc.at(cnt), b, hloc );
@@ -74,8 +79,9 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
   for ( auto &b : bs ){
     assert( b.getL() == lt.size() );
     if( !(b.getType()) ){//boson
-      assert( bs.size() == 1);//NOTE: Only support this right now.
-      BosonIntraHoppingPart( cnt, lt, b, hhop );
+      if ( bs.size() == 1){
+        BosonIntraHoppingPart( lt, b, hhop );
+      }
     }else{//fermion
       assert( bs.size() == 2);//NOTE: Only support this right now.
       FermionIntraHoppingPart( cnt, lt, b, hhop );

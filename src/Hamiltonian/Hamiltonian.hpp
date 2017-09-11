@@ -1,6 +1,8 @@
 #ifndef __HAMILTONIAN_HPP__
 #define __HAMILTONIAN_HPP__
 #include <vector>
+#include <utility>
+#include <tuple>
 #include "src/EDType.hpp"
 #include "src/EigenMatrix.hpp"
 #include "src/Node/Node.hpp"
@@ -40,11 +42,14 @@ public:
   void BuildTIsingHamiltonian(const Tnum hz, const std::vector<Basis> &bs,
     const std::vector< Node<Tnum>* > &lt );
   /* vvvvvvv Boson Functions vvvvvvv */
+  void BosonIntraLocalPart( const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
+    const Basis &bs, std::vector<Triplet> &hloc );
   void BosonIntraLocalPart( const size_t species_id,
     const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
     const Basis &bs, std::vector<Triplet> &hloc );
-  void BosonIntraHoppingPart( const size_t species_id,
-    const std::vector< Node<Tnum>* > &lt,
+  void BosonIntraHoppingPart( const std::vector< Node<Tnum>* > &lt,
+    const Basis &bs, std::vector<Triplet> &hhop );
+  void BosonIntraHoppingPart( const size_t species_id, const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Boson Functions ^^^^^^^ */
   /* vvvvvvv Fermion Functions vvvvvvv */
@@ -57,6 +62,12 @@ public:
   void FermionIntraHoppingPart( const size_t species_id,
     const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop );
+  void FermionIntraNN( const int speciesId,
+    const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
+    const Basis &bs, std::vector<Triplet> &hloc );
+  // void FermionDensityDensity(
+  //   const std::vector<std::pair<int,int> > betweenSpecies, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
+  //   const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
   /* ^^^^^^^ Fermion Functions ^^^^^^^ */
   /* vvvvvvv Spin Functions vvvvvvv */
   void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt,

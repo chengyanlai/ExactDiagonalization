@@ -4,10 +4,9 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BosonIntraLocalPart( const size_t species_id,
+void Hamiltonian<Tnum>::BosonIntraLocalPart(
   const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
-  const Basis &bs, std::vector<Triplet> &hloc )
-{
+  const Basis &bs, std::vector<Triplet> &hloc ){
   int state_id = 0;
   for ( std::vector<int> b : bs.BStates ){
     int loc = 0;
@@ -17,15 +16,6 @@ void Hamiltonian<Tnum>::BosonIntraLocalPart( const size_t species_id,
         (Tnum)0.50e0 * Uloc.at(loc) * (Tnum)(p * (p - 1));
       loc++;
     }
-    //FIXME: Need to loop over all species_id!
-    //use while
-    // std::vector<size_t> idrun(HilbertSpaces.size(), 0);
-    // idrun.at(species_id) = HilbertSpaces.at(HilbertSpaces);
-    // bool DONE = false;
-    // while ( !DONE ){
-    //   for (size_t cnt = 0; cnt < HilbertSpaces.size(); cnt++) {
-    //   }
-    // }
     size_t idx = DetermineTotalIndex( std::vector<size_t>(1, state_id) );
     hloc.push_back(Triplet(idx, idx, val));
     state_id++;
@@ -33,10 +23,43 @@ void Hamiltonian<Tnum>::BosonIntraLocalPart( const size_t species_id,
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BosonIntraHoppingPart( const size_t species_id,
-const std::vector< Node<Tnum>* > &lt,
-const Basis &bs, std::vector<Triplet> &hhop )
-{
+void Hamiltonian<Tnum>::BosonIntraLocalPart( const size_t species_id,
+  const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
+  const Basis &bs, std::vector<Triplet> &hloc ){
+  int state_id = 0;
+  for ( std::vector<int> b : bs.BStates ){
+    int loc = 0;
+    Tnum val = (Tnum)0.0;
+    for ( int &p : b ){
+      val += Vloc.at(loc) * (Tnum)p +
+        (Tnum)0.50e0 * Uloc.at(loc) * (Tnum)(p * (p - 1));
+      loc++;
+    }
+    if ( std::abs(val) > 1.0e-12 ){
+      std::vector<size_t> ids(2, state_id);
+      if (species_id == 0) {
+        for (size_t id2 = 0; id2 < HilbertSpaces.at(1); id2++) {
+          ids.at(1) = id2;
+          size_t idx = DetermineTotalIndex( ids );
+          hloc.push_back(Triplet(idx, idx, val));
+        }
+      } else if (species_id == 1){
+        for (size_t id2 = 0; id2 < HilbertSpaces.at(0); id2++) {
+          ids.at(0) = id2;
+          size_t idx = DetermineTotalIndex( ids );
+          hloc.push_back(Triplet(idx, idx, val));
+        }
+      } else{
+        RUNTIME_ERROR("Not support more than 2 species fermion yet!");
+      }
+    }
+    state_id++;
+  }
+}
+
+template<typename Tnum>
+void Hamiltonian<Tnum>::BosonIntraHoppingPart( const std::vector< Node<Tnum>* > &lt,
+const Basis &bs, std::vector<Triplet> &hhop ){
   int state_id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
     for ( Node<Tnum>* l : lt ) {
@@ -60,6 +83,54 @@ const Basis &bs, std::vector<Triplet> &hhop )
             size_t idx2 = DetermineTotalIndex(std::vector<size_t>(1, state_id2));
             hhop.push_back(Triplet(idx2, idx1, val));
             // INFO(idx2 << "(" << BosonBasisTag(b_copy) << " " << bs.BTags.at(idx2) << ") " << idx1 << " " << val);
+          }
+        }
+      }
+    }
+    state_id1++;
+  }
+}
+
+template<typename Tnum>
+void Hamiltonian<Tnum>::BosonIntraHoppingPart( const size_t species_id,
+  const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop ){
+  int state_id1 = 0;
+  for ( std::vector<int> b : bs.BStates ){
+    for ( Node<Tnum>* l : lt ) {
+      size_t site_i = l->data;
+      std::vector< Node<Tnum>* > nn = l->getNeighbors();
+      std::vector< Tnum > nnJ = l->getJval();
+      for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
+        std::vector<int> b_copy = b;
+        size_t site_j = nn.at(cnt)->data;
+        if ( b_copy.at(site_i) > 0 ){
+          Tnum val = (Tnum)(-1.0e0) * nnJ.at(cnt) *
+            sqrt( (Tnum)((b.at(site_j) + 1) * b.at(site_i)) );
+          b_copy.at(site_j) = b.at(site_j) + 1;
+          b_copy.at(site_i) = b.at(site_i) - 1;
+          size_t state_id2 = bs.getIndexFromTag( BosonBasisTag(b_copy) );
+          if ( state_id2 < bs.getHilbertSpace() ){
+            //FIXME: Need to loop over all species_id!
+            size_t count;
+            if ( species_id == 0 ) {
+              count = HilbertSpaces.at(1);
+            } else {
+              count = HilbertSpaces.at(0);
+            }
+            std::vector<size_t> rids(2, state_id2);
+            std::vector<size_t> cids(2, state_id1);
+            for (size_t loop_id = 0; loop_id < count; loop_id++) {
+              if ( species_id == 0 ) {
+                rids.at(1) = loop_id;
+                cids.at(1) = loop_id;
+              } else {
+                rids.at(0) = loop_id;
+                cids.at(0) = loop_id;
+              }
+              size_t rid = DetermineTotalIndex( rids );
+              size_t cid = DetermineTotalIndex( cids );
+              hhop.push_back(Triplet(rid, cid, val));
+            }
           }
         }
       }

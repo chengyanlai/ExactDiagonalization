@@ -25,7 +25,7 @@ public:
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
   void Boson();
-  void Boson( const int MinB, const int MaxB );
+  void Boson( const int MaxLocalB);
   void BosonTB( const size_t TBloc, const bool HARD_CUT = false );
   void Fermion();
   void Fermion( const int MinF );
@@ -69,7 +69,7 @@ private:
   std::vector<RealType> BTags;//for Boson
   std::vector<int> FStates;//for Fermion, and SpinOneHalf.
   std::vector<size_t> FTags;//for Fermion, and SpinOneHalf.
-  std::vector<int> NfTotal;//for Fermion without U(1).
+  std::vector<int> NTotal;//for Fermion without U(1).
   std::vector<int> SzTotal;//for Transverse Ising
 };
 

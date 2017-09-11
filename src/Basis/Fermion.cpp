@@ -38,7 +38,7 @@ void Basis::Fermion( const int MinF )
   // assert( L % 2 == 0 );
   size_t minrange = 0;
   size_t maxrange = pow(2, L);
-  NfTotal.clear();
+  NTotal.clear();
   for (size_t cnt1 = minrange; cnt1 < maxrange; cnt1++) {
     FStates.push_back(cnt1);
     FTags.push_back(cnt1);
@@ -48,10 +48,7 @@ void Basis::Fermion( const int MinF )
         nbit += 1;
       }
     }
-    // std::cout << cnt1 << " " << std::flush;
-    // printSpinOneHalfBasis(cnt1);
-    // std::cout << nbit - (int)L/2 << "." << std::endl;
-    NfTotal.push_back(nbit);
+    NTotal.push_back(nbit);
   }
 }
 

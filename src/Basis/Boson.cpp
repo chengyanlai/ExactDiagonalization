@@ -42,20 +42,25 @@ void Basis::Boson()
   assert( BStates.size() == BTags.size() );
 }
 
-void Basis::Boson( const int MinB, const int MaxB )
+void Basis::Boson( const int MaxLocalB )
 {
-  /* Build bosonic basis from minimum boson number to maximum boson number allowed locally.
-    There is no total boson number constrain! */
+  /* Build bosonic basis from zero to maximum boson number allowed locally.
+    Total boson number is not larger than N */
   assert( !(isFermion) );
+  assert( L * MaxLocalB >= N );
   std::vector< std::vector<int> > work;
   int k, Nres;
-  /* NOTE: Include all U(1) sector which has particle number larger than MinB and smaller than MaxB */
+  /* NOTE: Include all U(1) sector which has particle number smaller than N */
   std::vector<int> Ivec(L,0);
-  for (ptrdiff_t cntN = MaxB; cntN > MinB-1; cntN--) {
+  work.push_back( Ivec );
+  BTags.push_back( BosonBasisTag(Ivec) );
+  for (ptrdiff_t cntN = N; cntN > 0; cntN--) {
     Ivec.assign(L, 0);
     Ivec.at(0) = cntN;
-    work.push_back( Ivec );
-    BTags.push_back( BosonBasisTag(Ivec) );
+    if( cntN <= MaxLocalB ){
+      work.push_back( Ivec );
+      BTags.push_back( BosonBasisTag(Ivec) );
+    }
     while ( Ivec[L - 1] < cntN ) {
       for (ptrdiff_t cnt = L - 2; cnt > -1; cnt--) {
         if ( Ivec[cnt] != 0 ){
@@ -71,10 +76,20 @@ void Basis::Boson( const int MinB, const int MaxB )
           Ivec.at(cnt) = 0;
         }
       }
-      work.push_back( Ivec );
-      BTags.push_back( BosonBasisTag(Ivec) );
-      Nres = std::accumulate(Ivec.begin(), Ivec.end(), 0);
-      assert( cntN == Nres );
+      /* NOTE: Rule out the state which is not existed in terminator beam setup */
+      bool isBasis = true;
+      for ( auto n : Ivec){
+        if ( n > MaxLocalB ){
+          isBasis = false;
+          break;
+        }
+      }
+      if ( isBasis ) {
+        work.push_back( Ivec );
+        BTags.push_back( BosonBasisTag(Ivec) );
+        Nres = std::accumulate(Ivec.begin(), Ivec.end(), 0);
+        assert( cntN == Nres );
+      }
     }
   }
   // sort BTags
@@ -86,8 +101,7 @@ void Basis::Boson( const int MinB, const int MaxB )
   assert( BStates.size() == BTags.size() );
 }
 
-void Basis::BosonTB( const size_t TBloc, const bool HARD_CUT )
-{
+void Basis::BosonTB( const size_t TBloc, const bool HARD_CUT ){
   assert( !(isFermion) );
   /* NOTE: Terminator Beam can not be located in first site or larger than system size */
   assert( TBloc > 0 );

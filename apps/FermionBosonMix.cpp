@@ -17,10 +17,10 @@ int main(int argc, char const *argv[]) {
   std::vector<Basis> Bs;
   // For bosons
   const int BL = 8;
-  const int BN = 4;
+  const int BN = 8;
 
   Basis Bosons(BL, BN);
-  Bosons.Boson(0, 1);
+  Bosons.Boson(1);
   Bs.push_back(Bosons);
   // testing
   std::vector< std::vector<int> > BStates = Bosons.getBStates();
@@ -60,4 +60,17 @@ int main(int argc, char const *argv[]) {
     FJ.push_back(1.0);
   }
   const std::vector< Node<RealType>* > FLattice = NN_1D_Chain(FL, FJ, FOBC);
+
+  std::vector<std::vector<double> > Vls;
+  std::vector<double> Vloc(BL, 0.0e0);
+  Vls.push_back(Vloc);
+  Vloc.assign(FL, 0.0e0);
+  Vls.push_back(Vloc);
+  std::vector<std::vector<double> > Uls;
+  std::vector<double> Uloc(BL, 0.0e0);
+  Uls.push_back(Uloc);
+  Uloc.assign(FL, 0.0e0);
+  Uls.push_back(Uloc);
+  Hamiltonian<double> Ham(Bs);
+  Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
 }
