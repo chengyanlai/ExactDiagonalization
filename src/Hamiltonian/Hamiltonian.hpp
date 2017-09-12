@@ -72,9 +72,17 @@ public:
   /* vvvvvvv Spin Functions vvvvvvv */
   void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt,
     const Basis &bs, std::vector<Triplet> &hhop);
-  void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt,
-    const Basis &bs, std::vector<Triplet> &hhop );
+    void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt,
+      const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Spin Functions ^^^^^^^ */
+  /* vvvvvvv Hybrid systems vvvvvvv */
+  void AddHybridHamiltonian( const int species1, const int species2,
+    const std::vector< std::tuple<int, int, Tnum> > &hybVals,
+    const std::vector<Basis> &bs, const int maxLocalB = 0);
+  void Hybirdynation( const int species1, const int species2,
+    const std::vector< std::tuple<int, int, Tnum> > &hybVals,
+    const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
+  /* ^^^^^^^ Hybrid systems ^^^^^^^ */
   void eigh( std::vector<RealType> &Val, VectorType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   void diag( RealVectorType &Val, RealMatrixType &Vec);

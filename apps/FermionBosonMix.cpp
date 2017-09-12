@@ -11,16 +11,15 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
-
 int main(int argc, char const *argv[]) {
   /* Basis */
   std::vector<Basis> Bs;
   // For bosons
-  const int BL = 8;
-  const int BN = 8;
-
+  const int BL = 2;
+  const int BN = 2;
+  const int maxLocalB = 1;
   Basis Bosons(BL, BN);
-  Bosons.Boson(1);
+  Bosons.Boson(maxLocalB);
   Bs.push_back(Bosons);
   // testing
   std::vector< std::vector<int> > BStates = Bosons.getBStates();
@@ -46,6 +45,21 @@ int main(int argc, char const *argv[]) {
   }
 
   /* Hamiltonian */
+  // Local potential
+  std::vector<std::vector<double> > Vls;
+  std::vector<double> Vloc(BL, 0.0e0);
+  Vls.push_back(Vloc);
+  Vloc.assign(FL, 0.0e0);
+  Vls.push_back(Vloc);
+  // Local interaction
+  //    Here, U for fermion is NN density density terms.
+  std::vector<std::vector<double> > Uls;
+  std::vector<double> Uloc(BL, 0.0e0);
+  Uls.push_back(Uloc);
+  Uloc.assign(FL, 1.0e0);
+  Uls.push_back(Uloc);
+  Hamiltonian<double> Ham(Bs);
+  Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
   // For bosonic chain
   const bool BOBC = false;
   std::vector<double> BJ;
@@ -57,20 +71,28 @@ int main(int argc, char const *argv[]) {
   const bool FOBC = true;
   std::vector<double> FJ;
   for (size_t cnt = 0; cnt < FL-1; cnt++) {
-    FJ.push_back(1.0);
+    FJ.push_back(0.10);
   }
   const std::vector< Node<RealType>* > FLattice = NN_1D_Chain(FL, FJ, FOBC);
-
-  std::vector<std::vector<double> > Vls;
-  std::vector<double> Vloc(BL, 0.0e0);
-  Vls.push_back(Vloc);
-  Vloc.assign(FL, 0.0e0);
-  Vls.push_back(Vloc);
-  std::vector<std::vector<double> > Uls;
-  std::vector<double> Uloc(BL, 0.0e0);
-  Uls.push_back(Uloc);
-  Uloc.assign(FL, 0.0e0);
-  Uls.push_back(Uloc);
-  Hamiltonian<double> Ham(Bs);
-  Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
+  std::vector< std::vector< Node<RealType>* > > LT;
+  LT.push_back(BLattice);
+  LT.push_back(FLattice);
+  Ham.BuildHoppingHamiltonian(Bs, LT);
+  Ham.BuildTotalHamiltonian();
+  /* Print to check. Only for small matrix */
+  RealSparseMatrixType w = Ham.getTotalHamiltonian();
+  RealMatrixType h(w);
+  std::cout << h << std::endl;
+  const double DeltaDC = 0.20e0;
+  std::vector< std::tuple<int, int, double> > DeltaTerm;
+  for ( size_t i = 0; i < FL; i++){
+    for (size_t j = 0; j < BL; j++){
+      DeltaTerm.push_back(std::make_tuple(j, i, DeltaDC));
+    }
+  }
+  Ham.AddHybridHamiltonian( 0, 1, DeltaTerm, Bs, maxLocalB);
+  /* Print to check. Only for small matrix */
+  RealSparseMatrixType w2 = Ham.getTotalHamiltonian();
+  RealMatrixType h2(w2);
+  std::cout << h2 << std::endl;
 }
