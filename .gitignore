@@ -122,3 +122,4 @@ data
 sync*
 .vscode
 tags
+Makefile
