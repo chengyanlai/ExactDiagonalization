@@ -23,7 +23,7 @@ void Hamiltonian<Tnum>::Hybirdynation( const int species1, const int species2,
       for ( std::vector<int> b : b1.BStates ){
         size_t rid = 0, cid = 0;
         Tnum value = (Tnum)0.0e0;
-        if ( btest(f, site2) && ( (b.at(site1) < maxLocalB && maxLocalB) || (b.at(site1) < b1.getN()) ) ){// hopping happens
+        if ( btest(f, site2) && ( (b.at(site1) < maxLocalB && maxLocalB) || (b.at(site1) < b1.getN() && !(maxLocalB)) ) ){// hopping happens
           size_t fid1 = f2.FTags.at(f);
           rid = DetermineTotalIndex( vec<size_t>(bid1, fid1) );
           int CrossFermionNumber = 0;
@@ -46,6 +46,7 @@ void Hamiltonian<Tnum>::Hybirdynation( const int species1, const int species2,
           }
           cid = DetermineTotalIndex( vec<size_t>(bid2, fid2) );
           value = (Tnum)( val * sqrt( (Tnum)(q.at(site1)) ) ) * tsign;
+          // std::cout << site1 << " " << site2 << ":" << rid << "(" << bid1 << "," << fid1 << ") " << cid << "(" << bid2 << "," << fid2 << ") " << value << std::endl;
         }else if ( !(btest(f, site2)) && b.at(site1) > 0 ){
           size_t fid1 = f2.FTags.at(f);
           rid = DetermineTotalIndex( vec<size_t>(bid1, fid1) );
