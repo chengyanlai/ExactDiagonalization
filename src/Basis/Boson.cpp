@@ -4,8 +4,7 @@
 #include "src/EDType.hpp"
 #include "src/Basis/Basis.hpp"
 
-void Basis::Boson()
-{
+void Basis::Boson(){
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;
   int k, Nres;
@@ -76,7 +75,6 @@ void Basis::Boson( const int MaxLocalB )
           Ivec.at(cnt) = 0;
         }
       }
-      /* NOTE: Rule out the state which is not existed in terminator beam setup */
       bool isBasis = true;
       for ( auto n : Ivec){
         if ( n > MaxLocalB ){

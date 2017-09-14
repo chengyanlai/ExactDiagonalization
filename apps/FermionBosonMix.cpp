@@ -39,39 +39,47 @@ void density( const std::vector<Basis> &bs, const RealVectorType GS, Hamiltonian
   }
 }
 
-void peaks( const int site, const std::vector<Basis> &bs, Hamiltonian<double> Ham,
-  const RealVectorType &EigVal, const RealMatrixType &EigVec, const int maxLocalB,
-  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight){
-  PeakLocation.clear();
-  PeakWeight.clear();
-  RealVectorType GS = EigVec.row(0);
-  for ( size_t i = 0; i < EigVec.rows(); i++){
-    PeakLocation.push_back(EigVal(i) - EigVal(0));
-    RealVectorType psi = RealVectorType::Zero(EigVec.cols());
-    // Find psi = d^\dagger_site \Psi_i
-    size_t bid1 = 0;
-    for ( std::vector<int> b : bs.at(0).getBStates() ){
-      std::vector<int> nb = b;
-      if( (b.at(site) < maxLocalB && maxLocalB) || (b.at(site) < bs.at(0).getN() && !(maxLocalB)) ){
-        nb.at(site) += 1;
-      }
+RealVectorType AdaggerState( const int site, const std::vector<Basis> &bs,
+  Hamiltonian<double> Ham, const RealVectorType State, const int maxLocalB ){
+  assert( !(bs.at(0).getType()) );
+  RealVectorType psi = RealVectorType::Zero(State.rows());
+  size_t bid1 = 0;
+  for ( std::vector<int> b : bs.at(0).getBStates() ){
+    std::vector<int> nb = b;
+    if( (b.at(site) < maxLocalB && maxLocalB) || (b.at(site) < bs.at(0).getN() && !(maxLocalB)) ){
+      nb.at(site) += 1;
       size_t bid2 = bs.at(0).getIndexFromTag( BosonBasisTag(nb) );
       for ( size_t j = 0; j < bs.at(1).getHilbertSpace(); j++ ){
         size_t id1 = Ham.DetermineTotalIndex(vec<size_t>(bid1, j));
         size_t id2 = Ham.DetermineTotalIndex(vec<size_t>(bid2, j));
-        psi(id2) = EigVec.row(i)(id1);
+        psi(id2) = State(id1);
       }
-      bid1++;
     }
-    // inner product
-    PeakWeight.push_back( GS.dot(psi) );
+    bid1++;
+  }
+  return psi;
+}
+
+void peaks( const RealVectorType AS, const RealVectorType &EigVal, const RealMatrixType &EigVec,
+  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight){
+  PeakLocation.clear();
+  PeakWeight.clear();
+  for ( size_t i = 0; i < EigVec.rows(); i++){
+    PeakLocation.push_back(EigVal(i) - EigVal(0));
+    RealVectorType An = EigVec.row(i);
+    double val = An.dot(AS);
+    PeakWeight.push_back( val * val );
   }
   assert( PeakLocation.size() == PeakWeight.size() );
 }
 
 int main(int argc, char const *argv[]) {
   /* Parameters */
-  double Jbb = 0.00e0;
+  int BL = 2;
+  int FL = 1;
+  int maxLocalB = 1;
+  int TotalN = 2;
+  double Jbb = 0.010e0;
   double Jff = 0.00e0;
   double Vbb = 3.20e0;
   double Vff = 3.50e0;
@@ -80,9 +88,7 @@ int main(int argc, char const *argv[]) {
   /* Basis */
   std::vector<Basis> Bs;
   // For bosons
-  const int BL = 2;
-  const int BN = 2;
-  const int maxLocalB = 1;
+  int BN = BL;
   Basis Bosons(BL, BN);
   Bosons.Boson(maxLocalB);
   Bs.push_back(Bosons);
@@ -95,8 +101,7 @@ int main(int argc, char const *argv[]) {
   }
 
   // For fermions
-  const int FL = 2;
-  const int FN = 2;
+  int FN = FL;
   Basis Fermions(FL, FN, true);
   Fermions.Fermion(0);
   Bs.push_back(Fermions);
@@ -191,10 +196,12 @@ int main(int argc, char const *argv[]) {
     std::cout << val << " " << std::flush;
   }
   std::cout << std::endl;
-
+  // std::cout << EigVec.row(0) << std::endl;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){
     std::vector<double> PeakLocation, PeakWeight;
-    peaks(cnt, Bs, Ham, EigVal, EigVec, maxLocalB, PeakLocation, PeakWeight);
+    RealVectorType AS = AdaggerState( cnt, Bs, Ham, EigVec.row(0), maxLocalB);
+    // std::cout << AS << std::endl;
+    peaks(AS, EigVal, EigVec, PeakLocation, PeakWeight);
     std::cout << "Site - " << cnt << std::endl;
     for ( size_t k = 0; k < PeakLocation.size(); k++){
       std::cout << PeakLocation.at(k) << " " << PeakWeight.at(k) << std::endl;

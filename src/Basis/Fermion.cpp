@@ -40,14 +40,14 @@ void Basis::Fermion( const int MinF )
   size_t maxrange = pow(2, L);
   NTotal.clear();
   for (size_t cnt1 = minrange; cnt1 < maxrange; cnt1++) {
-    FStates.push_back(cnt1);
-    FTags.push_back(cnt1);
     int nbit = 0;
     for (size_t cnt2 = 0; cnt2 < L; cnt2++) {
       if ( btest(cnt1, cnt2) ){
         nbit += 1;
       }
     }
+    FStates.push_back(cnt1);
+    FTags.push_back(cnt1);
     NTotal.push_back(nbit);
   }
 }
