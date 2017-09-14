@@ -11,6 +11,23 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
+void LoadParameters( const std::string filename,
+  int &BL, int &FL, int &maxLocalB,
+  double &Jbb, double &Jff,
+  double &Vbb, double &Vff,
+  double &Uff, double &DeltaDC){
+  HDF5IO file(filename);
+  BL = file.loadInt("Parameters", "BL");
+  FL = file.loadInt("Parameters", "FL");
+  maxLocalB = file.loadInt("Parameters", "maxLocalB");
+  Jbb = file.loadReal("Parameters", "Jbb");
+  Jff = file.loadReal("Parameters", "Jff");
+  Vbb = file.loadReal("Parameters", "Vbb");
+  Vff = file.loadReal("Parameters", "Vff");
+  Uff = file.loadReal("Parameters", "Uff");
+  DeltaDC = file.loadReal("Parameters", "DeltaDC");
+}
+
 void density( const std::vector<Basis> &bs, const RealVectorType GS, Hamiltonian<double> Ham,
   std::vector<double> &nb, std::vector<double> &nf){
   nb.clear();
@@ -75,16 +92,16 @@ void peaks( const RealVectorType AS, const RealVectorType &EigVal, const RealMat
 
 int main(int argc, char const *argv[]) {
   /* Parameters */
-  int BL = 2;
-  int FL = 1;
+  int BL = 10;
+  int FL = 2;
   int maxLocalB = 1;
-  int TotalN = 2;
   double Jbb = 0.010e0;
   double Jff = 0.00e0;
   double Vbb = 3.20e0;
   double Vff = 3.50e0;
   double Uff = 0.00e0;
   double DeltaDC = -0.080e0;
+  LoadParameters( "confs.h5", BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
   /* Basis */
   std::vector<Basis> Bs;
   // For bosons
@@ -92,27 +109,27 @@ int main(int argc, char const *argv[]) {
   Basis Bosons(BL, BN);
   Bosons.Boson(maxLocalB);
   Bs.push_back(Bosons);
-  // testing
-  std::vector< std::vector<int> > BStates = Bosons.getBStates();
-  std::vector<RealType> BTags = Bosons.getBTags();
-  for( size_t i = 0; i < BTags.size(); ++i ){
-    std::cout << BTags.at(i) << ": " << std::flush;
-    Bosons.printBosonBasis( BStates.at(i) );
-  }
+  /* Print to check. Only for small matrix */
+  // std::vector< std::vector<int> > BStates = Bosons.getBStates();
+  // std::vector<RealType> BTags = Bosons.getBTags();
+  // for( size_t i = 0; i < BTags.size(); ++i ){
+  //   std::cout << BTags.at(i) << ": " << std::flush;
+  //   Bosons.printBosonBasis( BStates.at(i) );
+  // }
 
   // For fermions
   int FN = FL;
   Basis Fermions(FL, FN, true);
   Fermions.Fermion(0);
   Bs.push_back(Fermions);
-  // testing
-  std::vector<int> FStates = Fermions.getFStates();
-  std::vector<size_t> FTags = Fermions.getFTags();
-  for( size_t i = 0; i < FTags.size(); ++i ){
-    std::cout << FTags.at(i) << ": " << std::flush;
-    Fermions.printFermionBasis( FStates.at(i) );
-    std::cout << std::endl;
-  }
+  /* Print to check. Only for small matrix */
+  // std::vector<int> FStates = Fermions.getFStates();
+  // std::vector<size_t> FTags = Fermions.getFTags();
+  // for( size_t i = 0; i < FTags.size(); ++i ){
+  //   std::cout << FTags.at(i) << ": " << std::flush;
+  //   Fermions.printFermionBasis( FStates.at(i) );
+  //   std::cout << std::endl;
+  // }
 
   /* Hamiltonian */
   // Local potential
@@ -165,9 +182,9 @@ int main(int argc, char const *argv[]) {
   }
   Ham.AddHybridHamiltonian( 0, 1, DeltaTerm, Bs, maxLocalB);
   /* Print to check. Only for small matrix */
-  RealSparseMatrixType w2 = Ham.getTotalHamiltonian();
-  RealMatrixType h2(w2);
-  std::cout << h2 << std::endl;
+  // RealSparseMatrixType w2 = Ham.getTotalHamiltonian();
+  // RealMatrixType h2(w2);
+  // std::cout << h2 << std::endl;
 
   // Diagonalization and get GS
   RealVectorType EigVal;
@@ -179,7 +196,7 @@ int main(int argc, char const *argv[]) {
   std::vector<RealType> Val;
   RealVectorType Vec;
   Ham.eigh(Val, Vec);
-  // test only
+  /* Print to check. Only for small matrix */
   // std::cout << "GS - " << std::endl;
   // for ( size_t i = 0; i < GS.rows(); i++){
   //   std::cout << GS(i) << " " << Vec(i) << std::endl;
