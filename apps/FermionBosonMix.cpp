@@ -214,6 +214,7 @@ int main(int argc, char const *argv[]) {
   }
   std::cout << std::endl;
   // std::cout << EigVec.row(0) << std::endl;
+  std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){
     std::vector<double> PeakLocation, PeakWeight;
     RealVectorType AS = AdaggerState( cnt, Bs, Ham, EigVec.row(0), maxLocalB);
@@ -223,5 +224,25 @@ int main(int argc, char const *argv[]) {
     for ( size_t k = 0; k < PeakLocation.size(); k++){
       std::cout << PeakLocation.at(k) << " " << PeakWeight.at(k) << std::endl;
     }
+    PeakLocations.push_back(PeakLocation);
+    PeakWeights.push_back(PeakWeight);
   }
+
+  // save results
+  HDF5IO *file = new HDF5IO("plex.h5");
+  std::string gname = "obs";
+  file->saveVector(gname, "EigVal", EigVal);
+  file->saveMatrix(gname, "EigVec", EigVec);
+  file->saveStdVector(gname, "Nf", Nf);
+  file->saveStdVector(gname, "Nb", Nb);
+  std::string gname2 = "peak";
+  for ( size_t cnt = 0; cnt < BL; cnt ++ ){
+    std::string dname1 = "Ld-";
+    dname1.append(std::to_string((unsigned long long)cnt));
+    file->saveStdVector(gname2, dname1, PeakLocations.at(cnt));
+    std::string dname2 = "Wd-";
+    dname2.append(std::to_string((unsigned long long)cnt));
+    file->saveStdVector(gname2, dname2, PeakWeights.at(cnt));
+  }
+  delete file;
 }
