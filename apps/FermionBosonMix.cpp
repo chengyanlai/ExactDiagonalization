@@ -186,21 +186,21 @@ int main(int argc, char const *argv[]) {
   // RealMatrixType h2(w2);
   // std::cout << h2 << std::endl;
 
-  // Diagonalization and get GS
-  RealVectorType EigVal;
-  RealMatrixType EigVec;
-  Ham.diag(EigVal, EigVec);
-  std::cout << EigVal(0) << " " << EigVal(1) << std::endl;
-  RealVectorType GS = EigVec.row(0);
-  // compare arpack
-  std::vector<RealType> Val;
-  RealVectorType Vec;
-  Ham.eigh(Val, Vec);
-  /* Print to check. Only for small matrix */
-  // std::cout << "GS - " << std::endl;
-  // for ( size_t i = 0; i < GS.rows(); i++){
-  //   std::cout << GS(i) << " " << Vec(i) << std::endl;
-  // }
+  int GetFullSpectrum = 1;
+  if ( Ham.getTotalHilbertSpace() > 5000 ){
+    GetFullSpectrum = 0;
+  }
+  RealVectorType EigVals, GS;
+  RealMatrixType EigVecs;
+  if ( GetFullSpectrum ){
+    Ham.diag(EigVals, EigVecs);
+    GS = EigVecs.row(0);
+  }else{
+    std::vector<RealType> Val;
+    Ham.eigh(Val, GS);
+    EigVals = dMapVector(&Val[0], 2);
+  }
+  std::cout << "Eigen energies = " << EigVals(0) << ", " << EigVals(1) << std::endl;
 
   std::vector<double> Nf, Nb;
   density( Bs, GS, Ham, Nb, Nf);
@@ -217,12 +217,20 @@ int main(int argc, char const *argv[]) {
   std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){
     std::vector<double> PeakLocation, PeakWeight;
-    RealVectorType AS = AdaggerState( cnt, Bs, Ham, EigVec.row(0), maxLocalB);
-    // std::cout << AS << std::endl;
-    peaks(AS, EigVal, EigVec, PeakLocation, PeakWeight);
-    std::cout << "Site - " << cnt << std::endl;
-    for ( size_t k = 0; k < PeakLocation.size(); k++){
-      std::cout << PeakLocation.at(k) << " " << PeakWeight.at(k) << std::endl;
+    RealVectorType AS = AdaggerState( cnt, Bs, Ham, GS, maxLocalB);
+    if ( GetFullSpectrum ){
+      peaks(AS, EigVals, EigVecs, PeakLocation, PeakWeight);
+    }else{
+      size_t Kmax = 20;
+      double threshNorm = 1.0e-12;
+      RealVectorType wVals;
+      RealMatrixType wVecs;
+      Ham.krylovExpansion( AS, wVals, wVecs, Kmax, threshNorm );
+      wVecs.transposeInPlace();
+      peaks(AS, wVals, wVecs, PeakLocation, PeakWeight);
+      for ( auto &val : PeakWeight){
+        val *= AS.norm();
+      }
     }
     PeakLocations.push_back(PeakLocation);
     PeakWeights.push_back(PeakWeight);
@@ -231,8 +239,9 @@ int main(int argc, char const *argv[]) {
   // save results
   HDF5IO *file = new HDF5IO("plex.h5");
   std::string gname = "obs";
-  file->saveVector(gname, "EigVal", EigVal);
-  file->saveMatrix(gname, "EigVec", EigVec);
+  file->saveNumber(gname, "FullSpectrum", GetFullSpectrum);
+  file->saveVector(gname, "EigVals", EigVals);
+  file->saveMatrix(gname, "EigVecs", EigVecs);
   file->saveStdVector(gname, "Nf", Nf);
   file->saveStdVector(gname, "Nb", Nb);
   std::string gname2 = "peak";

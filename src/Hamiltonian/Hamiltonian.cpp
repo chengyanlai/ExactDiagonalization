@@ -180,13 +180,6 @@ void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec)
 }
 
 template<>
-void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
-  ComplexVectorType &Vec, const size_t Kmax )
-{
-  krylov(H_total, Vec, Prefactor, Kmax);
-}
-
-template<>
 void Hamiltonian<RealType>::diag( RealVectorType &Vals, RealMatrixType &Vecs)
 {
   size_t dim = getTotalHilbertSpace();
@@ -215,11 +208,23 @@ void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Ve
 }
 
 template<>
+void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
+  ComplexVectorType &Vec, const size_t Kmax ){
+  krylov(H_total, Vec, Prefactor, Kmax);
+}
+
+template<>
 RealVectorType Hamiltonian<RealType>::expVals( const RealType Prefactor,
   const RealVectorType Vec){
   RealVectorType out = Prefactor * Vec;
   Eigen::ArrayXd work = out.array().exp();
   return work.matrix();
+}
+
+template<>
+void Hamiltonian<RealType>::krylovExpansion( const RealVectorType InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs
+  , const size_t Kmax, const double threshNorm ){
+  krylov(H_total, InputVec, EigVals, EigVecs, Kmax, threshNorm);
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y

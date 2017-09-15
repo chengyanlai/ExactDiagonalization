@@ -84,10 +84,12 @@ public:
     const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
   /* ^^^^^^^ Hybrid systems ^^^^^^^ */
   void eigh( std::vector<RealType> &Val, VectorType &Vec);
-  void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   void diag( RealVectorType &Val, RealMatrixType &Vec);
   void diag( RealVectorType &Val, ComplexMatrixType &Vec);
+  void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
+  void krylovExpansion( const RealVectorType InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs
+    , const size_t Kmax = 30, const double threshNorm = 1.0e-12 );
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
   inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){

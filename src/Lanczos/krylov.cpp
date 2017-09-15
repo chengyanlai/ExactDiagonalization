@@ -12,10 +12,7 @@
 #endif
 
 void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
-  const ComplexType Prefactor, const size_t Kmax)
-{
-  // INFO(A);
-  const RealType beta_err = 1.0E-12;
+  const ComplexType Prefactor, const size_t Kmax, const double threshNorm){
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
@@ -37,7 +34,7 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
     if( DEBUG > 4 ){
       INFO("@ " << cntK << " alpha is " << alpha << " beta is " << beta);
     }
-    if( beta > beta_err ){
+    if( beta > threshNorm ){
       work.normalize();
       if( cntK+1 < Kmax ) {
         Vm.col(cntK+1) = work;
@@ -109,5 +106,73 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
     }
     ComplexMatrixType Otmp = Vm.block(0, 0, Vec.size(), Kused) * Kmat;
     Vec = ( Otmp * Dmat ) * ( Otmp.adjoint() * Vec );
+  }
+}
+
+void krylov(const RealSparseMatrixType &A, const RealVectorType &InputVec,
+  RealVectorType &EigVals, RealMatrixType &EigVecs,
+  const size_t Kmax, const double threshNorm){
+  if (DEBUG) assert( Kmax > 2 );
+  RealType alpha;
+  RealType beta = 1.0;
+  RealMatrixType Vm = RealMatrixType::Zero(InputVec.size(), Kmax);
+  std::vector<RealType> Alphas;
+  std::vector<RealType> Betas;
+  int cntK = 0;
+  //NOTE: normalized Vec
+  RealVectorType Vec = InputVec;
+  Vec.normalize();
+  Vm.col(cntK) = Vec;
+  while ( cntK < Kmax ) {
+    RealVectorType work = A * Vm.col(cntK);
+    if( cntK > 0 ) work -= beta * Vm.col(cntK-1);
+    alpha = work.dot( Vm.col(cntK) );
+    work -= alpha * Vm.col(cntK);
+    beta = work.norm();
+    Alphas.push_back(alpha);
+    if( DEBUG > 4 ){
+      INFO("@ " << cntK << " alpha is " << alpha << " beta is " << beta);
+    }
+    if( beta > threshNorm ){
+      work.normalize();
+      if( cntK+1 < Kmax ) {
+        Vm.col(cntK+1) = work;
+        Betas.push_back(beta);
+      }
+      cntK++;
+    }
+    else{// Norm is too small
+      cntK++;
+      break;
+    }
+  }
+  int Kused = cntK;
+  EigVals = RealVectorType::Zero(Kused);
+  EigVecs = RealMatrixType::Zero(Vec.size(), Kused);
+  if ( Kused == 1 ){
+    /* NOTE: This is a special case that input vector is eigenvector */
+    EigVals(0) = Alphas.at(0);
+    EigVecs.col(0) = Vec;
+  } else{
+    RealType* d = &Alphas[0];
+    RealType* e = &Betas[0];
+    RealType* z = (RealType*)malloc(Kused * Kused * sizeof(RealType));
+    RealType* work = (RealType*)malloc(4 * Kused * sizeof(RealType));
+    int info;
+    //dstev - LAPACK
+    dstev((char*)"V", &Kused, d, e, z, &Kused, work, &info);
+    if(info != 0){
+      INFO("Lapack INFO = " << info);
+      RUNTIME_ERROR("Error in Lapack function 'dstev'");
+    }
+    // build the solutions
+    EigVals = dMapVector(d, Kused);
+    Eigen::Map<RealMatrixType> Kmat(z, Kused, Kused);
+    Kmat.transposeInPlace();
+    // ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kused, Kused);
+    // for (size_t cnt = 0; cnt < Kused; cnt++) {
+    //   Dmat(cnt,cnt) = exp( Prefactor * d[cnt] );
+    // }
+    EigVecs = Vm.block(0, 0, Vec.size(), Kused) * Kmat;
   }
 }
