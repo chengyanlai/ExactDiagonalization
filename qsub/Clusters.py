@@ -48,7 +48,7 @@ if platform.system() == "Linux":
     Cluster = "LANL"
     Partition = "standard"
     MaxNumThreads = 16
-    MaxWallTime = '336:0:0'
+    MaxWallTime = '16:0:0'
     qsub_cmd = "sbatch"
     SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
     EXEC_DIR = "/net/scratch1/chengyanlai"
@@ -56,7 +56,7 @@ if platform.system() == "Linux":
     Cluster = "LANL"
     Partition = "standard"
     MaxNumThreads = 20
-    MaxWallTime = '48:0:0'
+    MaxWallTime = '16:0:0'
     qsub_cmd = "sbatch"
     SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
     EXEC_DIR = "/net/scratch1/chengyanlai"
