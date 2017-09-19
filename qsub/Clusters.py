@@ -43,7 +43,7 @@ if platform.system() == "Linux":
     MaxWallTime = '336:0:0'
     qsub_cmd = "sbatch"
     SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
-    EXEC_DIR = "/net/scratch1/chengyanlai"
+    EXEC_DIR = "/net/scratch3/chengyanlai"
   elif socket.gethostname()[:5] == "wf-fe":
     Cluster = "LANL"
     Partition = "standard"
@@ -51,7 +51,7 @@ if platform.system() == "Linux":
     MaxWallTime = '16:0:0'
     qsub_cmd = "sbatch"
     SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
-    EXEC_DIR = "/net/scratch1/chengyanlai"
+    EXEC_DIR = "/net/scratch3/chengyanlai"
   elif socket.gethostname()[:5] == "gr-fe":
     Cluster = "LANL"
     Partition = "standard"
@@ -59,7 +59,7 @@ if platform.system() == "Linux":
     MaxWallTime = '16:0:0'
     qsub_cmd = "sbatch"
     SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
-    EXEC_DIR = "/net/scratch1/chengyanlai"
+    EXEC_DIR = "/net/scratch3/chengyanlai"
 elif platform.system() == "Darwin":
   if socket.gethostname() == "pn1716764.lanl.gov":
     QSUB = False

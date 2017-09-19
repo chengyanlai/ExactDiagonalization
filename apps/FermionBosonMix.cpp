@@ -26,8 +26,8 @@
 void LoadParameters( const std::string filename, const int set,
   int &BL, int &FL, int &maxLocalB,
   double &Jbb, double &Jff,
-  double &Vbbs, double &Vff,
-  double &Uff, double &DeltaDCs){
+  double &Vbb, double &Vff,
+  double &Uff, double &DeltaDC){
   HDF5IO file(filename);
   std::string gname = "Input-";
   gname.append(std::to_string((unsigned long long)set));
@@ -128,7 +128,7 @@ int main(int argc, char const *argv[]) {
   // Get the rank of the process
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  LoadParameters( "confs.h5", world_rank, BL, FL, maxLocalB, Jbb, Jff, Vbbs, Vff, Uff, DeltaDC);
+  LoadParameters( "confs.h5", world_rank, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
 #else
   LoadParameters( "confs.h5", 0, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
 #endif

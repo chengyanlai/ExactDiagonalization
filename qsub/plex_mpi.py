@@ -28,10 +28,9 @@ Exac_program = "\n".join(APPs)
 
 QSUB = False
 NumCores = 10
-WallTime = 12:0:0
+WallTime = MaxWallTime
 
-SetCount = 0
-DATADIR = os.path.join( EXEC_DIR, "Plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]) )
+DATADIR = os.path.join( EXEC_DIR, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]) )
 for Uff in Uffs:
   Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "Uf", str(Uff)])
   workdir = os.path.join(DATADIR, Job_Name)
@@ -39,11 +38,12 @@ for Uff in Uffs:
   with shp.cd(workdir):
     if os.path.isfile('DONE'):
       pass
+    SetCount = 0
     for Jbb in Jbbs:
       for Jff in Jffs:
         for Vbb in Vbbs:
           for Vff in Vffs:
-            for DeltsDC in DeltaDCs:
+            for DeltaDC in DeltaDCs:
               f = h5py.File('confs.h5', 'a')
               para = f.create_group("Input-" + str(SetCount))
               dset = para.create_dataset("BL", data=BL)
