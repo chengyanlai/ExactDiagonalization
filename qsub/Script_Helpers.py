@@ -88,7 +88,7 @@ def WriteQsubSBATCH_MPI(
   Job_Name,
   EXAC_Name,
   Folder_Name,
-  Nodes='1',
+  Nodes=1,
   NumCore=1,
   WallTime='16:00:00',
   partition='standard',
@@ -108,7 +108,7 @@ export OMP_NUM_THREADS=%d
 echo "------------------------------------------------------------------------"
 echo "Job started on" `date`
 echo "------------------------------------------------------------------------"
-mpirun -n %d %s
+mpirun -n %d -ppn %d %s
 echo "------------------------------------------------------------------------"
 echo "Job ended on" `date`
 echo "------------------------------------------------------------------------"

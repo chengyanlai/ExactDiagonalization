@@ -46,7 +46,8 @@ for Uff in Uffs:
             for DeltaDC in DeltaDCs:
               f = h5py.File('confs.h5', 'a')
               para = f.create_group("Input-" + str(SetCount))
-              dset = para.create_dataset("BL", data=BL)
+              print(SetCount)
+       	      dset = para.create_dataset("BL", data=BL)
               dset = para.create_dataset("FL", data=FL)
               dset = para.create_dataset("maxLocalB", data=maxLocalB)
               dset = para.create_dataset("Jbb", data=Jbb)
@@ -58,6 +59,6 @@ for Uff in Uffs:
               f.close()
               SetCount += 1
 
-  shp.WriteQsubSBATCH_MPI("job.mpi", Job_Name, Exac_program, workdir, Nodes=SetCount, \
-                          NumCore=NumCores, WallTime=WallTime, partition=Partition)
+    shp.WriteQsubSBATCH_MPI("job.mpi", Job_Name, Exac_program, workdir, Nodes=SetCount, \
+                            NumCore=NumCores, WallTime=WallTime, partition=Partition)
 
