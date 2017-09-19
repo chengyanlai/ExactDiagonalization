@@ -10,7 +10,7 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
-#ifdef MPI
+#ifdef MPIPARALLEL
   #include <mpi.h>
 #endif
 
@@ -103,7 +103,7 @@ int main(int argc, char const *argv[]) {
   double Vbb = 3.20e0;
   double Vff = 3.50e0;
   double Uff = 0.00e0;
-#ifdef MPI
+#ifdef MPIPARALLEL
   std::vector<double> DeltaDCs(15,-0.080e0);
   // Get the number of processes
   int world_size;
@@ -184,7 +184,7 @@ int main(int argc, char const *argv[]) {
   LT.push_back(FLattice);
   Ham.BuildHoppingHamiltonian(Bs, LT);
   Ham.BuildTotalHamiltonian();
-#ifdef MPI
+#ifdef MPIPARALLEL
   double DeltaDC = DeltaDCs.at(world_rank);
 #endif
   std::vector< std::tuple<int, int, double> > DeltaTerm;
@@ -252,7 +252,7 @@ int main(int argc, char const *argv[]) {
   // save results
   std::string filename = "plex";
 #ifdef MPI
-filename.append(std::to_string((unsigned long long)world_rank);
+filename.append(std::to_string((unsigned long long)world_rank));
 #endif
   filename.append(".h5");
   HDF5IO *file = new HDF5IO(filename);
@@ -272,7 +272,7 @@ filename.append(std::to_string((unsigned long long)world_rank);
     file->saveStdVector(gname2, dname2, PeakWeights.at(cnt));
   }
   delete file;
-#ifdef MPI
+#ifdef MPIPARALLEL
   MPI_Finalize();
 #endif
 }
