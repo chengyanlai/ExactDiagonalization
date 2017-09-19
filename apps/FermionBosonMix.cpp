@@ -16,7 +16,7 @@
 #endif
 
 #ifndef NumCores
-#define NumCores 12
+#define NumCores 10
 #endif
 
 #ifdef MPIPARALLEL
@@ -118,6 +118,8 @@ int main(int argc, char const *argv[]) {
   double Uff = 0.00e0;
 #ifdef MPIPARALLEL
   std::vector<double> DeltaDCs(15,-0.080e0);
+  // Initialize MPI
+  MPI_Init(NULL, NULL);
   // Get the number of processes
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
@@ -264,7 +266,7 @@ int main(int argc, char const *argv[]) {
 
   // save results
   std::string filename = "plex";
-#ifdef MPI
+#ifdef MPIPARALLEL
 filename.append(std::to_string((unsigned long long)world_rank));
 #endif
   filename.append(".h5");
