@@ -10,6 +10,15 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
+
+#ifdef MKL
+#include "mkl.h"
+#endif
+
+#ifndef NumCores
+#define NumCores 12
+#endif
+
 #ifdef MPIPARALLEL
   #include <mpi.h>
 #endif
@@ -94,6 +103,10 @@ void peaks( const RealVectorType AS, const RealVectorType &EigVal, const RealMat
 }
 
 int main(int argc, char const *argv[]) {
+  Eigen::setNbThreads(NumCores);
+#ifdef MKL
+  mkl_set_num_threads(NumCores);
+#endif
   /* Parameters */
   int BL = 2;
   int FL = 2;
