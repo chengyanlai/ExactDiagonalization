@@ -10,6 +10,9 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
+#ifdef MPI
+  #include <mpi.h>
+#endif
 
 void LoadParameters( const std::string filename,
   int &BL, int &FL, int &maxLocalB,
@@ -92,7 +95,7 @@ void peaks( const RealVectorType AS, const RealVectorType &EigVal, const RealMat
 
 int main(int argc, char const *argv[]) {
   /* Parameters */
-  int BL = 10;
+  int BL = 2;
   int FL = 2;
   int maxLocalB = 1;
   double Jbb = 0.010e0;
@@ -100,8 +103,19 @@ int main(int argc, char const *argv[]) {
   double Vbb = 3.20e0;
   double Vff = 3.50e0;
   double Uff = 0.00e0;
+#ifdef MPI
+  std::vector<double> DeltaDCs(15,-0.080e0);
+  // Get the number of processes
+  int world_size;
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  assert( DeltaDCs.size() == world_size);
+  // Get the rank of the process
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+#else
   double DeltaDC = -0.080e0;
   LoadParameters( "confs.h5", BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
+#endif
   /* Basis */
   std::vector<Basis> Bs;
   // For bosons
@@ -170,10 +184,9 @@ int main(int argc, char const *argv[]) {
   LT.push_back(FLattice);
   Ham.BuildHoppingHamiltonian(Bs, LT);
   Ham.BuildTotalHamiltonian();
-  /* Print to check. Only for small matrix */
-  // RealSparseMatrixType w = Ham.getTotalHamiltonian();
-  // RealMatrixType h(w);
-  // std::cout << h << std::endl;
+#ifdef MPI
+  double DeltaDC = DeltaDCs.at(world_rank);
+#endif
   std::vector< std::tuple<int, int, double> > DeltaTerm;
   for ( size_t i = 0; i < FL; i++){
     for (size_t j = 0; j < BL; j++){
@@ -237,7 +250,12 @@ int main(int argc, char const *argv[]) {
   }
 
   // save results
-  HDF5IO *file = new HDF5IO("plex.h5");
+  std::string filename = "plex";
+#ifdef MPI
+filename.append(std::to_string((unsigned long long)world_rank);
+#endif
+  filename.append(".h5");
+  HDF5IO *file = new HDF5IO(filename);
   std::string gname = "obs";
   file->saveNumber(gname, "FullSpectrum", GetFullSpectrum);
   file->saveVector(gname, "EigVals", EigVals);
@@ -254,4 +272,7 @@ int main(int argc, char const *argv[]) {
     file->saveStdVector(gname2, dname2, PeakWeights.at(cnt));
   }
   delete file;
+#ifdef MPI
+  MPI_Finalize();
+#endif
 }
