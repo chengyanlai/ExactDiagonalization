@@ -37,7 +37,8 @@ for Uff in Uffs:
   os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
   with shp.cd(workdir):
     if os.path.isfile('DONE'):
-      pass
+      print(workdir, " is DONE!")
+      continue
     SetCount = 0
     for Jbb in Jbbs:
       for Jff in Jffs:
@@ -46,7 +47,6 @@ for Uff in Uffs:
             for DeltaDC in DeltaDCs:
               f = h5py.File('confs.h5', 'a')
               para = f.create_group("Input-" + str(SetCount))
-              print(SetCount)
        	      dset = para.create_dataset("BL", data=BL)
               dset = para.create_dataset("FL", data=FL)
               dset = para.create_dataset("maxLocalB", data=maxLocalB)
