@@ -183,7 +183,7 @@ int main(int argc, char const *argv[]) {
   for (size_t cnt = 0; cnt < BL; cnt++) {
     BJ.push_back(Jbb);
   }
-  if ( BL == 2 ) {
+  if ( BL < 3 ) {
     BOBC = true;
     BJ.pop_back();
   }
