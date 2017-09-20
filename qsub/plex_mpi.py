@@ -12,14 +12,14 @@ import Script_Helpers as shp
 from Clusters import *
 
 BL = 10
-FL = 2
+FL = 1
 maxLocalB = 1
-Jbbs = [0.05, 0.10, 0.50]
-Jffs = [0.05, 0.10, 0.50]
+Jbbs = [0.01, 0.05, 0.10]
+Jffs = [0.01, 0.05, 0.10]
 Vbbs = [2.80, 3.20, 3.60]
 Vffs = [3.00, 3.50, 4.00]
-Uffs = [0.0, 0.10, 0.50,]
-DeltaDCs = [-0.0010, -0.0050, -0.010, -0.050, -0.080]
+Uffs = [0.00, 0.10, 0.50]
+DeltaDCs = [-0.0050, -0.010, -0.050, -0.080]
 
 APPs = []
 APPs.append(os.path.join(SRC_DIR, "build", "plex.mpi"))

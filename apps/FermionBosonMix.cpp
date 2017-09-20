@@ -130,7 +130,15 @@ int main(int argc, char const *argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
   LoadParameters( "confs.h5", world_rank, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
 #else
-  LoadParameters( "confs.h5", 0, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
+  BL = 10;
+  FL = 1;
+  Jbb = 0.010e0;
+  Jff = 0.010e0;
+  Vbb = 3.20e0;
+  Vff = 3.50e0;
+  Uff = 0.00e0;
+  DeltaDC = -0.050e0;
+  // LoadParameters( "confs.h5", 0, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
 #endif
   /* Basis */
   std::vector<Basis> Bs;
