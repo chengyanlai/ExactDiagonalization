@@ -11,14 +11,14 @@ import h5py
 import Script_Helpers as shp
 from Clusters import *
 
-BL = 10
-FL = 2
+BL = 1
+FL = 4
 maxLocalB = 1
-Jbb = 0.10
-Jff = 0.10
-Vbbs = [3.00, 3.20, 3.40]
-Vffs = [3.00, 3.50, 4.00]
-Uffs = [0.0, 0.10, 1.00, 10.0]
+Jbb = 0.00
+Jff = 0.00
+Vbbs = [3.50,]# E_d
+Vffs = [3.40,]# E_c
+Uffs = [0.0, ]# V_c
 DeltaDC = -0.080
 
 APPs = []
@@ -45,7 +45,7 @@ for Uff in Uffs:
             pass
           else:
             f = h5py.File('confs.h5', 'w')
-            para = f.create_group("Parameters")
+            para = f.create_group("Input-0")
             dset = para.create_dataset("BL", data=BL)
             dset = para.create_dataset("FL", data=FL)
             dset = para.create_dataset("maxLocalB", data=maxLocalB)
@@ -66,14 +66,3 @@ for Uff in Uffs:
             else:
               shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
                 NumCore=NumThreads, WallTime=WallTime)
-
-            if platform.system() == "Darwin":
-              f = open(Job_Name, "w")
-              for i in APPs:
-                # print(i)
-                subprocess.call(i, shell=True, stdout=f)
-              f.close()
-            elif QSUB:
-              qsub_script = " ".join([qsub_cmd, "job;sleep 1"])
-              if QSUB: subprocess.call(qsub_script, shell=True)
-
