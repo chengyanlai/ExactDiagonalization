@@ -23,8 +23,8 @@
 #define NumCores 1
 #endif
 
-#define FIXJ 1
-#define SmallGammaRegime 1
+#define FIXJ 0
+#define SmallGammaRegime 0
 
 const int L = 3;
 const int N1 = L;// Open system has no upper limit

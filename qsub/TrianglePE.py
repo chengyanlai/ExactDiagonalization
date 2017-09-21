@@ -15,6 +15,7 @@ from Clusters import *
 t23 = 1.0
 Vin = 0.0
 
+# remember to set FIXJ to 0 in main program
 cntGStart = 0
 t13List = np.linspace(0.1, 1.9, 19)
 # Uin = [0.0, 1.0, 0.1, 5.0, 10.0]
