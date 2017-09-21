@@ -83,6 +83,41 @@ exit 0
   f.close()
   return
 
+def WriteQsubSBATCH_MPI(
+  fname,
+  Job_Name,
+  EXAC_Name,
+  Folder_Name,
+  Nodes=1,
+  NumCore=1,
+  WallTime='16:00:00',
+  partition='standard',
+  ProjectName='s17_cint'):
+  f = open(fname, 'w')
+  job_string = """#!/bin/bash
+#SBATCH -A %s
+#SBATCH --job-name=%s
+#SBATCH --partition=%s
+#SBATCH --nodes=%d
+#SBATCH --ntasks=%d
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=%d
+#SBATCH --time=%s
+#SBATCH --export=ALL
+export OMP_NUM_THREADS=%d
+echo "------------------------------------------------------------------------"
+echo "Job started on" `date`
+echo "------------------------------------------------------------------------"
+mpirun -n %d -ppn %d %s
+echo "------------------------------------------------------------------------"
+echo "Job ended on" `date`
+echo "------------------------------------------------------------------------"
+exit 0
+""" % (ProjectName, Job_Name, partition, Nodes, Nodes, NumCore, WallTime, NumCore, Nodes, NumCore, EXAC_Name)
+  f.write(job_string)
+  f.close()
+  return
+
 def WriteQsubSGE(
   fname,
   Job_Name,

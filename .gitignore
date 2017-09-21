@@ -123,3 +123,5 @@ sync*
 .vscode
 tags
 Makefile
+*.h5
+eigen

@@ -36,6 +36,30 @@ if platform.system() == "Linux":
       qsub_cmd = ' '.join([ qsub_cmd, ' '.join(sys.argv[1:]) ])
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
+  elif socket.gethostname()[:5] == "wc-fe":
+    Cluster = "LANL"
+    Partition = "standard"
+    MaxNumThreads = 16
+    MaxWallTime = '16:0:0'
+    qsub_cmd = "sbatch"
+    SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
+    EXEC_DIR = "/net/scratch3/chengyanlai"
+  elif socket.gethostname()[:5] == "wf-fe":
+    Cluster = "LANL"
+    Partition = "standard"
+    MaxNumThreads = 16
+    MaxWallTime = '16:0:0'
+    qsub_cmd = "sbatch"
+    SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
+    EXEC_DIR = "/net/scratch3/chengyanlai"
+  elif socket.gethostname()[:5] == "gr-fe":
+    Cluster = "LANL"
+    Partition = "standard"
+    MaxNumThreads = 20
+    MaxWallTime = '16:0:0'
+    qsub_cmd = "sbatch"
+    SRC_DIR = "/usr/projects/cint/cint_sces/ExactDiagonalization"
+    EXEC_DIR = "/net/scratch3/chengyanlai"
 elif platform.system() == "Darwin":
   if socket.gethostname() == "pn1716764.lanl.gov":
     QSUB = False

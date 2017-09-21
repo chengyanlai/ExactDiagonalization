@@ -2,6 +2,10 @@
 #include "src/Lanczos/krylov.hpp"
 #include "src/numeric/lapack.h"
 
+#ifndef DEBUG
+#define DEBUG 0
+#endif
+
 template<typename Tnum>
 Hamiltonian<Tnum>::~Hamiltonian(){}
 
@@ -16,7 +20,7 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
     HilbertSpaces.push_back(b.getHilbertSpace());
   }
   size_t TotalDim = getTotalHilbertSpace();
-  INFO("Total Hilbert Space = " << TotalDim);
+  if (DEBUG) std::cout << "Total Hilbert Space = " << TotalDim << std::endl;
   H_total.resize(TotalDim, TotalDim);
   H_total.reserve(3*TotalDim);
   H_local.resize(TotalDim, TotalDim);
@@ -77,7 +81,7 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(
     FermionIntraNN(0, betweenSitesVals, bs.at(0), hloc);
   }
   H_local.setFromTriplets(hloc.begin(), hloc.end());
-  std::cout << "Non-zero matrix elements = " << hloc.size() << std::endl;
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hloc.size() << std::endl;
 }
 
 template<typename Tnum>
@@ -104,7 +108,7 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
     cnt++;
   }
   H_hop.setFromTriplets(hhop.begin(), hhop.end());
-  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
 }
 
 template<typename Tnum>
@@ -126,7 +130,7 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
     cnt++;
   }
   H_hop.setFromTriplets(hhop.begin(), hhop.end());
-  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
 }
 
 template<typename Tnum>
@@ -139,7 +143,7 @@ void Hamiltonian<Tnum>::BuildXXZHamiltonian(const Tnum Delta,
     SpinOneHalfXXZ( Delta, lt, b, hhop );
   }
   H_hop.setFromTriplets(hhop.begin(), hhop.end());
-  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
 }
 
 template<typename Tnum>
@@ -152,7 +156,7 @@ void Hamiltonian<Tnum>::BuildTIsingHamiltonian(const Tnum hz,
     TIsing( hz, lt, b, hhop );
   }
   H_hop.setFromTriplets(hhop.begin(), hhop.end());
-  std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;
 }
 
 template<typename Tnum>
@@ -165,7 +169,7 @@ void Hamiltonian<Tnum>::AddHybridHamiltonian( const int species1, const int spec
   std::vector<Triplet> hhyb;
   Hybirdynation( species1, species2, hybVals, bs, hhyb, maxLocalB );
   H_hyb.setFromTriplets(hhyb.begin(), hhyb.end());
-  std::cout << "Non-zero matrix elements = " << hhyb.size() << " from H_hyb are added to H_total!" << std::endl;
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhyb.size() << " from H_hyb are added to H_total!" << std::endl;
   H_total += H_hyb;
 }
 
