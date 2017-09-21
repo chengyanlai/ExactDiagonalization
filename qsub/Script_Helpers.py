@@ -78,7 +78,7 @@ echo "------------------------------------------------------------------------"
 echo "Job ended on" `date`
 echo "------------------------------------------------------------------------"
 exit 0
-""" % (ProjectName, Job_Name, partition, Nodes, Nodes, NumCore, WallTime, NumCore, Nodes, NumCore, EXAC_Name)
+""" % (ProjectName, Job_Name, partition, Nodes, Nodes, NumCore, WallTime, NumCore, EXAC_Name)
   f.write(job_string)
   f.close()
   return
