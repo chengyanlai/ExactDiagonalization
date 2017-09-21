@@ -53,41 +53,6 @@ def WriteQsubSBATCH(
   Job_Name,
   EXAC_Name,
   Folder_Name,
-  Nodes='1',
-  NumCore=1,
-  WallTime='48:00:00',
-  partition='compute',
-  ProjectName='TG-DMR150075'):
-  f = open(fname, 'w')
-  job_string = """#!/bin/bash
-#SBATCH -A %s
-#SBATCH --job-name=%s
-#SBATCH --partition=%s
-#SBATCH --nodes=%s
-#SBATCH --ntasks-per-node=%d
-#SBATCH --export=ALL
-#SBATCH -t %s
-#SBATCH --mail-user=clai24@ucmerced.edu
-#SBATCH --mail-type=end
-export OMP_NUM_THREADS=%d
-echo "------------------------------------------------------------------------"
-echo "Job started on" `date`
-echo "------------------------------------------------------------------------"
-%s
-echo "------------------------------------------------------------------------"
-echo "Job ended on" `date`
-echo "------------------------------------------------------------------------"
-exit 0
-""" % (ProjectName, Job_Name, partition, Nodes, NumCore, WallTime, NumCore, EXAC_Name)
-  f.write(job_string)
-  f.close()
-  return
-
-def WriteQsubSBATCH_MPI(
-  fname,
-  Job_Name,
-  EXAC_Name,
-  Folder_Name,
   Nodes=1,
   NumCore=1,
   WallTime='16:00:00',
@@ -108,7 +73,7 @@ export OMP_NUM_THREADS=%d
 echo "------------------------------------------------------------------------"
 echo "Job started on" `date`
 echo "------------------------------------------------------------------------"
-mpirun -n %d -ppn %d %s
+%s
 echo "------------------------------------------------------------------------"
 echo "Job ended on" `date`
 echo "------------------------------------------------------------------------"

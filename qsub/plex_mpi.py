@@ -11,8 +11,8 @@ import h5py
 import Script_Helpers as shp
 from Clusters import *
 
-BL = 10
-FL = 1
+BL = 2
+FL = 10
 maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
@@ -27,11 +27,6 @@ else:
 Vbbs = [3.20, 3.50, 3.80]
 Vffs = [3.20, 3.40, 3.60]
 DeltaDCs = [-0.0080, -0.020, -0.050, -0.080]
-
-APPs = []
-APPs.append(os.path.join(SRC_DIR, "build", "plex.mpi"))
-APPs.append("/bin/touch DONE")
-Exac_program = "\n".join(APPs)
 
 QSUB = False
 NumCores = 10
@@ -65,6 +60,11 @@ for Uff in Uffs:
               dset = para.create_dataset("DeltaDC", data=DeltaDC)
               SetCount += 1
         f.close()
-        shp.WriteQsubSBATCH_MPI("job", Job_Name, Exac_program, workdir, Nodes=SetCount, \
-                                NumCore=NumCores, WallTime=WallTime, partition=Partition)
+        APPs = []
+        APPs.append("/bin/cp confs.h5 confs.h5.backup")
+        APPs.append("mpirun -n " + str(SetCount) + " -ppn " + str(NumCores) + " " + os.path.join(SRC_DIR, "build", "plex.mpi"))
+        APPs.append("/bin/touch DONE")
+        Exac_program = "\n".join(APPs)
+        shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, Nodes=SetCount, \
+                            NumCore=NumCores, WallTime=WallTime, partition=Partition)
 
