@@ -49,10 +49,10 @@ for Uff in Uffs:
           print(workdir, " is DONE!")
           continue
         SetCount = 0
+        f = h5py.File('confs.h5', 'w')
         for Vbb in Vbbs:
           for Vff in Vffs:
             for DeltaDC in DeltaDCs:
-              f = h5py.File('confs.h5', 'a')
               para = f.create_group("Input-" + str(SetCount))
               dset = para.create_dataset("BL", data=BL)
               dset = para.create_dataset("FL", data=FL)
@@ -63,9 +63,8 @@ for Uff in Uffs:
               dset = para.create_dataset("Vff", data=Vff)
               dset = para.create_dataset("Uff", data=Uff)
               dset = para.create_dataset("DeltaDC", data=DeltaDC)
-              f.close()
               SetCount += 1
-
+        f.close()
         shp.WriteQsubSBATCH_MPI("job", Job_Name, Exac_program, workdir, Nodes=SetCount, \
                                 NumCore=NumCores, WallTime=WallTime, partition=Partition)
 
