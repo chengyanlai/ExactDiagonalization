@@ -27,7 +27,7 @@ void LoadParameters( const std::string filename, const int set,
   int &BL, int &FL, int &maxLocalB,
   double &Jbb, double &Jff,
   double &Vbb, double &Vff,
-  double &Uff, double &DeltaDC){
+  double &Uff, std::vector<std::vector<double> > &DeltaDC){
   HDF5IO file(filename);
   std::string gname = "Input-";
   gname.append(std::to_string((unsigned long long)set));
@@ -39,7 +39,16 @@ void LoadParameters( const std::string filename, const int set,
   Vbb = file.loadReal(gname, "Vbb");
   Vff = file.loadReal(gname, "Vff");
   Uff = file.loadReal(gname, "Uff");
-  DeltaDC = file.loadReal(gname, "DeltaDC");
+  DeltaDC.clear();
+  std::string setName = "DeltaDC-";
+  for ( size_t i = 0; i < FL; i++){
+    std::string tmp = setName;
+    tmp.append(std::to_string((unsigned long long)i));
+    std::vector<double> work;
+    work.clear();
+    file.loadStdVector(gname, tmp, work);
+    DeltaDC.push_back( work );
+  }
 }
 
 void density( const std::vector<Basis> &bs, const RealVectorType GS, Hamiltonian<double> Ham,
@@ -118,7 +127,7 @@ int main(int argc, char const *argv[]) {
   double Vbb = 3.20e0;
   double Vff = 3.50e0;
   double Uff = 0.00e0;
-  double DeltaDC = -0.050e0;
+  std::vector<std::vector<double> > DeltaDC;
 #ifdef MPIPARALLEL
   // Initialize MPI
   MPI_Init(NULL, NULL);
@@ -128,18 +137,11 @@ int main(int argc, char const *argv[]) {
   // Get the rank of the process
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  LoadParameters( "confs.h5", world_rank, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
 #else
-  // BL = 10;
-  // FL = 1;
-  // Jbb = 0.010e0;
-  // Jff = 0.010e0;
-  // Vbb = 3.20e0;
-  // Vff = 3.50e0;
-  // Uff = 0.00e0;
-  // DeltaDC = -0.050e0;
-  LoadParameters( "confs.h5", 0, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
+  size_t RunSets = atoi(argv[1]);
+  for ( size_t world_rank = 0; world_rank < RunSets; world_rank++){
 #endif
+  LoadParameters( "confs.h5", world_rank, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
   /* Basis */
   std::vector<Basis> Bs;
   // For bosons
@@ -211,7 +213,7 @@ int main(int argc, char const *argv[]) {
   std::vector< std::tuple<int, int, double> > DeltaTerm;
   for ( size_t i = 0; i < FL; i++){
     for (size_t j = 0; j < BL; j++){
-      DeltaTerm.push_back(std::make_tuple(j, i, DeltaDC));
+      DeltaTerm.push_back(std::make_tuple(j, i, DeltaDC.at(i).at(j)));
     }
   }
   Ham.AddHybridHamiltonian( 0, 1, DeltaTerm, Bs, maxLocalB);
@@ -272,9 +274,7 @@ int main(int argc, char const *argv[]) {
 
   // save results
   std::string filename = "plex";
-#ifdef MPIPARALLEL
   filename.append(std::to_string((unsigned long long)world_rank));
-#endif
   filename.append(".h5");
   HDF5IO *file = new HDF5IO(filename);
   file->saveNumber("Input", "BL", BL);
@@ -285,7 +285,12 @@ int main(int argc, char const *argv[]) {
   file->saveNumber("Input", "Vbb", Vbb);
   file->saveNumber("Input", "Vff", Vff);
   file->saveNumber("Input", "Uff", Uff);
-  file->saveNumber("Input", "DeltaDC", DeltaDC);
+  std::string setName = "DeltaDC-";
+  for ( size_t i = 0; i < FL; i++){
+    std::string tmp = setName;
+    tmp.append(std::to_string((unsigned long long)i));
+    file->saveStdVector("Input", setName, DeltaDC.at(i));
+  }
   std::string gname = "obs";
   file->saveNumber(gname, "FullSpectrum", GetFullSpectrum);
   file->saveVector(gname, "EigVals", EigVals);
@@ -304,5 +309,7 @@ int main(int argc, char const *argv[]) {
   delete file;
 #ifdef MPIPARALLEL
   MPI_Finalize();
+#else
+  }
 #endif
 }
