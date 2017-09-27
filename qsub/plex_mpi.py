@@ -32,9 +32,9 @@ CouplingForm = "uniform"#
 NumCores = 10
 WallTime = MaxWallTime
 
-def DCcoupling(Delta, FL, BL, form="uniform"):
+def DCcoupling(Delta, BL, FL, form="uniform"):
   if form == "uniform":
-    return np.array([Delta,] * BL)
+    return np.ones(BL, dtype=np.float64) * Delta
   elif form == "dipole" and BL > FL:
     angles = np.linspace(0, 2.*np.pi, BL)
     work = np.zeros(BL, dtype=np.float64)
@@ -44,96 +44,46 @@ def DCcoupling(Delta, FL, BL, form="uniform"):
     work = np.zeros(BL, dtype=np.float64)
     return work
 
-def multiNodes():
-  DATADIR = os.path.join( EXEC_DIR, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
-  for Uff in Uffs:
-    for Jbb in Jbbs:
-      for Jff in Jffs:
-        Job_Name = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
-        workdir = os.path.join(DATADIR, Job_Name)
-        os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
-        with shp.cd(workdir):
-          if os.path.isfile('DONE'):
-            print(workdir, " is DONE!")
-            continue
-          SetCount = 0
-          f = h5py.File('confs.h5', 'w')
-          for Vbb in Vbbs:
-            for Vff in Vffs:
-              for DeltaDC in DeltaDCs:
-                para = f.create_group("Input-" + str(SetCount))
-                dset = para.create_dataset("BL", data=BL)
-                dset = para.create_dataset("FL", data=FL)
-                dset = para.create_dataset("maxLocalB", data=maxLocalB)
-                dset = para.create_dataset("Jbb", data=Jbb)
-                dset = para.create_dataset("Jff", data=Jff)
-                dset = para.create_dataset("Vbb", data=Vbb)
-                dset = para.create_dataset("Vff", data=Vff)
-                dset = para.create_dataset("Uff", data=Uff)
-                DeltaDCarr = DCcoupling(DeltaDC, BL, FL, form=CouplingForm)
-                for i in range(FL):
-                  dset = para.create_dataset("DeltaDC-"+str(i), data=DeltaDCarr)
-                SetCount += 1
-          f.close()
+DATADIR = os.path.join( EXEC_DIR, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
+for Uff in Uffs:
+  for Jbb in Jbbs:
+    for Jff in Jffs:
+      Job_Name = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
+      workdir = os.path.join(DATADIR, Job_Name)
+      os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
+      with shp.cd(workdir):
+        if os.path.isfile('DONE'):
+          print(workdir, " is DONE!")
+          continue
+        SetCount = 0
+        f = h5py.File('confs.h5', 'w')
+        for Vbb in Vbbs:
+          for Vff in Vffs:
+            for DeltaDC in DeltaDCs:
+              para = f.create_group("Input-" + str(SetCount))
+              dset = para.create_dataset("BL", data=BL)
+              dset = para.create_dataset("FL", data=FL)
+              dset = para.create_dataset("maxLocalB", data=maxLocalB)
+              dset = para.create_dataset("Jbb", data=Jbb)
+              dset = para.create_dataset("Jff", data=Jff)
+              dset = para.create_dataset("Vbb", data=Vbb)
+              dset = para.create_dataset("Vff", data=Vff)
+              dset = para.create_dataset("Uff", data=Uff)
+              DeltaDCarr = DCcoupling(DeltaDC, BL, FL, form=CouplingForm)
+              for i in range(FL):
+                dset = para.create_dataset("DeltaDC-"+str(i), data=DeltaDCarr)
+              SetCount += 1
+        f.close()
+        if Cluster == "LANL":
           APPs = []
           APPs.append("/bin/cp confs.h5 confs.h5.backup")
           APPs.append("mpirun -n " + str(SetCount) + " -ppn " + str(NumCores) + " " + os.path.join(SRC_DIR, "build", "plex.mpi"))
           Exac_program = "\n".join(APPs)
           shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, \
             Nodes=SetCount, NumCore=NumCores, WallTime=WallTime, partition=Partition)
-
-def singleNode():
-  APPs = []
-  APPs.append(os.path.join(SRC_DIR, "build", "plex"))
-  Exac_program = "\n".join(APPs)
-  DATADIR = os.path.join( EXEC_DIR, "Plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm]) )
-  for Uff in Uffs:
-    for Jbb in Jbbs:
-      for Jff in Jffs:
-        for Vbb in Vbbs:
-          for Vff in Vffs:
-            for DeltaDC in DeltaDCs:
-              Job_Name =  "".join(["D", str(DeltaDC), "BJ", str(Jbb), "V", str(Vbb), "FJ", str(Jff), "V", str(Vff), "U", str(Uff)])
-              workdir = os.path.join(DATADIR, Job_Name)
-
-              os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
-              with shp.cd(workdir):
-                if os.path.isfile('DONE'):
-                  print(workdir, " is DONE!")
-                  continue
-                else:
-                  f = h5py.File('confs.h5', 'w')
-                  para = f.create_group("Input-0")
-                  dset = para.create_dataset("BL", data=BL)
-                  dset = para.create_dataset("FL", data=FL)
-                  dset = para.create_dataset("maxLocalB", data=maxLocalB)
-                  dset = para.create_dataset("Jbb", data=Jbb)
-                  dset = para.create_dataset("Jff", data=Jff)
-                  dset = para.create_dataset("Vbb", data=Vbb)
-                  dset = para.create_dataset("Vff", data=Vff)
-                  dset = para.create_dataset("Uff", data=Uff)
-                  DeltaDCarr = DCcoupling(DeltaDC, BL, FL, form=CouplingForm)
-                  for i in range(FL):
-                    dset = para.create_dataset("DeltaDC-"+str(i), data=DeltaDCarr)
-                  f.close()
-
-                  if Cluster == "Comet" or Cluster == "Stampede":
-                    shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, \
-                      NumCore=NumCores, WallTime=WallTime, partition=Partition)
-                  elif Cluster == "Merced":
-                    shp.WriteQsubSGE("job", Job_Name, Exac_program, workdir, \
-                      NumCore=NumCores, WallTime=WallTime)
-                  else:
-                    shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
-                      NumCore=NumCores, WallTime=WallTime)
-                    f = open(Job_Name, "w")
-                    for i in APPs:
-                      subprocess.call(i, shell=True, stdout=f)
-                    f.close()
-
-if __name__ == '__main__':
-  if sys.argv[1] == "mpi":
-    multiNodes()
-  else:
-    singleNode()
-
+        elif Cluster == "Kagome":
+          APPs = []
+          APPs.append(os.path.join(SRC_DIR, "build", "plex " + str(SetCount) ))
+          Exac_program = "\n".join(APPs)
+          shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
+            NumCore=1, WallTime=WallTime)

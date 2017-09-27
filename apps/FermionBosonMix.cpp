@@ -138,6 +138,7 @@ int main(int argc, char const *argv[]) {
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 #else
+  assert( argc > 1 );
   size_t RunSets = atoi(argv[1]);
   for ( size_t world_rank = 0; world_rank < RunSets; world_rank++){
 #endif
