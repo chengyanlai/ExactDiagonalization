@@ -11,45 +11,57 @@ import h5py
 import Script_Helpers as shp
 from Clusters import *
 
-BL = 4
-FL = 1
+BL = 1
+FL = 6
 maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
 else:
-  Jbbs = [0.01, 0.05, 0.10]
+  Jbbs = [0.0, 0.01, 0.05, 0.10]
 if FL == 1:
   Jffs = [0.0,]
   Uffs = [0.00]
 else:
-  Jffs = [0.01, 0.05, 0.10]
+  Jffs = [0.0, 0.01, 0.05, 0.10]
   Uffs = [0.00, 0.10, 0.50,-0.10,-0.50]
 Vbbs = [3.20, 3.50, 3.80]
 Vffs = [3.20, 3.40, 3.60]
 DeltaDCs = [-0.0080, -0.020, -0.050, -0.080]
-CouplingForm = "uniform"#
+CouplingForm = "angle1"# uniform, P2, COS2
+if CouplingForm == "angle1":
+  if BL > FL:
+    CouplingForm = "P2"
+  if BL < FL:
+    CouplingForm = "COS2"
 
-NumCores = 10
+if BL + FL > 11:
+  NumCores = 6
+else:
+  NumCores = 1
 WallTime = MaxWallTime
 
-def DCcoupling(Delta, BL, FL, form="uniform"):
+def DCcoupling(Delta, BL, FL, fi=0, form="uniform"):
   if form == "uniform":
-    return np.ones(BL, dtype=np.float64) * Delta
-  elif form == "dipole" and BL > FL:
-    angles = np.linspace(0, 2.*np.pi, BL)
-    work = np.zeros(BL, dtype=np.float64)
+    return Delta * np.ones(BL, dtype=np.float64)
+  elif form == "P2" and BL > FL:# Bosons surround Fermion
+    angles = np.linspace(0, 2.*np.pi, BL+1)
+    work = -1.0 * Delta * np.polynomial.legendre.legval(np.cos(angles), [0,0,1])
+    return work[:-1]
+  elif form == "COS2" and BL < FL:# Fermion surround Bosons
+    angles = np.linspace(0, 2.*np.pi, FL+1)
+    work = -1.0 * Delta * np.cos(angles[fi]) * np.cos(angles[fi]) * np.ones(BL, dtype=np.float64)
     return work
-  elif form == "dipole" and BL < FL:
-    angles = np.linspace(0, 2.*np.pi, BL)
-    work = np.zeros(BL, dtype=np.float64)
-    return work
+  else:
+    print("Not supported yet")
+    sys.exit()
 
 DATADIR = os.path.join( EXEC_DIR, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
 for Uff in Uffs:
   for Jbb in Jbbs:
     for Jff in Jffs:
-      Job_Name = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
-      workdir = os.path.join(DATADIR, Job_Name)
+      Job_Name = "".join(["Pl", str(BL), "Ex", str(FL), "JB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
+      Folder = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
+      workdir = os.path.join(DATADIR, Folder)
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
       with shp.cd(workdir):
         if os.path.isfile('DONE'):
@@ -69,9 +81,10 @@ for Uff in Uffs:
               dset = para.create_dataset("Vbb", data=Vbb)
               dset = para.create_dataset("Vff", data=Vff)
               dset = para.create_dataset("Uff", data=Uff)
-              DeltaDCarr = DCcoupling(DeltaDC, BL, FL, form=CouplingForm)
               for i in range(FL):
-                dset = para.create_dataset("DeltaDC-"+str(i), data=DeltaDCarr)
+                DeltaDCarr = DCcoupling(DeltaDC, BL, FL, fi=i, form=CouplingForm)
+                gname = "DeltaDC-" + str(i)
+                dset = para.create_dataset(gname, data=DeltaDCarr)
               SetCount += 1
         f.close()
         if Cluster == "LANL":
@@ -86,4 +99,4 @@ for Uff in Uffs:
           APPs.append(os.path.join(SRC_DIR, "build", "plex " + str(SetCount) ))
           Exac_program = "\n".join(APPs)
           shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
-            NumCore=1, WallTime=WallTime)
+            NumCore=NumCores, WallTime=WallTime)

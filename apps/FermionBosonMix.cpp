@@ -290,7 +290,7 @@ int main(int argc, char const *argv[]) {
   for ( size_t i = 0; i < FL; i++){
     std::string tmp = setName;
     tmp.append(std::to_string((unsigned long long)i));
-    file->saveStdVector("Input", setName, DeltaDC.at(i));
+    file->saveStdVector("Input", tmp, DeltaDC.at(i));
   }
   std::string gname = "obs";
   file->saveNumber(gname, "FullSpectrum", GetFullSpectrum);
