@@ -12,7 +12,7 @@ import Script_Helpers as shp
 from Clusters import *
 
 BL = 1
-FL = 10
+FL = 6
 maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
@@ -23,7 +23,7 @@ if FL == 1:
   Uffs = [0.00]
 else:
   Jffs = [0.0, 0.01, 0.05, 0.10]
-  Uffs = [0.00, 0.10, 0.50,-1.0,-5.0]
+  Uffs = [0.00,-3.0,-3.4,-3.6,-4.0, 0.10, 0.50]
 Vbbs = [3.20, 3.50, 3.80]
 Vffs = [3.20, 3.40, 3.60]
 DeltaDCs = [-0.0080, -0.020, -0.050, -0.080]
