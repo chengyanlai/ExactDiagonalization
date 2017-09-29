@@ -12,7 +12,7 @@ import Script_Helpers as shp
 from Clusters import *
 
 BL = 1
-FL = 6
+FL = 10
 maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
@@ -23,11 +23,12 @@ if FL == 1:
   Uffs = [0.00]
 else:
   Jffs = [0.0, 0.01, 0.05, 0.10]
-  Uffs = [0.00, 0.10, 0.50,-0.10,-0.50]
+  Uffs = [0.00, 0.10, 0.50,-1.0,-5.0]
 Vbbs = [3.20, 3.50, 3.80]
 Vffs = [3.20, 3.40, 3.60]
 DeltaDCs = [-0.0080, -0.020, -0.050, -0.080]
-CouplingForm = "angle1"# uniform, P2, COS2
+CouplingForm = "uniform"# uniform, angle1
+# CouplingForm = "angle1"
 if CouplingForm == "angle1":
   if BL > FL:
     CouplingForm = "P2"
