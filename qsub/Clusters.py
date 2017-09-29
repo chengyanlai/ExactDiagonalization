@@ -18,7 +18,7 @@ if platform.system() == "Linux":
         MaxNumThreads = 12
     SRC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization"
     EXEC_DIR = "/home/chengyanlai/GitRepo/ExactDiagonalization/data"
-  elif socket.gethostname() == 'merced.cluster':
+  elif socket.gethostname() == 'merced':
     Cluster = "Merced"
     MaxNumThreads = 20
     MaxWallTime = '24:0:0'

@@ -12,7 +12,7 @@ import Script_Helpers as shp
 from Clusters import *
 
 BL = 1
-FL = 6
+FL = 5
 maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
@@ -96,6 +96,13 @@ for Uff in Uffs:
           Exac_program = "\n".join(APPs)
           shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, \
             Nodes=SetCount, NumCore=NumCores, WallTime=WallTime, partition=Partition)
+        elif Cluster == "Merced":
+          APPs = []
+          APPs.append(os.path.join(SRC_DIR, "build", "plex " + str(SetCount) ))
+          APPs.append("/bin/touch DONE")
+          Exac_program = "\n".join(APPs)
+          shp.WriteQsubSGE("job", Job_Name, Exac_program, workdir, \
+            NumCore=NumCores, WallTime=WallTime)
         elif Cluster == "Kagome":
           APPs = []
           APPs.append(os.path.join(SRC_DIR, "build", "plex " + str(SetCount) ))
