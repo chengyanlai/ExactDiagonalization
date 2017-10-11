@@ -191,12 +191,13 @@ int main(int argc, char const *argv[]) {
   ham.BuildTotalHamiltonian();
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
-  std::vector<RealType> Val;
-  ComplexVectorType Vec;
-  ham.eigh(Val, Vec);
-  INFO("GS energy = " << Val.at(0));
+  RealVectorType Vals;
+  ComplexMatrixType Vecs;
+  ham.eigh(Vals, Vecs);
+  ComplexVectorType Vec = Vecs.col(0);
+  INFO("GS energy = " << Vals[0]);
   file->saveVector("GS", "EVec", Vec);
-  file->saveStdVector("GS", "EVal", Val);
+  file->saveVector("GS", "EVal", Vals);
   INFO("DONE!");
   std::vector< RealVectorType > Nfi = Ni( Bases, Vec, ham );
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);

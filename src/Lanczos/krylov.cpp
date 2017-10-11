@@ -11,8 +11,7 @@
 #define DEBUG 4
 #endif
 
-void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
-  const ComplexType Prefactor, const size_t Kmax, const double threshNorm){
+void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const ComplexType Prefactor, const size_t Kmax, const double threshNorm){
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
@@ -94,7 +93,7 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
     for (size_t cnt = 0; cnt < Kused; cnt++) {
       Dmat(cnt,cnt) = exp( Prefactor * d[cnt] );
     }
-    if(info != 0){
+    if(info != 0) {
       INFO("Lapack INFO = " << info);
       RUNTIME_ERROR("Error in Lapack function 'dstev'");
     }
@@ -109,9 +108,7 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec,
   }
 }
 
-void krylov(const RealSparseMatrixType &A, const RealVectorType &InputVec,
-  RealVectorType &EigVals, RealMatrixType &EigVecs,
-  const size_t Kmax, const double threshNorm){
+void krylov(const RealSparseMatrixType &A, const RealVectorType &InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs, const size_t Kmax, const double threshNorm){
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
@@ -126,7 +123,7 @@ void krylov(const RealSparseMatrixType &A, const RealVectorType &InputVec,
   while ( cntK < Kmax ) {
     RealVectorType work = A * Vm.col(cntK);
     if( cntK > 0 ) work -= beta * Vm.col(cntK-1);
-    alpha = work.dot( Vm.col(cntK) );
+    alpha = Vm.col(cntK).dot( work );
     work -= alpha * Vm.col(cntK);
     beta = work.norm();
     Alphas.push_back(alpha);
@@ -154,6 +151,8 @@ void krylov(const RealSparseMatrixType &A, const RealVectorType &InputVec,
     EigVals(0) = Alphas.at(0);
     EigVecs.col(0) = Vec;
   } else{
+    assert( Alphas.size() == Kused );
+    assert( Betas.size() == Kused - 1 );
     RealType* d = &Alphas[0];
     RealType* e = &Betas[0];
     RealType* z = (RealType*)malloc(Kused * Kused * sizeof(RealType));

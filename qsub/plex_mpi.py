@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 # coding=utf-8
 
-# install_name_tool -change "@rpath/libarpack.2.dylib" "/Users/chengyanlai/.bin/lib/libarpack.2.0.0.dylib" plex
-
 import os
 import sys
 import subprocess
@@ -63,18 +61,15 @@ for Uff in Uffs:
     for Jff in Jffs:
       Job_Name = "".join(["Pl", str(BL), "Ex", str(FL), "JB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
       Folder = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
-      workdir = os.path.join(DATADIR, Folder)
+      SetCount = 0
+      workdir = os.path.join(DATADIR, Folder, "Input-"+str(SetCount))
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
       with shp.cd(workdir):
-        if os.path.isfile('DONE'):
-          print(workdir, " is DONE!")
-          continue
-        SetCount = 0
         f = h5py.File('confs.h5', 'w')
         for Vbb in Vbbs:
           for Vff in Vffs:
             for DeltaDC in DeltaDCs:
-              para = f.create_group("Input-" + str(SetCount))
+              para = f.create_group("Input")
               dset = para.create_dataset("BL", data=BL)
               dset = para.create_dataset("FL", data=FL)
               dset = para.create_dataset("maxLocalB", data=maxLocalB)
@@ -91,7 +86,6 @@ for Uff in Uffs:
         f.close()
         if Cluster == "LANL":
           APPs = []
-          APPs.append("/bin/cp confs.h5 confs.h5.backup")
           APPs.append("mpirun -n " + str(SetCount) + " -ppn " + str(NumCores) + " " + os.path.join(SRC_DIR, "build", "plex.mpi"))
           Exac_program = "\n".join(APPs)
           shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, \

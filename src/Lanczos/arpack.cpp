@@ -170,10 +170,10 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
   if ( info != 0 )
     std::cerr << "Error with dneupd, info = " << info << std::endl;
   evals.clear();
-  evals.push_back(d[0].real());
-  evals.push_back(d[1].real());
-  /* TODO: make complex eigenvector */
-  memcpy(input_ptr, z, n * sizeof(ComplexType));
+  for ( size_t cnt=0; cnt < nev; cnt++){
+    evals.push_back(d[cnt].real());
+  }
+  memcpy(input_ptr, z, nev * n * sizeof(ComplexType));
   delete [] workev;
   delete [] z;
   delete [] d;
@@ -236,9 +236,10 @@ void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr,
   if ( info != 0 )
     std::cerr << "Error with dseupd, info = " << info << std::endl;
   evals.clear();
-  evals.push_back(d[0]);
-  evals.push_back(d[1]);
-  memcpy(input_ptr, z, n * sizeof(RealType));
+  for ( size_t cnt=0; cnt < nev; cnt++){
+    evals.push_back(d[cnt]);
+  }
+  memcpy(input_ptr, z, nev * n * sizeof(RealType));
   delete [] resid;
   delete [] v;
   delete [] iparam;

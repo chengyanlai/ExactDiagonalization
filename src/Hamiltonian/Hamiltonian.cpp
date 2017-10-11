@@ -173,14 +173,26 @@ void Hamiltonian<Tnum>::AddHybridHamiltonian( const int species1, const int spec
   H_total += H_hyb;
 }
 
-template<typename Tnum>
-void Hamiltonian<Tnum>::eigh( std::vector<RealType> &Val, VectorType &Vec)
-{
+template<>
+void Hamiltonian<RealType>::eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev){
   size_t dim = getTotalHilbertSpace();
-  Vec = VectorType::Random(dim);
-  Tnum* input_ptr = Vec.data();
-  arpackDiagonalize(dim, input_ptr, Val, /*nev*/4, /*tol*/0.0e0);
-  Vec = Eigen::Map<VectorType>(input_ptr, dim);
+  Vecs = MatrixType::Random(nev, dim);
+  RealType* input_ptr = Vecs.data();
+  std::vector<RealType> Val;
+  arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
+  Vals = dMapVector(&Val[0], nev);
+  Vecs = MapMatrix(input_ptr, nev, dim);
+}
+
+template<>
+void Hamiltonian<ComplexType>::eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev){
+  size_t dim = getTotalHilbertSpace();
+  Vecs = MatrixType::Random(nev, dim);
+  ComplexType* input_ptr = Vecs.data();
+  std::vector<RealType> Val;
+  arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
+  Vals = dMapVector(&Val[0], nev);
+  Vecs = MapMatrix(input_ptr, nev, dim);
 }
 
 template<>

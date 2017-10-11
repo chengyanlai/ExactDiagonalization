@@ -83,9 +83,10 @@ public:
     const std::vector< std::tuple<int, int, Tnum> > &hybVals,
     const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
   /* ^^^^^^^ Hybrid systems ^^^^^^^ */
-  void eigh( std::vector<RealType> &Val, VectorType &Vec);
-  void diag( RealVectorType &Val, RealMatrixType &Vec);
-  void diag( RealVectorType &Val, ComplexMatrixType &Vec);
+  void eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev=4);
+  void eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev=4);
+  void diag( RealVectorType &Vals, RealMatrixType &Vec);
+  void diag( RealVectorType &Vals, ComplexMatrixType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
   void krylovExpansion( const RealVectorType InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs

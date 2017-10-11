@@ -12,7 +12,7 @@
 #include "src/hdf5io/hdf5io.hpp"
 
 #ifdef MKL
-#include "mkl.h"
+  #include "mkl.h"
 #endif
 
 #ifndef NumCores
@@ -23,14 +23,13 @@
   #include <mpi.h>
 #endif
 
-void LoadParameters( const std::string filename, const int set,
+void LoadParameters( const std::string filename,
   int &BL, int &FL, int &maxLocalB,
   double &Jbb, double &Jff,
   double &Vbb, double &Vff,
   double &Uff, std::vector<std::vector<double> > &DeltaDC){
   HDF5IO file(filename);
-  std::string gname = "Input-";
-  gname.append(std::to_string((unsigned long long)set));
+  std::string gname = "Input";
   BL = file.loadInt(gname, "BL");
   FL = file.loadInt(gname, "FL");
   maxLocalB = file.loadInt(gname, "maxLocalB");
@@ -142,7 +141,10 @@ int main(int argc, char const *argv[]) {
   size_t RunSets = atoi(argv[1]);
   for ( size_t world_rank = 0; world_rank < RunSets; world_rank++){
 #endif
-  LoadParameters( "confs.h5", world_rank, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
+  std::string prefix = "Input-";
+  prefix.append(std::to_string((unsigned long long)world_rank));
+  prefix.append("/confs.h5");
+  LoadParameters( prefix, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
   /* Basis */
   std::vector<Basis> Bs;
   // For bosons
@@ -229,15 +231,14 @@ int main(int argc, char const *argv[]) {
   }
   RealVectorType EigVals, GS;
   RealMatrixType EigVecs;
+  size_t MaxNumPeak = 20;
   if ( GetFullSpectrum ){
     Ham.diag(EigVals, EigVecs);
-    GS = EigVecs.row(0);
   }else{
-    std::vector<RealType> Val;
-    Ham.eigh(Val, GS);
-    EigVals = dMapVector(&Val[0], 2);
+    Ham.eigh(EigVals, EigVecs, MaxNumPeak);
   }
-  // std::cout << "Eigen energies = " << EigVals(0) << ", " << EigVals(1) << std::endl;
+  GS = EigVecs.row(0);
+  // std::cout << EigVals[0] << " " << EigVals[1] << std::endl;
 
   std::vector<double> Nf, Nb;
   density( Bs, GS, Ham, Nb, Nf);
@@ -250,33 +251,33 @@ int main(int argc, char const *argv[]) {
   //   std::cout << val << " " << std::flush;
   // }
   // std::cout << std::endl;
-  // std::cout << EigVec.row(0) << std::endl;
+
   std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){
     std::vector<double> PeakLocation, PeakWeight;
     RealVectorType AS = AdaggerState( cnt, Bs, Ham, GS, maxLocalB);
-    if ( GetFullSpectrum ){
-      peaks(AS, EigVals, EigVecs, PeakLocation, PeakWeight);
-    }else{
-      size_t Kmax = 20;
-      double threshNorm = 1.0e-12;
-      RealVectorType wVals;
-      RealMatrixType wVecs;
-      Ham.krylovExpansion( AS, wVals, wVecs, Kmax, threshNorm );
-      wVecs.transposeInPlace();
-      peaks(AS, wVals, wVecs, PeakLocation, PeakWeight);
-      for ( auto &val : PeakWeight){
-        val *= AS.norm();
-      }
-    }
+    peaks(AS, EigVals, EigVecs, PeakLocation, PeakWeight);
+    for ( int i = 0; i < 4; i++ ) std::cout << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
     PeakLocations.push_back(PeakLocation);
     PeakWeights.push_back(PeakWeight);
+    /* NOTE: Why this krylovExpansion is not working? */
+    // double threshNorm = 1.0e-12;
+    // RealVectorType wVals;
+    // RealMatrixType wVecs;
+    // Ham.krylovExpansion( AS, wVals, wVecs, MaxNumPeak, threshNorm );
+    // std::cout << wVals[0] << " " << wVals[1] << std::endl;
+    // std::cout << wVecs.rows() << " " << wVecs.cols() << std::endl;
+    // wVecs.transposeInPlace();
+    // peaks(AS, wVals, wVecs, PeakLocation, PeakWeight);
+    // std::cout << wVecs.rows() << " " << wVecs.cols() << std::endl;
+    // std::cout << "cp" << std::endl;
+    // for ( int i = 0; i < 4; i++ ) std::cout << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
   }
 
   // save results
-  std::string filename = "plex";
+  std::string filename = "Input-";
   filename.append(std::to_string((unsigned long long)world_rank));
-  filename.append(".h5");
+  filename.append("/plex.h5");
   HDF5IO *file = new HDF5IO(filename);
   file->saveNumber("Input", "BL", BL);
   file->saveNumber("Input", "FL", FL);
