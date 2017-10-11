@@ -62,13 +62,13 @@ for Uff in Uffs:
       Job_Name = "".join(["Pl", str(BL), "Ex", str(FL), "JB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
       Folder = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
       SetCount = 0
-      workdir = os.path.join(DATADIR, Folder, "Input-"+str(SetCount))
-      os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
-      with shp.cd(workdir):
-        f = h5py.File('confs.h5', 'w')
-        for Vbb in Vbbs:
-          for Vff in Vffs:
-            for DeltaDC in DeltaDCs:
+      for Vbb in Vbbs:
+        for Vff in Vffs:
+          for DeltaDC in DeltaDCs:
+            workdir = os.path.join(DATADIR, Folder, "Input-"+str(SetCount))
+            os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
+            with shp.cd(workdir):
+              f = h5py.File('confs.h5', 'w')
               para = f.create_group("Input")
               dset = para.create_dataset("BL", data=BL)
               dset = para.create_dataset("FL", data=FL)
@@ -83,7 +83,8 @@ for Uff in Uffs:
                 gname = "DeltaDC-" + str(i)
                 dset = para.create_dataset(gname, data=DeltaDCarr)
               SetCount += 1
-        f.close()
+              f.close()
+      with shp.cd(os.path.join(DATADIR, Folder)):
         if Cluster == "LANL":
           APPs = []
           APPs.append("mpirun -n " + str(SetCount) + " -ppn " + str(NumCores) + " " + os.path.join(SRC_DIR, "build", "plex.mpi"))
