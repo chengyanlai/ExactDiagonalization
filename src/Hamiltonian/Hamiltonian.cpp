@@ -7,9 +7,6 @@
 #endif
 
 template<typename Tnum>
-Hamiltonian<Tnum>::~Hamiltonian(){}
-
-template<typename Tnum>
 Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 {
   /* Get each hilbert space and calculate total Hilbert space.
@@ -27,6 +24,8 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
   H_local.reserve(TotalDim);
   H_hop.resize(TotalDim, TotalDim);
   H_hop.reserve(2*TotalDim);
+  H_hybridization.resize(TotalDim,TotalDim);
+  H_hybridization.reserve(2*TotalDim);
 }
 
 template<typename Tnum>
@@ -157,17 +156,11 @@ void Hamiltonian<Tnum>::BuildTIsingHamiltonian(const Tnum hz,
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::AddHybridHamiltonian( const int species1, const int species2,
-  const std::vector< std::tuple<int, int, Tnum> > &hybVals,
-  const std::vector<Basis> &bs, const int maxLocalB ){
-  SparseMatrixType H_hyb;
-  H_hyb.resize(getTotalHilbertSpace(), getTotalHilbertSpace());
-  H_hyb.reserve(3*getTotalHilbertSpace());
+void Hamiltonian<Tnum>::BuildHybridHamiltonian( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, const int maxLocalB ){
   std::vector<Triplet> hhyb;
-  Hybirdynation( species1, species2, hybVals, bs, hhyb, maxLocalB );
-  H_hyb.setFromTriplets(hhyb.begin(), hhyb.end());
-  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhyb.size() << " from H_hyb are added to H_total!" << std::endl;
-  H_total += H_hyb;
+  Hybridization( species1, species2, hybVals, bs, hhyb, maxLocalB );
+  H_hybridization.setFromTriplets(hhyb.begin(), hhyb.end());
+  if (DEBUG) std::cout << "Non-zero matrix elements = " << hhyb.size() << " from H_hyb!" << std::endl;
 }
 
 template<>

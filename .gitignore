@@ -122,6 +122,6 @@ data
 sync*
 .vscode
 tags
-Makefile
 *.h5
 eigen
+env.in

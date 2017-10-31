@@ -5,9 +5,7 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::Hybirdynation( const int species1, const int species2,
-  const std::vector< std::tuple<int, int, Tnum> > &hybVals,
-  const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB ){
+void Hamiltonian<Tnum>::Hybridization( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB ){
   /* assuming only two species now */
   assert( bs.size() > 1 );
   Basis b1 = bs.at(species1);

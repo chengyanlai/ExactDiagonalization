@@ -20,7 +20,7 @@ public:
   typedef Eigen::Map<MatrixType> MapMatrix;
   Hamiltonian(){};
   Hamiltonian( const std::vector<Basis> &bs );
-  virtual ~Hamiltonian();
+  virtual ~Hamiltonian(){};
   inline size_t getTotalHilbertSpace()const{
     size_t tmp = 1;
     for (auto &j : HilbertSpaces){
@@ -28,7 +28,7 @@ public:
     }
     return tmp;
   };
-  inline void BuildTotalHamiltonian(){H_total = H_hop + H_local;};
+  inline void BuildTotalHamiltonian(){H_total = H_hop + H_local + H_hybridization;};
   // inline void CheckTotalHamiltonian(){H_total.isApprox(H_total)};
   void BuildLocalHamiltonian(
     const std::vector< std::vector<Tnum> > &Vloc,
@@ -77,12 +77,8 @@ public:
       const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Spin Functions ^^^^^^^ */
   /* vvvvvvv Hybrid systems vvvvvvv */
-  void AddHybridHamiltonian( const int species1, const int species2,
-    const std::vector< std::tuple<int, int, Tnum> > &hybVals,
-    const std::vector<Basis> &bs, const int maxLocalB = 0);
-  void Hybirdynation( const int species1, const int species2,
-    const std::vector< std::tuple<int, int, Tnum> > &hybVals,
-    const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
+  void BuildHybridHamiltonian( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, const int maxLocalB = 0);
+  void Hybridization( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
   /* ^^^^^^^ Hybrid systems ^^^^^^^ */
   void eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
   void eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
@@ -106,8 +102,7 @@ public:
   };
 private:
   std::vector<size_t> HilbertSpaces;
-  SparseMatrixType H_hop;
-  SparseMatrixType H_local;
+  SparseMatrixType H_hop, H_local, H_hybridization;
   SparseMatrixType H_total;
   void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0);
 };

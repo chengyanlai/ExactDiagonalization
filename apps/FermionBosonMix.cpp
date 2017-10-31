@@ -207,14 +207,14 @@ Hamiltonian<T> BuildHamiltonian( const int& maxLocalB, const std::vector<Basis>&
   Uls.push_back(Uloc);
   Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
   Ham.BuildHoppingHamiltonian(Bs, LT);
-  Ham.BuildTotalHamiltonian();
   std::vector< std::tuple<int, int, T> > DeltaTerm;
   for ( size_t i = 0; i < Bs.at(1).getL(); i++){
     for (size_t j = 0; j < Bs.at(0).getL(); j++){
       DeltaTerm.push_back(std::make_tuple(j, i, T(DeltaDC.at(i).at(j))));
     }
   }
-  Ham.AddHybridHamiltonian( 0, 1, DeltaTerm, Bs, maxLocalB);
+  Ham.BuildHybridHamiltonian( 0, 1, DeltaTerm, Bs, maxLocalB);
+  Ham.BuildTotalHamiltonian();
   /* Print to check. Only for small matrix */
   // RealSparseMatrixType w2 = Ham.getTotalHamiltonian();
   // RealMatrixType h2(w2);
