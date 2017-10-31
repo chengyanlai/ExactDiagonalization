@@ -27,7 +27,7 @@ if platform.system() == "Linux":
         Project = "s17_cint"
         MaxNumThreads = 16
         if socket.gethostname()[:2] == "gr":
-            MaxNumThreads = 20
+            MaxNumThreads = 36
         MaxWallTime = '16:0:0'
         SrcDir = "/usr/projects/cint/cint_sces/ExactDiagonalization"
         ExecDir = "/net/scratch3/chengyanlai"

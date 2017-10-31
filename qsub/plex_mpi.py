@@ -21,7 +21,7 @@ if FL == 1:
   Uffs = [0.00]
 else:
   Jffs = [0.0, 0.05, 0.10]
-  Uffs = [0.00,-3.0,-4.0,-5.0, 0.10, 0.50]
+  Uffs = [0.0,-3.0,-4.0, 0.10, 0.50]
   # Uffs = [-4.1,]
 Vbbs = [3.20, 3.50, 3.80]
 Vffs = [3.20, 3.40, 3.60]
@@ -46,7 +46,7 @@ def pulse(tlist, td=6, tau=2, W=1, A0=1, Phase=0.0e0):
     p.append(val)
   return np.array(p)
 
-NumCore = np.int(MaxNumThreads / 2)
+NumCore = np.int(MaxNumThreads / 3)
 WallTime = MaxWallTime
 
 def DCcoupling(Delta, BL, FL, fi=0, form="uniform"):
@@ -65,11 +65,11 @@ def DCcoupling(Delta, BL, FL, fi=0, form="uniform"):
     sys.exit()
 
 DataDir = os.path.join( ExecDir, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
+Paths = []
+SetCount = 0
+Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm])
 for Uff in Uffs:
-  Paths = []
-  SetCount = 0
   Prefix0 = "".join([ "Ue", str(Uff) ])
-  Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm, Prefix0])
   for Jbb in Jbbs:
     for Jff in Jffs:
       Prefix1 = "".join([ "Jd", str(Jbb), "Je", str(Jff) ])
@@ -105,11 +105,11 @@ for Uff in Uffs:
             dset = para.create_dataset("dT", data=dT)
             fp.close()
 
-  MPIFolders = open(os.path.join(DataDir, Prefix0, "MPIFolders"), "w")
-  for item in Paths:
-    MPIFolders.write("%s\n" % item)
-  APPs = []
-  APPs.append("mpirun -n " + str(SetCount) + " -ppn 2 " + os.path.join(SrcDir, "build", "plex.mpi 1"))
-  APPs.append("/bin/touch DONE")
-  Exac_program = "\n".join(APPs)
-  sg.GenerateScript("SLURM", os.path.join(DataDir, Prefix0, "job.mpi"), Job_Name, APPs, DataDir, np.int(SetCount/2), NumCore, WallTime, Partition, Project, MPI=SetCount, PPN=2)
+MPIFolders = open(os.path.join(DataDir, "MPIFolders"), "w")
+for item in Paths:
+  MPIFolders.write("%s\n" % item)
+APPs = []
+APPs.append("mpirun -n " + str(SetCount) + " -ppn 3 " + os.path.join(SrcDir, "build", "plex.mpi 1"))
+APPs.append("/bin/touch DONE")
+Exac_program = "\n".join(APPs)
+sg.GenerateScript("SLURM", os.path.join(DataDir, "job.mpi"), Job_Name, APPs, DataDir, np.int(SetCount/3), NumCore, WallTime, Partition, Project, MPI=SetCount, PPN=3)
