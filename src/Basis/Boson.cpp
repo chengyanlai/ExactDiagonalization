@@ -5,6 +5,7 @@
 #include "src/Basis/Basis.hpp"
 
 void Basis::Boson(){
+  HaveU1 = true;
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;
   int k, Nres;
@@ -41,8 +42,8 @@ void Basis::Boson(){
   assert( BStates.size() == BTags.size() );
 }
 
-void Basis::Boson( const int MaxLocalB )
-{
+void Basis::Boson( const int MaxLocalB ){
+  HaveU1 = false;
   /* Build bosonic basis from zero to maximum boson number allowed locally.
     Total boson number is not larger than N */
   assert( !(isFermion) );
@@ -178,6 +179,7 @@ std::vector<size_t> SortBTags( std::vector<T> &v ) {
   assert( v.size() == idx.size() );
   return idx;
 }
+template std::vector<size_t> SortBTags( std::vector<RealType> &v );
 
 void Basis::printBosonBasis( const std::vector<int> state )const
 {
@@ -187,4 +189,3 @@ void Basis::printBosonBasis( const std::vector<int> state )const
   std::cout << std::endl;
 }
 
-template std::vector<size_t> SortBTags( std::vector<RealType> &v );

@@ -30,10 +30,7 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BuildLocalHamiltonian(
-  const std::vector< std::vector<Tnum> > &Vloc,
-  const std::vector< std::vector<Tnum> > &Uloc,
-  const std::vector<Basis> &bs ){
+void Hamiltonian<Tnum>::BuildLocalHamiltonian(const std::vector< std::vector<Tnum> > &Vloc,const std::vector< std::vector<Tnum> > &Uloc,const std::vector<Basis> &bs ){
   std::vector<Triplet> hloc;
   hloc.clear();
   assert( Vloc.size() == Uloc.size() );
@@ -174,9 +171,9 @@ void Hamiltonian<Tnum>::AddHybridHamiltonian( const int species1, const int spec
 }
 
 template<>
-void Hamiltonian<RealType>::eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev){
+void Hamiltonian<RealType>::eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev, const bool randomInitial){
   size_t dim = getTotalHilbertSpace();
-  Vecs = MatrixType::Random(nev, dim);
+  if ( randomInitial ) Vecs = MatrixType::Random(nev, dim);
   RealType* input_ptr = Vecs.data();
   std::vector<RealType> Val;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
@@ -185,9 +182,9 @@ void Hamiltonian<RealType>::eigh( RealVectorType &Vals, RealMatrixType &Vecs, co
 }
 
 template<>
-void Hamiltonian<ComplexType>::eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev){
+void Hamiltonian<ComplexType>::eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev, const bool randomInitial){
   size_t dim = getTotalHilbertSpace();
-  Vecs = MatrixType::Random(nev, dim);
+  if ( randomInitial ) Vecs = MatrixType::Random(nev, dim);
   ComplexType* input_ptr = Vecs.data();
   std::vector<RealType> Val;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
@@ -196,8 +193,7 @@ void Hamiltonian<ComplexType>::eigh( RealVectorType &Vals, ComplexMatrixType &Ve
 }
 
 template<>
-void Hamiltonian<RealType>::diag( RealVectorType &Vals, RealMatrixType &Vecs)
-{
+void Hamiltonian<RealType>::diag( RealVectorType &Vals, RealMatrixType &Vecs){
   size_t dim = getTotalHilbertSpace();
   // convert H_total to dense matrix
   RealMatrixType dMat = MatrixType(H_total);
@@ -210,8 +206,7 @@ void Hamiltonian<RealType>::diag( RealVectorType &Vals, RealMatrixType &Vecs)
 }
 
 template<>
-void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Vecs)
-{
+void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Vecs){
   size_t dim = getTotalHilbertSpace();
   // convert H_total to dense matrix
   ComplexMatrixType dMat = MatrixType(H_total);
@@ -224,9 +219,12 @@ void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Ve
 }
 
 template<>
-void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor,
-  ComplexVectorType &Vec, const size_t Kmax ){
+void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax ){
   krylov(H_total, Vec, Prefactor, Kmax);
+  // RealVectorType KVals = RealVectorType::Zero(Kmax);
+  // ComplexMatrixType KVecs = ComplexMatrixType::Zero(Kmax, Vec.cols());
+  // KVecs.row(0) = Vec;
+  // eigh( KVals, KVecs, Kmax, false);
 }
 
 template<>
@@ -237,11 +235,11 @@ RealVectorType Hamiltonian<RealType>::expVals( const RealType Prefactor,
   return work.matrix();
 }
 
-template<>
-void Hamiltonian<RealType>::krylovExpansion( const RealVectorType InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs
-  , const size_t Kmax, const double threshNorm ){
-  krylov(H_total, InputVec, EigVals, EigVecs, Kmax, threshNorm);
-}
+// template<>
+// void Hamiltonian<RealType>::krylovExpansion( const RealVectorType InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs
+//   , const size_t Kmax, const double threshNorm ){
+//   krylov(H_total, InputVec, EigVals, EigVecs, Kmax, threshNorm);
+// }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y
  * @param x the input vector

@@ -65,6 +65,7 @@ private:
   size_t L;
   size_t N;
   bool isFermion;
+  bool HaveU1;
   std::vector< std::vector<int> > BStates;//for Boson
   std::vector<RealType> BTags;//for Boson
   std::vector<int> FStates;//for Fermion, and SpinOneHalf.

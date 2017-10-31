@@ -6,7 +6,7 @@ import sys
 import subprocess
 import numpy as np
 import h5py
-import Script_Helpers as shp
+import ScriptGenerator as sg
 from Clusters import *
 
 BL = 1
@@ -15,13 +15,13 @@ maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
 else:
-  Jbbs = [0.0, 0.01, 0.05, 0.10]
+  Jbbs = [0.0, 0.05, 0.10]
 if FL == 1:
   Jffs = [0.0,]
   Uffs = [0.00]
 else:
-  Jffs = [0.0, 0.01, 0.05, 0.10]
-  Uffs = [0.00,-3.0,-4.0,-4.1,-5.0, 0.10, 0.50]
+  Jffs = [0.0, 0.05, 0.10]
+  Uffs = [0.00,-3.0,-4.0,-5.0, 0.10, 0.50]
   # Uffs = [-4.1,]
 Vbbs = [3.20, 3.50, 3.80]
 Vffs = [3.20, 3.40, 3.60]
@@ -34,10 +34,19 @@ if CouplingForm == "angle1":
   if BL < FL:
     CouplingForm = "COS2"
 
-if BL + FL > 11:
-  NumCores = 6
-else:
-  NumCores = 1
+# Dynamics
+dT = 0.005
+Tf = 3000
+tlist = np.arange(0, 12, dT)
+phi = 0
+def pulse(tlist, td=6, tau=2, W=1, A0=1, Phase=0.0e0):
+  p = []
+  for t in tlist:
+    val = A0 * np.exp( -(t - td) * (t - td) / (2. * tau * tau) ) * np.cos(W * (t - td) + Phase)
+    p.append(val)
+  return np.array(p)
+
+NumCore = np.int(MaxNumThreads / 2)
 WallTime = MaxWallTime
 
 def DCcoupling(Delta, BL, FL, fi=0, form="uniform"):
@@ -55,53 +64,52 @@ def DCcoupling(Delta, BL, FL, fi=0, form="uniform"):
     print("Not supported yet")
     sys.exit()
 
-DATADIR = os.path.join( EXEC_DIR, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
+DataDir = os.path.join( ExecDir, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
 for Uff in Uffs:
+  Paths = []
+  SetCount = 0
+  Prefix0 = "".join([ "Ue", str(Uff) ])
+  Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm, Prefix0])
   for Jbb in Jbbs:
     for Jff in Jffs:
-      Job_Name = "".join(["Pl", str(BL), "Ex", str(FL), "JB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
-      Folder = "".join(["PlExJB", str(Jbb), "JF", str(Jff), "Uf", str(Uff)])
-      SetCount = 0
+      Prefix1 = "".join([ "Jd", str(Jbb), "Je", str(Jff) ])
       for Vbb in Vbbs:
         for Vff in Vffs:
           for DeltaDC in DeltaDCs:
-            workdir = os.path.join(DATADIR, Folder, "Input-"+str(SetCount))
+            Prefix2 = "".join(["Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC)])
+            workdir = os.path.join(DataDir, Prefix0, Prefix1, Prefix2)
             os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
-            with shp.cd(workdir):
-              f = h5py.File('confs.h5', 'w')
-              para = f.create_group("Input")
-              dset = para.create_dataset("BL", data=BL)
-              dset = para.create_dataset("FL", data=FL)
-              dset = para.create_dataset("maxLocalB", data=maxLocalB)
-              dset = para.create_dataset("Jbb", data=Jbb)
-              dset = para.create_dataset("Jff", data=Jff)
-              dset = para.create_dataset("Vbb", data=Vbb)
-              dset = para.create_dataset("Vff", data=Vff)
-              dset = para.create_dataset("Uff", data=Uff)
-              for i in range(FL):
-                DeltaDCarr = DCcoupling(DeltaDC, BL, FL, fi=i, form=CouplingForm)
-                gname = "DeltaDC-" + str(i)
-                dset = para.create_dataset(gname, data=DeltaDCarr)
-              SetCount += 1
-              f.close()
-      with shp.cd(os.path.join(DATADIR, Folder)):
-        if Cluster == "LANL":
-          APPs = []
-          APPs.append("mpirun -n " + str(SetCount) + " -ppn " + str(NumCores) + " " + os.path.join(SRC_DIR, "build", "plex.mpi"))
-          Exac_program = "\n".join(APPs)
-          shp.WriteQsubSBATCH("job", Job_Name, Exac_program, workdir, \
-            Nodes=SetCount, NumCore=NumCores, WallTime=WallTime, partition=Partition)
-        elif Cluster == "Merced":
-          APPs = []
-          APPs.append(os.path.join(SRC_DIR, "build", "plex " + str(SetCount) ))
-          APPs.append("/bin/touch DONE")
-          Exac_program = "\n".join(APPs)
-          shp.WriteQsubSGE("job", Job_Name, Exac_program, workdir, \
-            NumCore=NumCores, WallTime=WallTime)
-        elif Cluster == "Kagome":
-          APPs = []
-          APPs.append(os.path.join(SRC_DIR, "build", "plex " + str(SetCount) ))
-          APPs.append("/bin/touch DONE")
-          Exac_program = "\n".join(APPs)
-          shp.WriteQsubPBS("job", Job_Name, Exac_program, workdir, \
-            NumCore=NumCores, WallTime=WallTime)
+            f = h5py.File(os.path.join(workdir, 'confs.h5'), 'w')
+            para = f.create_group("Input")
+            dset = para.create_dataset("BL", data=BL)
+            dset = para.create_dataset("FL", data=FL)
+            dset = para.create_dataset("maxLocalB", data=maxLocalB)
+            dset = para.create_dataset("Jbb", data=Jbb)
+            dset = para.create_dataset("Jff", data=Jff)
+            dset = para.create_dataset("Vbb", data=Vbb)
+            dset = para.create_dataset("Vff", data=Vff)
+            dset = para.create_dataset("Uff", data=Uff)
+            for i in range(FL):
+              DeltaDCarr = DCcoupling(DeltaDC, BL, FL, fi=i, form=CouplingForm)
+              gname = "DeltaDC-" + str(i)
+              dset = para.create_dataset(gname, data=DeltaDCarr)
+            SetCount += 1
+            Paths.append(workdir)
+            f.close()
+            fp = h5py.File(os.path.join(workdir, 'pulse.h5'), 'w')
+            para = fp.create_group("Input")
+            Vfft = pulse(tlist, Phase=phi*np.pi)
+            dset = para.create_dataset("Phase", data=phi)
+            dset = para.create_dataset("Vfft", data=Vfft)
+            dset = para.create_dataset("Tf", data=Tf+Vfft.shape[0])
+            dset = para.create_dataset("dT", data=dT)
+            fp.close()
+
+  MPIFolders = open(os.path.join(DataDir, Prefix0, "MPIFolders"), "w")
+  for item in Paths:
+    MPIFolders.write("%s\n" % item)
+  APPs = []
+  APPs.append("mpirun -n " + str(SetCount) + " -ppn 2 " + os.path.join(SrcDir, "build", "plex.mpi 1"))
+  APPs.append("/bin/touch DONE")
+  Exac_program = "\n".join(APPs)
+  sg.GenerateScript("SLURM", os.path.join(DataDir, Prefix0, "job.mpi"), Job_Name, APPs, DataDir, np.int(SetCount/2), NumCore, WallTime, Partition, Project, MPI=SetCount, PPN=2)

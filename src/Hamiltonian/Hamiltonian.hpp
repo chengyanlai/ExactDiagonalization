@@ -18,6 +18,7 @@ public:
   typedef Eigen::Matrix<Tnum, Eigen::Dynamic, 1, Eigen::AutoAlign> VectorType;
   typedef Eigen::Triplet<Tnum> Triplet;
   typedef Eigen::Map<MatrixType> MapMatrix;
+  Hamiltonian(){};
   Hamiltonian( const std::vector<Basis> &bs );
   virtual ~Hamiltonian();
   inline size_t getTotalHilbertSpace()const{
@@ -83,8 +84,8 @@ public:
     const std::vector< std::tuple<int, int, Tnum> > &hybVals,
     const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
   /* ^^^^^^^ Hybrid systems ^^^^^^^ */
-  void eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev=4);
-  void eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev=4);
+  void eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
+  void eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
   void diag( RealVectorType &Vals, RealMatrixType &Vec);
   void diag( RealVectorType &Vals, ComplexMatrixType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );

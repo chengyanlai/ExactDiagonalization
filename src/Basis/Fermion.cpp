@@ -3,8 +3,8 @@
 #include "src/bitwise.h"
 #include "src/Basis/Basis.hpp"
 
-void Basis::Fermion()
-{
+void Basis::Fermion(){
+  HaveU1 = true;
   assert( isFermion );
   size_t minrange = 0;
   size_t maxrange = 0;
@@ -31,8 +31,8 @@ void Basis::Fermion()
   FTags = windex;
 }
 
-void Basis::Fermion( const int MinF )
-{
+void Basis::Fermion( const int MinF ){
+  HaveU1 = false;
   // This will include all possible fermion numbers, the input parameter has no meaning for now.
   assert( isFermion );
   // assert( L % 2 == 0 );

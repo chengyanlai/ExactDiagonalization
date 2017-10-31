@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <iomanip>
 #include <string>
 #include <vector>
@@ -23,11 +24,29 @@
   #include <mpi.h>
 #endif
 
-void LoadParameters( const std::string filename,
-  int &BL, int &FL, int &maxLocalB,
-  double &Jbb, double &Jff,
-  double &Vbb, double &Vff,
-  double &Uff, std::vector<std::vector<double> > &DeltaDC){
+std::vector<std::string> GetPrefix(const std::string FileName){
+  std::ifstream file(FileName);
+  std::vector<std::string> out;
+  std::string s;
+  while (std::getline(file, s)){
+    out.push_back(s + "/");
+  }
+  return out;
+}
+
+void LoadPulse(const std::string filename, int& Tf, double& dT, std::vector<double>& Vfft, int& SaveWFEvery){
+  HDF5IO file(filename);
+  std::string gname = "Input";
+  Tf = file.loadInt(gname, "Tf");
+  dT = file.loadReal(gname, "dT");
+  Vfft.clear();
+  file.loadStdVector(gname, "Vfft", Vfft);
+  // SaveWFEvery = file.loadInt(gname, "SaveWFEvery");
+  SaveWFEvery = 40;
+}
+
+void LoadParameters( const std::string filename, int &BL, int &FL, int &maxLocalB,
+  double &Jbb, double &Jff, double &Vbb, double &Vff, double &Uff, std::vector<std::vector<double> > &DeltaDC){
   HDF5IO file(filename);
   std::string gname = "Input";
   BL = file.loadInt(gname, "BL");
@@ -99,53 +118,21 @@ RealVectorType AdaggerState( const int site, const std::vector<Basis> &bs,
   return psi;
 }
 
-void peaks( const RealVectorType AS, const RealVectorType &EigVal, const RealMatrixType &EigVec,
-  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight){
+void peaks( const double EG, const RealVectorType AS, const RealVectorType &EigVal, const RealMatrixType &EigVec,
+  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight, const int MaxNumPeak){
   PeakLocation.clear();
   PeakWeight.clear();
   for ( size_t i = 0; i < EigVec.rows(); i++){
-    PeakLocation.push_back(EigVal(i) - EigVal(0));
+    PeakLocation.push_back(EigVal(i) - EG);
     RealVectorType An = EigVec.row(i);
     double val = An.dot(AS);
     PeakWeight.push_back( val * val );
+    if ( i > MaxNumPeak ) break;
   }
   assert( PeakLocation.size() == PeakWeight.size() );
 }
 
-int main(int argc, char const *argv[]) {
-  Eigen::setNbThreads(NumCores);
-#ifdef MKL
-  mkl_set_num_threads(NumCores);
-#endif
-  /* Parameters */
-  int BL = 2;
-  int FL = 2;
-  int maxLocalB = 1;
-  double Jbb = 0.020e0;
-  double Jff = 0.010e0;
-  double Vbb = 3.20e0;
-  double Vff = 3.50e0;
-  double Uff = 0.00e0;
-  std::vector<std::vector<double> > DeltaDC;
-#ifdef MPIPARALLEL
-  // Initialize MPI
-  MPI_Init(NULL, NULL);
-  // Get the number of processes
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  // Get the rank of the process
-  int world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-#else
-  assert( argc > 1 );
-  size_t RunSets = atoi(argv[1]);
-  for ( size_t world_rank = 0; world_rank < RunSets; world_rank++){
-#endif
-  std::string prefix = "Input-";
-  prefix.append(std::to_string((unsigned long long)world_rank));
-  prefix.append("/confs.h5");
-  LoadParameters( prefix, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
-  /* Basis */
+std::vector<Basis> BuildBasis(const int& BL, const int& FL, const int& maxLocalB){
   std::vector<Basis> Bs;
   // For bosons
   int BN = BL;
@@ -156,7 +143,7 @@ int main(int argc, char const *argv[]) {
   // std::vector< std::vector<int> > BStates = Bosons.getBStates();
   // std::vector<RealType> BTags = Bosons.getBTags();
   // for( size_t i = 0; i < BTags.size(); ++i ){
-  //   std::cout << BTags.at(i) << ": " << std::flush;
+  //   OASOut << BTags.at(i) << ": " << std::flush;
   //   Bosons.printBosonBasis( BStates.at(i) );
   // }
 
@@ -169,30 +156,18 @@ int main(int argc, char const *argv[]) {
   // std::vector<int> FStates = Fermions.getFStates();
   // std::vector<size_t> FTags = Fermions.getFTags();
   // for( size_t i = 0; i < FTags.size(); ++i ){
-  //   std::cout << FTags.at(i) << ": " << std::flush;
+  //   OASOut << FTags.at(i) << ": " << std::flush;
   //   Fermions.printFermionBasis( FStates.at(i) );
-  //   std::cout << std::endl;
+  //   OASOut << std::endl;
   // }
+  return Bs;
+}
 
-  /* Hamiltonian */
-  // Local potential
-  std::vector<std::vector<double> > Vls;
-  std::vector<double> Vloc(BL, Vbb);
-  Vls.push_back(Vloc);
-  Vloc.assign(FL, Vff);
-  Vls.push_back(Vloc);
-  // Local interaction
-  //    Here, U for fermion is NN density density terms.
-  std::vector<std::vector<double> > Uls;
-  std::vector<double> Uloc(BL, 0.0e0);
-  Uls.push_back(Uloc);
-  Uloc.assign(FL, Uff);
-  Uls.push_back(Uloc);
-  Hamiltonian<double> Ham(Bs);
-  Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
+template<typename T>
+std::vector< std::vector< Node<T>* > > BuildLattice( const int& BL, const T& Jbb, const int& FL, const T& Jff){
   // For bosonic chain
   bool BOBC = false;
-  std::vector<double> BJ;
+  std::vector<T> BJ;
   for (size_t cnt = 0; cnt < BL; cnt++) {
     BJ.push_back(Jbb);
   }
@@ -200,84 +175,116 @@ int main(int argc, char const *argv[]) {
     BOBC = true;
     BJ.pop_back();
   }
-  const std::vector< Node<RealType>* > BLattice = NN_1D_Chain(BL, BJ, BOBC);
+  const std::vector< Node<T>* > BLattice = NN_1D_Chain(BL, BJ, BOBC);
   // For fermionic chain
   const bool FOBC = true;
-  std::vector<double> FJ;
+  std::vector<T> FJ;
   for (size_t cnt = 0; cnt < FL-1; cnt++) {
     FJ.push_back(Jff);
   }
-  const std::vector< Node<RealType>* > FLattice = NN_1D_Chain(FL, FJ, FOBC);
-  std::vector< std::vector< Node<RealType>* > > LT;
+  const std::vector< Node<T>* > FLattice = NN_1D_Chain(FL, FJ, FOBC);
+  std::vector< std::vector< Node<T>* > > LT;
   LT.push_back(BLattice);
   LT.push_back(FLattice);
+  return LT;
+}
+
+template<typename T>
+Hamiltonian<T> BuildHamiltonian( const int& maxLocalB, const std::vector<Basis>& Bs, const double& Vbb, const double& Vff, const double& Uff, std::vector< std::vector< Node<T>* > > LT, const std::vector<std::vector<double> >& DeltaDC ){
+  Hamiltonian<T> Ham(Bs);
+  // Local potential
+  std::vector<std::vector<T> > Vls;
+  std::vector<T> Vloc(Bs.at(0).getL(), T(Vbb));
+  Vls.push_back(Vloc);
+  Vloc.assign(Bs.at(1).getL(), T(Vff));
+  Vls.push_back(Vloc);
+  // Local interaction
+  //    Here, U for fermion is NN density density terms.
+  std::vector<std::vector<T> > Uls;
+  std::vector<T> Uloc(Bs.at(0).getL(), T(0.0e0));
+  Uls.push_back(Uloc);
+  Uloc.assign(Bs.at(1).getL(), T(Uff));
+  Uls.push_back(Uloc);
+  Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
   Ham.BuildHoppingHamiltonian(Bs, LT);
   Ham.BuildTotalHamiltonian();
-  std::vector< std::tuple<int, int, double> > DeltaTerm;
-  for ( size_t i = 0; i < FL; i++){
-    for (size_t j = 0; j < BL; j++){
-      DeltaTerm.push_back(std::make_tuple(j, i, DeltaDC.at(i).at(j)));
+  std::vector< std::tuple<int, int, T> > DeltaTerm;
+  for ( size_t i = 0; i < Bs.at(1).getL(); i++){
+    for (size_t j = 0; j < Bs.at(0).getL(); j++){
+      DeltaTerm.push_back(std::make_tuple(j, i, T(DeltaDC.at(i).at(j))));
     }
   }
   Ham.AddHybridHamiltonian( 0, 1, DeltaTerm, Bs, maxLocalB);
   /* Print to check. Only for small matrix */
   // RealSparseMatrixType w2 = Ham.getTotalHamiltonian();
   // RealMatrixType h2(w2);
-  // std::cout << h2 << std::endl;
+  // OASOut << h2 << std::endl;
+  return Ham;
+}
 
+void OAS(const std::string prefix, const int dynamics=0){
+  std::ofstream OASOut;
+  OASOut.open(prefix + "trace.oas", std::ios::app);
+  /* Parameters */
+  int BL = 2;
+  int FL = 2;
+  int maxLocalB = 1;
+  double Jbb = 0.020e0;
+  double Jff = 0.010e0;
+  double Vbb = 3.20e0;
+  double Vff = 3.50e0;
+  double Uff = 0.00e0;
+  std::vector<std::vector<double> > DeltaDC;
+
+  std::string filename = prefix;
+  filename.append("confs.h5");
+  LoadParameters( filename, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
+  /* Basis */
+  std::vector<Basis> Bs = BuildBasis(BL, FL, maxLocalB);
+
+  /* Hamiltonian */
+  std::vector< std::vector< Node<RealType>* > > LT = BuildLattice( BL, Jbb, FL, Jff);
+  Hamiltonian<double> Ham = BuildHamiltonian( maxLocalB, Bs, Vbb, Vff, Uff, LT, DeltaDC );
+
+  /* Get ground state and excited states */
   int GetFullSpectrum = 1;
   if ( Ham.getTotalHilbertSpace() > 5000 ){
     GetFullSpectrum = 0;
   }
   RealVectorType EigVals, GS;
   RealMatrixType EigVecs;
-  size_t MaxNumPeak = 20;
   if ( GetFullSpectrum ){
     Ham.diag(EigVals, EigVecs);
   }else{
-    Ham.eigh(EigVals, EigVecs, MaxNumPeak);
+    Ham.eigh(EigVals, EigVecs, 2);
   }
   GS = EigVecs.row(0);
-  // std::cout << EigVals[0] << " " << EigVals[1] << std::endl;
-
+  double EG = EigVals[0];
+  OASOut << EigVals[0] << " " << EigVals[1] << std::endl;
   std::vector<double> Nf, Nb;
   density( Bs, GS, Ham, Nb, Nf);
-  // std::cout << "Nb - " << std::endl;
-  // for( auto val : Nb){
-  //   std::cout << val << " " << std::flush;
-  // }
-  // std::cout << "\nNf - " << std::endl;
-  // for( auto val : Nf){
-  //   std::cout << val << " " << std::flush;
-  // }
-  // std::cout << std::endl;
 
+  /* Get equilibrium spectrum */
+  size_t MaxNumPeak = 20;
   std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){
     std::vector<double> PeakLocation, PeakWeight;
     RealVectorType AS = AdaggerState( cnt, Bs, Ham, GS, maxLocalB);
-    peaks(AS, EigVals, EigVecs, PeakLocation, PeakWeight);
-    for ( int i = 0; i < 4; i++ ) std::cout << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
+    if ( !(GetFullSpectrum) ){
+      EigVecs.row(0) = AS;
+      Ham.eigh(EigVals, EigVecs, MaxNumPeak, false);
+      OASOut << "new " << EigVals[0] << " " << EigVals[1] << std::endl;
+    }
+    peaks(EG, AS, EigVals, EigVecs, PeakLocation, PeakWeight, MaxNumPeak);
+    /* Print to check. */
+    // for ( int i = 0; i < 4; i++ ) OASOut << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
     PeakLocations.push_back(PeakLocation);
     PeakWeights.push_back(PeakWeight);
-    /* NOTE: Why this krylovExpansion is not working? */
-    // double threshNorm = 1.0e-12;
-    // RealVectorType wVals;
-    // RealMatrixType wVecs;
-    // Ham.krylovExpansion( AS, wVals, wVecs, MaxNumPeak, threshNorm );
-    // std::cout << wVals[0] << " " << wVals[1] << std::endl;
-    // std::cout << wVecs.rows() << " " << wVecs.cols() << std::endl;
-    // wVecs.transposeInPlace();
-    // peaks(AS, wVals, wVecs, PeakLocation, PeakWeight);
-    // std::cout << wVecs.rows() << " " << wVecs.cols() << std::endl;
-    // std::cout << "cp" << std::endl;
-    // for ( int i = 0; i < 4; i++ ) std::cout << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
   }
 
-  // save results
-  std::string filename = "Input-";
-  filename.append(std::to_string((unsigned long long)world_rank));
-  filename.append("/plex.h5");
+  /* save results */
+  filename = prefix;
+  filename.append("plex.h5");
   HDF5IO *file = new HDF5IO(filename);
   file->saveNumber("Input", "BL", BL);
   file->saveNumber("Input", "FL", FL);
@@ -295,6 +302,7 @@ int main(int argc, char const *argv[]) {
   }
   std::string gname = "obs";
   file->saveNumber(gname, "FullSpectrum", GetFullSpectrum);
+  file->saveNumber(gname, "EG", EG);
   file->saveVector(gname, "EigVals", EigVals);
   file->saveMatrix(gname, "EigVecs", EigVecs);
   file->saveStdVector(gname, "Nf", Nf);
@@ -309,9 +317,101 @@ int main(int argc, char const *argv[]) {
     file->saveStdVector(gname2, dname2, PeakWeights.at(cnt));
   }
   delete file;
+
+  /* Run dynamics */
+  if ( dynamics ){
+    int Tf, SaveWFEvery;
+    int Kmax = 20;
+    double dT;
+    std::vector<double> Vfft;
+    LoadPulse(prefix+"pulse.h5", Tf, dT, Vfft, SaveWFEvery);
+    ComplexType Prefactor = ComplexType(0.0, -1.0 * dT );
+    std::vector< std::vector< Node<ComplexType>* > > LTc = BuildLattice( BL, ComplexType(Jbb, 0.0e0), FL, ComplexType(Jff, 0.0e0) );
+
+    /* save inputs */
+    filename = prefix;
+    filename.append("trplex.h5");
+    HDF5IO *file1 = new HDF5IO(filename);
+    file1->saveNumber("Input", "BL", BL);
+    file1->saveNumber("Input", "FL", FL);
+    file1->saveNumber("Input", "maxLocalB", maxLocalB);
+    file1->saveNumber("Input", "Jbb", Jbb);
+    file1->saveNumber("Input", "Jff", Jff);
+    file1->saveNumber("Input", "Vbb", Vbb);
+    file1->saveStdVector("Input", "Vff", Vfft);
+    file1->saveNumber("Input", "Uff", Uff);
+    file1->saveNumber("Input", "dT", dT);
+    file1->saveNumber("Input", "Tf", Tf);
+    for ( size_t i = 0; i < FL; i++){
+      std::string tmp1 = "DeltaDC-";
+      tmp1.append(std::to_string((unsigned long long)i));
+      file1->saveStdVector("Input", tmp1, DeltaDC.at(i));
+    }
+    delete file1;
+
+    for ( size_t cnt = 0; cnt < BL; cnt ++ ){
+      RealVectorType AS = AdaggerState( cnt, Bs, Ham, GS, maxLocalB );
+      ComplexVectorType VecT = AS.cast<ComplexType>();
+      size_t TStep = 0;
+      Hamiltonian<ComplexType> HamT;
+      std::vector<ComplexType> At;
+      At.clear();
+      while ( TStep < Tf ){
+        if ( TStep < Vfft.size() ){// update Hamiltonian
+          HamT = BuildHamiltonian( maxLocalB, Bs, Vbb, Vfft.at(TStep), Uff, LTc, DeltaDC );
+        }
+        HamT.expH( Prefactor, VecT, Kmax );
+        At.push_back( AS.dot(VecT) );
+        TStep++;
+        if ( TStep % SaveWFEvery ){
+          filename = prefix;
+          filename.append("trplex.h5");
+          HDF5IO *file3 = new HDF5IO(filename);
+          std::string gname3 = "wf";
+          std::string sname3 = "vec-";
+          sname3.append(std::to_string((unsigned long long)TStep));
+          file3->saveVector(gname3, sname3, VecT);
+          delete file3;
+        }
+      }
+      filename = prefix;
+      filename.append("trplex.h5");
+      HDF5IO *file2 = new HDF5IO(filename);
+      std::string gname2 = "obs";
+      std::string sname2 = "at-";
+      sname2.append(std::to_string((unsigned long long)cnt));
+      file2->saveStdVector(gname2, sname2, At);
+      delete file2;
+    }
+  }
+}
+
+/* main program */
+int main(int argc, char *argv[]){
+  if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. ");
+#ifdef MKL
+  mkl_set_dynamic(0);
+  mkl_set_num_threads(NumCores);
+#endif
+  int world_size;
+  int world_rank;
+  std::vector<std::string> MPIFolders = GetPrefix("MPIFolders");
 #ifdef MPIPARALLEL
+  // Initialize MPI
+  MPI_Init(NULL, NULL);
+  // Get the number of processes
+  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+  // Get the rank of the process
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  assert ( MPIFolders.size() == world_size );
+  OAS( MPIFolders.at(world_rank), std::atoi(argv[1]) );
   MPI_Finalize();
 #else
+  world_size = MPIFolders.size();
+  world_rank = 0;
+  for(;world_rank < world_size; world_rank++){
+    OAS( MPIFolders.at(world_rank), std::atoi(argv[1]) );
   }
 #endif
+  return 0;
 }
