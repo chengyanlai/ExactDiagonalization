@@ -1,5 +1,5 @@
-#ifndef __RUNGE_KUTTA_HPP__
-#define __RUNGE_KUTTA_HPP__
+#ifndef __LINDBLAD_HPP__
+#define __LINDBLAD_HPP__
 #include <tuple>
 #include "src/bitwise.h"
 #include "src/EDType.hpp"
@@ -33,4 +33,4 @@ void Cf(const size_t Site, const int Spin,
   const std::map<std::pair<int,int>, int > PairIndex1,
   const std::map<int, std::pair<int,int> > PairIndex2,
   std::vector<std::pair<int,int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx);
-#endif /* end of include guard: __RUNGE_KUTTA_HPP__ */
+#endif /* end of include guard: __LINDBLAD_HPP__ */
