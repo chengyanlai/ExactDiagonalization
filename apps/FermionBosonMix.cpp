@@ -277,7 +277,7 @@ void OAS(const std::string prefix, const int dynamics=0){
     }
     peaks(EG, AS, EigVals, EigVecs, PeakLocation, PeakWeight, MaxNumPeak);
     /* Print to check. */
-    // for ( int i = 0; i < 4; i++ ) OASOut << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
+    for ( int i = 0; i < 4; i++ ) OASOut << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
     PeakLocations.push_back(PeakLocation);
     PeakWeights.push_back(PeakWeight);
   }

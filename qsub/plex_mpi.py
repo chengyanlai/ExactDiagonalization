@@ -10,7 +10,7 @@ import ScriptGenerator as sg
 from Clusters import *
 
 BL = 1
-FL = 5
+FL = 6
 maxLocalB = 1
 if BL == 1:
   Jbbs = [0.0,]
@@ -38,7 +38,7 @@ if CouplingForm == "angle1":
 dT = 0.005
 Tf = 3000
 tlist = np.arange(0, 12, dT)
-phi = 0
+phi = 0.25
 def pulse(tlist, td=6, tau=2, W=1, A0=1, Phase=0.0e0):
   p = []
   for t in tlist:
@@ -76,7 +76,7 @@ for Uff in Uffs:
       for Vbb in Vbbs:
         for Vff in Vffs:
           for DeltaDC in DeltaDCs:
-            Prefix2 = "".join(["Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC)])
+            Prefix2 = "".join(["Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC), "P", str(phi)])
             workdir = os.path.join(DataDir, Prefix0, Prefix1, Prefix2)
             os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
             f = h5py.File(os.path.join(workdir, 'confs.h5'), 'w')
