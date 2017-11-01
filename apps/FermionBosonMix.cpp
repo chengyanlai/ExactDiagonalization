@@ -338,7 +338,7 @@ void OAS(const std::string prefix, const int dynamics=0){
     file1->saveNumber("Input", "Jbb", Jbb);
     file1->saveNumber("Input", "Jff", Jff);
     file1->saveNumber("Input", "Vbb", Vbb);
-    file1->saveStdVector("Input", "Vff", Vfft);
+    file1->saveStdVector("Input", "Vfft", Vfft);
     file1->saveNumber("Input", "Uff", Uff);
     file1->saveNumber("Input", "dT", dT);
     file1->saveNumber("Input", "Tf", Tf);
