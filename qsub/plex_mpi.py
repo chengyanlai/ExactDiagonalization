@@ -69,14 +69,14 @@ Paths = []
 SetCount = 0
 Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm])
 for Uff in Uffs:
-  Prefix0 = "".join([ "Ue", str(Uff) ])
+  Prefix0 = "".join([ "Ue", str(Uff), "P", str(phi) ])
   for Jbb in Jbbs:
     for Jff in Jffs:
       Prefix1 = "".join([ "Jd", str(Jbb), "Je", str(Jff) ])
       for Vbb in Vbbs:
         for Vff in Vffs:
           for DeltaDC in DeltaDCs:
-            Prefix2 = "".join(["Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC), "P", str(phi)])
+            Prefix2 = "".join([ "Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC) ])
             workdir = os.path.join(DataDir, Prefix0, Prefix1, Prefix2)
             os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
             f = h5py.File(os.path.join(workdir, 'confs.h5'), 'w')
