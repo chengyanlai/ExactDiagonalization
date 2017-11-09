@@ -91,6 +91,56 @@ ComplexVectorType OperateCdagger( const std::vector<Basis> OldBases, const Compl
   return Vout;
 }
 
+ComplexVectorType OperateC( const std::vector<Basis> OldBases, const ComplexVectorType Vin,
+  const std::vector<Basis> NewBases, const int CHloc, const int species,
+  Hamiltonian<ComplexType> OldHam, Hamiltonian<ComplexType> NewHam  ){
+  size_t NewHilbertSpace = NewBases.at(0).getHilbertSpace() * NewBases.at(1).getHilbertSpace();
+  ComplexVectorType Vout = ComplexVectorType::Zero(NewHilbertSpace);
+  std::vector<int> OldFup = OldBases.at(0).getFStates();
+  std::vector<int> OldFdn = OldBases.at(1).getFStates();
+  std::vector<size_t> OldFupTag = OldBases.at(0).getFTags();
+  std::vector<size_t> OldFdnTag = OldBases.at(1).getFTags();
+  std::vector<size_t> NewFupTag = NewBases.at(0).getFTags();
+  std::vector<size_t> NewFdnTag = NewBases.at(1).getFTags();
+  size_t NewFupIdx, NewFdnIdx, OldFupIdx, OldFdnIdx;
+  // int Update = false;
+  for ( auto OldFupState : OldFup ){
+    if (species == 1){
+      NewFupIdx = NewFupTag.at(OldFupState);// Find their indices
+      OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
+    }else if ( (species == 0) && (btest(OldFupState, CHloc)) ){
+      int NewFupState = ibclr(OldFupState, CHloc);
+      NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
+      OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
+    }else{
+      continue;
+    }
+    for ( auto OldFdnState : OldFdn ){
+      if ( species == 0 ){
+        NewFdnIdx = NewFdnTag.at(OldFdnState);// Find their indices
+        OldFdnIdx = OldFdnTag.at(OldFdnState);// Find their indices
+      }else if ( (species == 1) && (btest(OldFdnState, CHloc)) ){
+        int NewFdnState = ibclr(OldFdnState, CHloc);
+        NewFdnIdx = NewFdnTag.at(NewFdnState);// Find their indices
+        OldFdnIdx = OldFdnTag.at(OldFdnState);// Find their indices
+      }else{
+        continue;
+      }
+      std::vector<size_t> OldIdx, NewIdx;
+      OldIdx.clear();
+      OldIdx.push_back(OldFupIdx);
+      OldIdx.push_back(OldFdnIdx);
+      NewIdx.clear();
+      NewIdx.push_back(NewFupIdx);
+      NewIdx.push_back(NewFdnIdx);
+      size_t oid = OldHam.DetermineTotalIndex( OldIdx );
+      size_t nid = NewHam.DetermineTotalIndex( NewIdx );
+      Vout(nid) = Vin(oid);
+    }
+  }
+  return Vout;
+}
+
 std::vector< RealVectorType > Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec,
   Hamiltonian<ComplexType> &ham ){
   std::vector< RealVectorType > out;

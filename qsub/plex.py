@@ -9,22 +9,22 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
-BL = 2
-FL = 1
+BL = 1
+FL = 6
 maxLocalB = 1
 if BL == 1:
-  Jbbs = [0.0,]
+  Jds = [0.0,]
 else:
-  Jbbs = [0.0, 0.05, 0.10]
+  Jds = [0.0, 0.05, 0.10]
 if FL == 1:
-  Jffs = [0.0,]
-  Uffs = [0.00]
+  Jcs = [0.0,]
+  Vcs = [0.00]
 else:
-  Jffs = [0.0, 0.05, 0.10]
-  Uffs = [0.0,-3.0,-4.0, 0.10, 0.50]
-  # Uffs = [-4.1,]
-Vbbs = [3.50, 3.20, 3.80]
-Vffs = [3.40, 3.20, 3.60]
+  Jcs = [0.0, 0.05, 0.10]
+  Vcs = np.linspace(-3.0, -5.0, 21)
+  Vcs = np.hstack([np.array([0.0, 0.01, 0.1]), Vcs])
+Eds = [3.50, 3.20, 3.80]
+Ecs = [3.40, 3.20, 3.60]
 DeltaDCs = [-0.080, -0.020, -0.050, -0.0080]
 CouplingForm = "uniform"# uniform, angle1
 # CouplingForm = "angle1"
@@ -56,15 +56,15 @@ DataDir = os.path.join( ExecDir, "plex", "".join(["B", str(BL), "F", str(FL), "m
 Paths = []
 SetCount = 0
 Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm])
-for Uff in Uffs:
-  Prefix0 = "".join([ "Ue", str(Uff), "P", str(phi) ])
-  for Jbb in Jbbs:
-    for Jff in Jffs:
-      Prefix1 = "".join([ "Jd", str(Jbb), "Je", str(Jff) ])
-      for Vbb in Vbbs:
-        for Vff in Vffs:
+for Vc in Vcs:
+  Prefix0 = "".join([ "Vc", str(Vc) ])
+  for Jd in Jds:
+    for Jc in Jcs:
+      Prefix1 = "".join([ "Jd", str(Jd), "Jc", str(Jc) ])
+      for Ed in Eds:
+        for Ec in Ecs:
           for DeltaDC in DeltaDCs:
-            Prefix2 = "".join([ "Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC) ])
+            Prefix2 = "".join([ "Ed", str(Ed), "Ec", str(Ec), "Ddc", str(DeltaDC) ])
             workdir = os.path.join(DataDir, Prefix0, Prefix1, Prefix2)
             os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
             f = h5py.File(os.path.join(workdir, 'confs.h5'), 'w')
@@ -72,11 +72,11 @@ for Uff in Uffs:
             dset = para.create_dataset("BL", data=BL)
             dset = para.create_dataset("FL", data=FL)
             dset = para.create_dataset("maxLocalB", data=maxLocalB)
-            dset = para.create_dataset("Jbb", data=Jbb)
-            dset = para.create_dataset("Jff", data=Jff)
-            dset = para.create_dataset("Vbb", data=Vbb)
-            dset = para.create_dataset("Vff", data=Vff)
-            dset = para.create_dataset("Uff", data=Uff)
+            dset = para.create_dataset("Jd", data=Jd)
+            dset = para.create_dataset("Jc", data=Jc)
+            dset = para.create_dataset("Ed", data=Ed)
+            dset = para.create_dataset("Ec", data=Ec)
+            dset = para.create_dataset("Vc", data=Vc)
             for i in range(FL):
               DeltaDCarr = DCcoupling(DeltaDC, BL, FL, fi=i, form=CouplingForm)
               gname = "DeltaDC-" + str(i)
@@ -89,7 +89,7 @@ MPIFolders = open(os.path.join(DataDir, "MPIFolders"), "w")
 for item in Paths:
   MPIFolders.write("%s\n" % item)
 APPs = []
-APPs.append("mpirun -n " + str(SetCount) + " -ppn 1 " + os.path.join(SrcDir, "build", "plex.mpi 1"))
+APPs.append("mpirun -n " + str(SetCount) + " -ppn 1 " + os.path.join(SrcDir, "build", "plex.mpi 0"))
 APPs.append("/bin/touch DONE")
 Exac_program = "\n".join(APPs)
 sg.GenerateScript("SLURM", os.path.join(DataDir, "job.mpi"), Job_Name, APPs, DataDir, SetCount, NumCore, WallTime, Partition, Project, MPI=SetCount, PPN=1)

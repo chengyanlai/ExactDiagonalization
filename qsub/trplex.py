@@ -13,18 +13,18 @@ BL = 2
 FL = 1
 maxLocalB = 1
 if BL == 1:
-  Jbbs = [0.0,]
+  Jds = [0.0,]
 else:
-  Jbbs = [0.0, 0.05, 0.10]
+  Jds = [0.0, 0.05, 0.10]
 if FL == 1:
-  Jffs = [0.0,]
-  Uffs = [0.00]
+  Jcs = [0.0,]
+  Vcs = [0.00]
 else:
-  Jffs = [0.0, 0.05, 0.10]
-  Uffs = [0.0,]#-3.0,-4.0, 0.10, 0.50]
-  # Uffs = [-4.1,]
-Vbbs = [3.50, ]#3.20, 3.80]
-Vffs = [3.40, 3.20, 3.60]
+  Jcs = [0.0, 0.05, 0.10]
+  Vcs = [0.0,]#-3.0,-4.0, 0.10, 0.50]
+  # Vcs = [-4.1,]
+Eds = [3.50, ]#3.20, 3.80]
+Ecs = [3.40, 3.20, 3.60]
 DeltaDCs = [-0.080, ]#-0.020, -0.050, -0.0080]
 CouplingForm = "uniform"# uniform, angle1
 # CouplingForm = "angle1"
@@ -68,18 +68,18 @@ def DCcoupling(Delta, BL, FL, fi=0, form="uniform"):
     print("Not supported yet")
     sys.exit()
 
-DataDir = os.path.join( ExecDir, "plex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
+DataDir = os.path.join( ExecDir, "trplex", "".join(["B", str(BL), "F", str(FL), "mB", str(maxLocalB)]), CouplingForm)
 Paths = []
 SetCount = 0
 Job_Name = "".join(["PlExB", str(BL), "F", str(FL), "mB", str(maxLocalB), CouplingForm])
-for Uff in Uffs:
-  for Jbb in Jbbs:
-    for Jff in Jffs:
-      Prefix1 = "".join([ "Jd", str(Jbb), "Je", str(Jff), "Ue", str(Uff) ])
-      for Vbb in Vbbs:
-        for Vff in Vffs:
+for Vc in Vcs:
+  for Jd in Jds:
+    for Jc in Jcs:
+      Prefix1 = "".join([ "Jd", str(Jd), "Jc", str(Jc), "Vc", str(Vc) ])
+      for Ed in Eds:
+        for Ec in Ecs:
           for DeltaDC in DeltaDCs:
-            Prefix2 = "".join([ "Vd", str(Vbb), "Ve", str(Vff), "Ddc", str(DeltaDC) ])
+            Prefix2 = "".join([ "Ed", str(Ed), "Ec", str(Ec), "Ddc", str(DeltaDC) ])
             for A0 in A0s:
               for phi in Phis:
                 Prefix3 = "".join(["A", str(A0), "P", str(phi)])
@@ -90,11 +90,11 @@ for Uff in Uffs:
                 dset = para.create_dataset("BL", data=BL)
                 dset = para.create_dataset("FL", data=FL)
                 dset = para.create_dataset("maxLocalB", data=maxLocalB)
-                dset = para.create_dataset("Jbb", data=Jbb)
-                dset = para.create_dataset("Jff", data=Jff)
-                dset = para.create_dataset("Vbb", data=Vbb)
-                dset = para.create_dataset("Vff", data=Vff)
-                dset = para.create_dataset("Uff", data=Uff)
+                dset = para.create_dataset("Jd", data=Jd)
+                dset = para.create_dataset("Jc", data=Jc)
+                dset = para.create_dataset("Ed", data=Ed)
+                dset = para.create_dataset("Ec", data=Ec)
+                dset = para.create_dataset("Vc", data=Vc)
                 for i in range(FL):
                   DeltaDCarr = DCcoupling(DeltaDC, BL, FL, fi=i, form=CouplingForm)
                   gname = "DeltaDC-" + str(i)
@@ -103,10 +103,10 @@ for Uff in Uffs:
 
                 fp = h5py.File(os.path.join(workdir, 'pulse.h5'), 'w')
                 para = fp.create_group("Input")
-                Vfft = pulse(dt=dT, A0=A0, Phase=phi) + Vff
+                Ect = pulse(dt=dT, A0=A0, Phase=phi) + Ec
                 dset = para.create_dataset("Phase", data=phi)
-                dset = para.create_dataset("Vfft", data=Vfft)
-                dset = para.create_dataset("Tf", data=Tf+Vfft.shape[0])
+                dset = para.create_dataset("Ect", data=Ect)
+                dset = para.create_dataset("Tf", data=Tf+Ect.shape[0])
                 dset = para.create_dataset("dT", data=dT)
                 fp.close()
 

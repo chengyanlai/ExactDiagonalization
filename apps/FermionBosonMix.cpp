@@ -34,29 +34,29 @@ std::vector<std::string> GetPrefix(const std::string FileName){
   return out;
 }
 
-void LoadPulse(const std::string filename, int& Tf, double& dT, std::vector<double>& Vfft, int& SaveWFEvery){
+void LoadPulse(const std::string filename, int& Tf, double& dT, std::vector<double>& Ect, int& SaveWFEvery){
   HDF5IO file(filename);
   std::string gname = "Input";
   Tf = file.loadInt(gname, "Tf");
   dT = file.loadReal(gname, "dT");
-  Vfft.clear();
-  file.loadStdVector(gname, "Vfft", Vfft);
+  Ect.clear();
+  file.loadStdVector(gname, "Ect", Ect);
   // SaveWFEvery = file.loadInt(gname, "SaveWFEvery");
   SaveWFEvery = 40;
 }
 
 void LoadParameters( const std::string filename, int &BL, int &FL, int &maxLocalB,
-  double &Jbb, double &Jff, double &Vbb, double &Vff, double &Uff, std::vector<std::vector<double> > &DeltaDC){
+  double &Jd, double &Jc, double &Ed, double &Ec, double &Vc, std::vector<std::vector<double> > &DeltaDC){
   HDF5IO file(filename);
   std::string gname = "Input";
   BL = file.loadInt(gname, "BL");
   FL = file.loadInt(gname, "FL");
   maxLocalB = file.loadInt(gname, "maxLocalB");
-  Jbb = file.loadReal(gname, "Jbb");
-  Jff = file.loadReal(gname, "Jff");
-  Vbb = file.loadReal(gname, "Vbb");
-  Vff = file.loadReal(gname, "Vff");
-  Uff = file.loadReal(gname, "Uff");
+  Jd = file.loadReal(gname, "Jd");
+  Jc = file.loadReal(gname, "Jc");
+  Ed = file.loadReal(gname, "Ed");
+  Ec = file.loadReal(gname, "Ec");
+  Vc = file.loadReal(gname, "Vc");
   DeltaDC.clear();
   std::string setName = "DeltaDC-";
   for ( size_t i = 0; i < FL; i++){
@@ -164,12 +164,12 @@ std::vector<Basis> BuildBasis(const int& BL, const int& FL, const int& maxLocalB
 }
 
 template<typename T>
-std::vector< std::vector< Node<T>* > > BuildLattice( const int& BL, const T& Jbb, const int& FL, const T& Jff){
+std::vector< std::vector< Node<T>* > > BuildLattice( const int& BL, const T& Jd, const int& FL, const T& Jc){
   // For bosonic chain
   bool BOBC = false;
   std::vector<T> BJ;
   for (size_t cnt = 0; cnt < BL; cnt++) {
-    BJ.push_back(Jbb);
+    BJ.push_back(Jd);
   }
   if ( BL < 3 ) {
     BOBC = true;
@@ -180,7 +180,7 @@ std::vector< std::vector< Node<T>* > > BuildLattice( const int& BL, const T& Jbb
   const bool FOBC = true;
   std::vector<T> FJ;
   for (size_t cnt = 0; cnt < FL-1; cnt++) {
-    FJ.push_back(Jff);
+    FJ.push_back(Jc);
   }
   const std::vector< Node<T>* > FLattice = NN_1D_Chain(FL, FJ, FOBC);
   std::vector< std::vector< Node<T>* > > LT;
@@ -190,20 +190,20 @@ std::vector< std::vector< Node<T>* > > BuildLattice( const int& BL, const T& Jbb
 }
 
 template<typename T>
-Hamiltonian<T> BuildHamiltonian( const int& maxLocalB, const std::vector<Basis>& Bs, const double& Vbb, const double& Vff, const double& Uff, std::vector< std::vector< Node<T>* > > LT, const std::vector<std::vector<double> >& DeltaDC ){
+Hamiltonian<T> BuildHamiltonian( const int& maxLocalB, const std::vector<Basis>& Bs, const double& Ed, const double& Ec, const double& Vc, std::vector< std::vector< Node<T>* > > LT, const std::vector<std::vector<double> >& DeltaDC ){
   Hamiltonian<T> Ham(Bs);
   // Local potential
   std::vector<std::vector<T> > Vls;
-  std::vector<T> Vloc(Bs.at(0).getL(), T(Vbb));
+  std::vector<T> Vloc(Bs.at(0).getL(), T(Ed));
   Vls.push_back(Vloc);
-  Vloc.assign(Bs.at(1).getL(), T(Vff));
+  Vloc.assign(Bs.at(1).getL(), T(Ec));
   Vls.push_back(Vloc);
   // Local interaction
   //    Here, U for fermion is NN density density terms.
   std::vector<std::vector<T> > Uls;
   std::vector<T> Uloc(Bs.at(0).getL(), T(0.0e0));
   Uls.push_back(Uloc);
-  Uloc.assign(Bs.at(1).getL(), T(Uff));
+  Uloc.assign(Bs.at(1).getL(), T(Vc));
   Uls.push_back(Uloc);
   Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
   Ham.BuildHoppingHamiltonian(Bs, LT);
@@ -229,22 +229,22 @@ void OAS(const std::string prefix, const int dynamics=0){
   int BL = 2;
   int FL = 2;
   int maxLocalB = 1;
-  double Jbb = 0.020e0;
-  double Jff = 0.010e0;
-  double Vbb = 3.20e0;
-  double Vff = 3.50e0;
-  double Uff = 0.00e0;
+  double Jd = 0.020e0;
+  double Jc = 0.010e0;
+  double Ed = 3.20e0;
+  double Ec = 3.50e0;
+  double Vc = 0.00e0;
   std::vector<std::vector<double> > DeltaDC;
 
   std::string filename = prefix;
   filename.append("confs.h5");
-  LoadParameters( filename, BL, FL, maxLocalB, Jbb, Jff, Vbb, Vff, Uff, DeltaDC);
+  LoadParameters( filename, BL, FL, maxLocalB, Jd, Jc, Ed, Ec, Vc, DeltaDC);
   /* Basis */
   std::vector<Basis> Bs = BuildBasis(BL, FL, maxLocalB);
 
   /* Hamiltonian */
-  std::vector< std::vector< Node<RealType>* > > LT = BuildLattice( BL, Jbb, FL, Jff);
-  Hamiltonian<double> Ham = BuildHamiltonian( maxLocalB, Bs, Vbb, Vff, Uff, LT, DeltaDC );
+  std::vector< std::vector< Node<RealType>* > > LT = BuildLattice( BL, Jd, FL, Jc);
+  Hamiltonian<double> Ham = BuildHamiltonian( maxLocalB, Bs, Ed, Ec, Vc, LT, DeltaDC );
 
   /* Get ground state and excited states */
   int GetFullSpectrum = 1;
@@ -265,7 +265,9 @@ void OAS(const std::string prefix, const int dynamics=0){
   density( Bs, GS, Ham, Nb, Nf);
 
   /* Get equilibrium spectrum */
-  size_t MaxNumPeak = 20;
+  size_t MaxNumPeak;
+  if ( GetFullSpectrum ) MaxNumPeak =  Ham.getTotalHilbertSpace();
+  else MaxNumPeak = 20;
   std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){
     std::vector<double> PeakLocation, PeakWeight;
@@ -289,11 +291,11 @@ void OAS(const std::string prefix, const int dynamics=0){
   file->saveNumber("Input", "BL", BL);
   file->saveNumber("Input", "FL", FL);
   file->saveNumber("Input", "maxLocalB", maxLocalB);
-  file->saveNumber("Input", "Jbb", Jbb);
-  file->saveNumber("Input", "Jff", Jff);
-  file->saveNumber("Input", "Vbb", Vbb);
-  file->saveNumber("Input", "Vff", Vff);
-  file->saveNumber("Input", "Uff", Uff);
+  file->saveNumber("Input", "Jd", Jd);
+  file->saveNumber("Input", "Jc", Jc);
+  file->saveNumber("Input", "Ed", Ed);
+  file->saveNumber("Input", "Ec", Ec);
+  file->saveNumber("Input", "Vc", Vc);
   std::string setName = "DeltaDC-";
   for ( size_t i = 0; i < FL; i++){
     std::string tmp = setName;
@@ -323,10 +325,10 @@ void OAS(const std::string prefix, const int dynamics=0){
     int Tf, SaveWFEvery;
     int Kmax = 20;
     double dT;
-    std::vector<double> Vfft;
-    LoadPulse(prefix+"pulse.h5", Tf, dT, Vfft, SaveWFEvery);
+    std::vector<double> Ect;
+    LoadPulse(prefix+"pulse.h5", Tf, dT, Ect, SaveWFEvery);
     ComplexType Prefactor = ComplexType(0.0, -1.0 * dT );
-    std::vector< std::vector< Node<ComplexType>* > > LTc = BuildLattice( BL, ComplexType(Jbb, 0.0e0), FL, ComplexType(Jff, 0.0e0) );
+    std::vector< std::vector< Node<ComplexType>* > > LTc = BuildLattice( BL, ComplexType(Jd, 0.0e0), FL, ComplexType(Jc, 0.0e0) );
 
     /* save inputs */
     filename = prefix;
@@ -335,11 +337,11 @@ void OAS(const std::string prefix, const int dynamics=0){
     file1->saveNumber("Input", "BL", BL);
     file1->saveNumber("Input", "FL", FL);
     file1->saveNumber("Input", "maxLocalB", maxLocalB);
-    file1->saveNumber("Input", "Jbb", Jbb);
-    file1->saveNumber("Input", "Jff", Jff);
-    file1->saveNumber("Input", "Vbb", Vbb);
-    file1->saveStdVector("Input", "Vfft", Vfft);
-    file1->saveNumber("Input", "Uff", Uff);
+    file1->saveNumber("Input", "Jd", Jd);
+    file1->saveNumber("Input", "Jc", Jc);
+    file1->saveNumber("Input", "Ed", Ed);
+    file1->saveStdVector("Input", "Ect", Ect);
+    file1->saveNumber("Input", "Vc", Vc);
     file1->saveNumber("Input", "dT", dT);
     file1->saveNumber("Input", "Tf", Tf);
     for ( size_t i = 0; i < FL; i++){
@@ -357,8 +359,8 @@ void OAS(const std::string prefix, const int dynamics=0){
       std::vector<ComplexType> At;
       At.clear();
       while ( TStep < Tf ){
-        if ( TStep < Vfft.size() ){// update Hamiltonian
-          HamT = BuildHamiltonian( maxLocalB, Bs, Vbb, Vfft.at(TStep), Uff, LTc, DeltaDC );
+        if ( TStep < Ect.size() ){// update Hamiltonian
+          HamT = BuildHamiltonian( maxLocalB, Bs, Ed, Ect.at(TStep), Vc, LTc, DeltaDC );
         }
         HamT.expH( Prefactor, VecT, Kmax );
         At.push_back( AS.dot(VecT) );
