@@ -27,7 +27,7 @@ endef
 
 all: checkdirs build/loop.f build/xas.f build/plex build/1D.f
 
-mpi: checkdirs build/plex.mpi
+mpi: checkdirs build/plex.mpi build/rixs.mpi
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -49,6 +49,12 @@ build/apps/FermionBosonMixMPI.o: apps/FermionBosonMix.cpp
 
 build/plex.mpi: build/apps/FermionBosonMixMPI.o $(OBJ)
 	$(MPICC) -DMPIPARALLEL $^ -o $@ $(LAPACK) $(HDF5LIB)
+
+build/apps/RIXSMPI.o: apps/RIXS.cpp
+	$(MPICC) -DMPIPARALLEL $(INCLUDES) -c $< -o $@
+
+build/rixs.mpi: build/apps/RIXSMPI.o $(OBJ)
+	$(MPICC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
 
