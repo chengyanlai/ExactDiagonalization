@@ -3,7 +3,6 @@
 #include <string>
 #include <vector>
 #include <cmath>
-#include <stdlib.h>// atof
 #include "src/EDType.hpp"
 #include "src/bitwise.h"
 #include "src/Node/Node.hpp"
@@ -15,17 +14,46 @@
 #ifdef MKL
   #include "mkl.h"
 #endif
-#ifdef MPIPARALLEL
-  #include <mpi.h>
-#endif
 
 #ifndef DEBUG
-  #define DEBUG 1
+#define DEBUG 1
 #endif
 
 #ifndef NumCores
-  #define NumCores 20
+#define NumCores 12
 #endif
+
+void LoadParameters( const std::string filename, int &L,
+  int &OBC, int &N1, int &N2, std::vector<RealType> &Uinit,
+  std::vector<RealType> &Uloc, std::vector<RealType> &Vloc,
+  int &CHloc, int &dynamics, int &Tsteps, RealType &RealType){
+    HDF5IO file(filename);
+    L = file.loadInt("Parameters", "L");
+    OBC = file.loadInt("Parameters", "OBC");
+    N1 = file.loadInt("Parameters", "N1");
+    N2 = file.loadInt("Parameters", "N2");
+    CHloc = file.loadInt("Parameters", "CHloc");
+    file.loadStdVector("Parameters", "Uinit", Uinit);
+    file.loadStdVector("Parameters", "U", Uloc);
+    file.loadStdVector("Parameters", "V", Vloc);
+    dynamics = file.loadInt("Parameters", "dynamics");
+    Tsteps = file.loadInt("Parameters", "Tsteps");
+    RealType = file.loadReal("Parameters", "dt");
+}
+
+void peaks( const double EG, const ComplexVectorType AS, const RealVectorType &EigVal, const ComplexMatrixType &EigVec,
+  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight, const int MaxNumPeak){
+  PeakLocation.clear();
+  PeakWeight.clear();
+  for ( size_t i = 0; i < EigVec.rows(); i++){
+    PeakLocation.push_back(EigVal(i) - EG);
+    ComplexVectorType An = EigVec.row(i);
+    ComplexType val = An.dot(AS);
+    PeakWeight.push_back( RealPart(val * Conjg(val)) );
+    if ( i > MaxNumPeak ) break;
+  }
+  assert( PeakLocation.size() == PeakWeight.size() );
+}
 
 ComplexVectorType OperateCdagger( const std::vector<Basis> OldBases, const ComplexVectorType Vin,
   const std::vector<Basis> NewBases, const int CHloc, const int species,
@@ -127,8 +155,7 @@ ComplexVectorType OperateC( const std::vector<Basis> OldBases, const ComplexVect
   return Vout;
 }
 
-std::vector< RealVectorType > Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec,
-  Hamiltonian<ComplexType> &ham ){
+std::vector< RealVectorType > Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Hamiltonian<ComplexType> &ham ){
   std::vector< RealVectorType > out;
   RealVectorType tmp1 = RealVectorType::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
   RealVectorType tmp2 = RealVectorType::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
@@ -161,31 +188,15 @@ int main(int argc, char const *argv[]) {
 #ifdef MKL
   mkl_set_num_threads(NumCores);
 #endif
-#ifdef MPIPARALLEL
-  // Initialize MPI
-  MPI_Init(NULL, NULL);
-  // Get the number of processes
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  // Get the rank of the process
-  int world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-#else
-  int world_size = 1;
-  // int world_rank = 196;
-  for ( size_t world_rank = 0; world_rank < 196; world_rank++ ){
-#endif
   INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
-  int L = std::atoi(argv[1]);
-  const int OBC = 0;
-  int N1 = std::atoi(argv[2]);
-  int N2 = N1;
-  int S2 = std::atoi(argv[3]);;
-  int Tsteps = std::atoi(argv[4]);
-  const RealType dt = 0.005;
-  RealType Uinit  = std::atof(argv[5]);
-  RealType Vin = std::atof(argv[6]);
-  RealType Uin = std::atof(argv[7]);
+  int L, CHloc;
+  int OBC;
+  int N1, N2;
+  int dynamics, Tsteps;
+  RealType dt;
+  std::vector<RealType> Uinit, Vin, Uin;
+  LoadParameters( "conf.h5", L, OBC, N1, N2, Uinit, Uin, Vin, CHloc, dynamics, Tsteps, dt);
+  HDF5IO *file = new HDF5IO("XASEQM.h5");
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -198,6 +209,8 @@ int main(int argc, char const *argv[]) {
   }
   INFO("");
   const std::vector< Node<ComplexType>* > lattice = NN_1D_Chain(L, J, OBC);
+  file->saveNumber("1DChain", "L", L);
+  file->saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
     if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
   }
@@ -211,6 +224,12 @@ int main(int argc, char const *argv[]) {
   F2.Fermion();
   std::vector<int> st2 = F2.getFStates();
   std::vector<size_t> tg2 = F2.getFTags();
+  file->saveNumber("Basis", "N1", N1);
+  file->saveStdVector("Basis", "F1States", st1);
+  file->saveStdVector("Basis", "F1Tags", tg1);
+  file->saveNumber("Basis", "N2", N2);
+  file->saveStdVector("Basis", "F2States", st2);
+  file->saveStdVector("Basis", "F2Tags", tg2);
   INFO("DONE!");
   INFO_NONEWLINE("Build Hamiltonian - ");
   std::vector<Basis> Bases;
@@ -221,7 +240,10 @@ int main(int argc, char const *argv[]) {
   std::vector<std::vector<ComplexType> > Vloc;
   Vloc.push_back(Vtmp);
   Vloc.push_back(Vtmp);
-  std::vector<ComplexType> Utmp(L, ComplexType(Uinit, 0.0e0) );
+  std::vector<ComplexType> Utmp;
+  for ( auto val : Uinit ){
+    Utmp.push_back(ComplexType(val));
+  }
   std::vector<std::vector<ComplexType> > Uloc;
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
@@ -234,18 +256,17 @@ int main(int argc, char const *argv[]) {
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
   RealVectorType Vals;
   ComplexMatrixType Vecs;
-  ham.eigh(Vals, Vecs);
+  ham.eigh(Vals, Vecs, 1);
   ComplexVectorType Vec = Vecs.row(0);
+  RealType EG = Vals[0];
   INFO("GS energy = " << Vals[0]);
+  file->saveVector("GS", "EVec", Vec);
+  file->saveVector("GS", "EVal", Vals);
   INFO("DONE!");
-
-
-  int CHloc1 = world_rank / L;
-  int CHloc2 = world_rank % L;
-
-
   std::vector< RealVectorType > Nfi = Ni( Bases, Vec, ham );
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
+  file->saveVector("Obs", "Nup", Nfi.at(0));
+  file->saveVector("Obs", "Ndn", Nfi.at(1));
   std::cout << "Build core-hole Basis" << std::endl;
   /* Build New Basis */
   Basis nF1(L, N1+1, true);
@@ -258,11 +279,17 @@ int main(int argc, char const *argv[]) {
   /* Update the new Hamiltonian */
   std::cout << "Build core-hole Hamiltonian" << std::endl;
   Hamiltonian<ComplexType> nHam( nBases );
-  Vtmp.at(CHloc1) = Vin;
+  Vtmp.clear();
+  for ( auto val : Vin ){
+    Vtmp.push_back(ComplexType(val));
+  }
   Vloc.clear();
   Vloc.push_back(Vtmp);
   Vloc.push_back(Vtmp);
-  Utmp.at(CHloc1) = Uin;
+  Utmp.clear();
+  for ( auto val : Uin ){
+    Utmp.push_back(ComplexType(val));
+  }
   Uloc.clear();
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
@@ -271,95 +298,48 @@ int main(int argc, char const *argv[]) {
   nHam.BuildTotalHamiltonian();
   /* Apply the operator */
   std::cout << "Create core-hole state" << std::endl;
-
-  std::string filename1 = "WF";
-  filename1.append(std::to_string((unsigned long long)CHloc1));
-  filename1.append("-");
-  filename1.append(std::to_string((unsigned long long)CHloc2));
-  filename1.append(".h5");
-  HDF5IO *file = new HDF5IO(filename1);
-  file->saveVector("GS", "EVec", Vec);
-  file->saveVector("GS", "EVal", Vals);
-  file->saveVector("Obs", "Nup", Nfi.at(0));
-  file->saveVector("Obs", "Ndn", Nfi.at(1));
-
-  ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc1, 0, ham, nHam);
+  ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc, 0, ham, nHam);
   VecInit.normalize();
   ComplexVectorType VecT = VecInit;
   Nfi = Ni( nBases, VecT, nHam );
   Niall = Nfi.at(0) + Nfi.at(1);
-
-  std::string gname = "t-0";
-  file->saveVector(gname, "wf", VecT);
-  file->saveVector(gname, "Nup", Nfi.at(0));
-  file->saveVector(gname, "Ndn", Nfi.at(1));
-
-  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-  for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-    nHam.expH(Prefactor, VecT);
-    // if ( cntT % 20 == 0 ){
-    //   gname = "t-";
-    //   gname.append(std::to_string((unsigned long long)cntT));
-    //   Nfi = Ni( nBases, VecT, nHam );
-    //   file->saveVector(gname, "wf", VecT);
-    //   file->saveVector(gname, "Nup", Nfi.at(0));
-    //   file->saveVector(gname, "Ndn", Nfi.at(1));
-    // }
-  }
-
-  if ( S2 ){
-    /* Build New Basis */
-    Bases.clear();
-    Basis sF1(L, N1+1, true);
-    sF1.Fermion();
-    Basis sF2(L, N2-1, true);
-    sF2.Fermion();
-    Bases.push_back(sF1);
-    Bases.push_back(sF2);
-    /* Update the new Hamiltonian */
-    Vtmp = std::vector<ComplexType>(L, ComplexType(0.0e0, 0.0e0) );
-    Vloc.clear();
-    Vloc.push_back(Vtmp);
-    Vloc.push_back(Vtmp);
-    Utmp = std::vector<ComplexType>(L, ComplexType(Uinit, 0.0e0) );
-    Uloc.clear();
-    Uloc.push_back(Utmp);
-    Uloc.push_back(Utmp);
-    ham.BuildLocalHamiltonian(Vloc, Uloc, Bases);
-    ham.BuildHoppingHamiltonian(Bases, lattice);
-    ham.BuildTotalHamiltonian();
-  }
-
-  ComplexVectorType VecS = OperateC( nBases, VecT, Bases, CHloc2, S2, nHam, ham);
-  VecS.normalize();
-  Nfi = Ni( nBases, VecS, nHam );
-  Niall = Nfi.at(0) + Nfi.at(1);
-
-  gname = "s-0";
-  file->saveVector(gname, "wf", VecS);
-  file->saveVector(gname, "Nup", Nfi.at(0));
-  file->saveVector(gname, "Ndn", Nfi.at(1));
-
-  Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-  for (size_t cntT = 1; cntT <= 3000; cntT++) {
-    ham.expH(Prefactor, VecS);
-    if ( cntT % 20 == 0 ){
-      gname = "s-";
-      gname.append(std::to_string((unsigned long long)cntT));
-      Nfi = Ni( Bases, Vecs, ham );
-      file->saveVector(gname, "wf", VecS);
-      file->saveVector(gname, "Nup", Nfi.at(0));
-      file->saveVector(gname, "Ndn", Nfi.at(1));
-    }
-  }
-
+  file->saveVector("Obs", "NewNup", Nfi.at(0));
+  file->saveVector("Obs", "NewNdn", Nfi.at(1));
   delete file;
-
-#ifdef MPIPARALLEL
-  MPI_Finalize();
-#else
+  if ( dynamics ){
+    ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+    std::cout << "Begin dynamics......" << std::endl;
+    for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
+      nHam.expH(Prefactor, VecT);
+      if ( cntT % 2 == 0 ){
+        HDF5IO file2("XASDYN.h5");
+        std::string gname = "Obs-";
+        gname.append(std::to_string((unsigned long long)cntT));
+        gname.append("/");
+        ComplexType Lecho = VecInit.dot(VecT);
+        Nfi = Ni( nBases, VecT, nHam );
+        file2.saveNumber(gname, "Lecho", Lecho);
+        file2.saveVector(gname, "Nup", Nfi.at(0));
+        file2.saveVector(gname, "Ndn", Nfi.at(1));
+      }
+    }
+  }else{
+    int MaxNumPeak = 20;
+    std::vector<double> PeakLocation, PeakWeight;
+    RealVectorType EigVals = RealVectorType::Zero(MaxNumPeak);
+    ComplexMatrixType EigVecs = ComplexMatrixType::Zero(MaxNumPeak, nHam.getTotalHilbertSpace());
+    EigVecs.row(0) = VecInit;
+    nHam.eigh(EigVals, EigVecs, MaxNumPeak, false);
+    std::cout << "new " << EigVals[0] << " " << EigVals[1] << std::endl;
+    peaks(EG, VecInit, EigVals, EigVecs, PeakLocation, PeakWeight, MaxNumPeak);
+    /* Print to check. */
+    for ( int i = 0; i < 4; i++ ) std::cout << PeakLocation.at(i) << " " << PeakWeight.at(i) << std::endl;
+    HDF5IO file2("XAS2.h5");
+    std::string gname = "Obs";
+    file2.saveVector(gname, "EigVals", EigVals);
+    file2.saveStdVector(gname, "PeakLocation", PeakLocation);
+    file2.saveStdVector(gname, "PeakWeight", PeakWeight);
   }
-#endif
   return 0;
 }
 

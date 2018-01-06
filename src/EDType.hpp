@@ -22,6 +22,13 @@ typedef double RealType;
 /** Complex type. */
 typedef std::complex<double> ComplexType;
 
+inline RealType Conjg( RealType number ){return number;};
+inline ComplexType Conjg( ComplexType number ){return std::conj(number);};
+inline RealType RealPart( RealType number ){return number;};
+inline RealType RealPart( ComplexType number ){return number.real();};
+inline RealType ImaginaryPart( RealType number ){return 0.0e0;};
+inline RealType ImaginaryPart( ComplexType number ){return number.imag();};
+
 const RealType PI = std::atan(1.0)*4.0;
 
 template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1) ;

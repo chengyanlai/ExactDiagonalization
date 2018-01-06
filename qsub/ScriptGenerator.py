@@ -28,7 +28,7 @@ def GenerateScript(QueueingSystem, Filename, JobName, Executable, FolderName, No
             JobScript.append("".join(["#SBATCH --partition=", Partition]))
         JobScript.append("".join(["#SBATCH --nodes=", str(Nodes)]))
         if MPI:
-            JobScript.append("".join(["#SBATCH --ntasks=", str(MPI)]))
+            JobScript.append("".join(["#SBATCH --ntasks=", str(Nodes)]))
             JobScript.append("".join(["#SBATCH --ntasks-per-node=", str(PPN)]))
         JobScript.append("".join(["#SBATCH --cpus-per-task=", str(NumCore)]))
         JobScript.append("".join(["#SBATCH --time=", WallTime]))

@@ -79,10 +79,10 @@ int main(int argc, char const *argv[]) {
     LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
     std::cout << "Parameters for calculation loaded!" << std::endl;
   }catch(H5::FileIException){
-    L = 10;
+    L = 14;
     OBC = 1;
-    N1 = 5;
-    N2 = 5;
+    N1 = 6;
+    N2 = 6;
     Jin = std::vector<RealType>(L-1, 1.0);
     Uin = std::vector<RealType>(L, 9.0);
     Vin = std::vector<RealType>(L, 0.0);

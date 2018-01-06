@@ -25,7 +25,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/loop.f build/xas.f build/plex build/1D.f
+all: checkdirs build/loop.f build/xas.f build/plex build/1D.f build/rixs
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
@@ -35,7 +35,8 @@ build/apps/%.o: apps/%.cpp
 build/1D.f: build/apps/1D_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-build/xas.f: build/apps/XAS_fermion.o $(OBJ)
+# build/xas.f: build/apps/XAS_fermion.o $(OBJ)
+build/xas.f: build/apps/XAS2.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
@@ -44,14 +45,17 @@ build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
 build/plex: build/apps/FermionBosonMix.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
+build/rixs: build/apps/RIXS.o $(OBJ)
+	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+
 build/apps/FermionBosonMixMPI.o: apps/FermionBosonMix.cpp
-	$(MPICC) -DMPIPARALLEL $(INCLUDES) -c $< -o $@
+	$(MPICC) $(INCLUDES) -c $< -o $@
 
 build/plex.mpi: build/apps/FermionBosonMixMPI.o $(OBJ)
-	$(MPICC) -DMPIPARALLEL $^ -o $@ $(LAPACK) $(HDF5LIB)
+	$(MPICC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/apps/RIXSMPI.o: apps/RIXS.cpp
-	$(MPICC) -DMPIPARALLEL $(INCLUDES) -c $< -o $@
+	$(MPICC) $(INCLUDES) -c $< -o $@
 
 build/rixs.mpi: build/apps/RIXSMPI.o $(OBJ)
 	$(MPICC) $^ -o $@ $(LAPACK) $(HDF5LIB)
