@@ -1,0 +1,10 @@
+build
+data
+*.o
+*.app
+*.h5
+.git*
+.localized
+__pycache__
+.vscode
+env.in

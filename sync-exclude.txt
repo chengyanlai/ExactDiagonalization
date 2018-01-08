@@ -1,0 +1,10 @@
+data
+build
+*.o
+*.h5
+data
+.git*
+.DS_Store
+.vscode
+.clang_complete
+env.in

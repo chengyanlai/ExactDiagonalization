@@ -238,14 +238,26 @@ int main(int argc, char const *argv[]) {
   ComplexVectorType Vec = Vecs.row(0);
   INFO("GS energy = " << Vals[0]);
   INFO("DONE!");
-
+  /* Density calculation */
+  std::vector< RealVectorType > Nfi = Ni( Bases, Vec, ham );
+  RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
 
   int CHloc1 = world_rank / L;
   int CHloc2 = world_rank % L;
+  std::cout << CHloc1 << " " << CHloc2 << std::endl;
 
+  /* Save the initial G.S. wavefunction */
+  std::string filename1 = "WF";
+  filename1.append(std::to_string((unsigned long long)CHloc1));
+  filename1.append("-");
+  filename1.append(std::to_string((unsigned long long)CHloc2));
+  filename1.append(".h5");
+  HDF5IO *file = new HDF5IO(filename1);
+  file->saveVector("GS", "EVec", Vec);
+  file->saveVector("GS", "EVal", Vals);
+  file->saveVector("Obs", "Nup", Nfi.at(0));
+  file->saveVector("Obs", "Ndn", Nfi.at(1));
 
-  std::vector< RealVectorType > Nfi = Ni( Bases, Vec, ham );
-  RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
   std::cout << "Build core-hole Basis" << std::endl;
   /* Build New Basis */
   Basis nF1(L, N1+1, true);
@@ -269,20 +281,9 @@ int main(int argc, char const *argv[]) {
   nHam.BuildLocalHamiltonian(Vloc, Uloc, nBases);
   nHam.BuildHoppingHamiltonian(nBases, lattice);
   nHam.BuildTotalHamiltonian();
+
   /* Apply the operator */
   std::cout << "Create core-hole state" << std::endl;
-
-  std::string filename1 = "WF";
-  filename1.append(std::to_string((unsigned long long)CHloc1));
-  filename1.append("-");
-  filename1.append(std::to_string((unsigned long long)CHloc2));
-  filename1.append(".h5");
-  HDF5IO *file = new HDF5IO(filename1);
-  file->saveVector("GS", "EVec", Vec);
-  file->saveVector("GS", "EVal", Vals);
-  file->saveVector("Obs", "Nup", Nfi.at(0));
-  file->saveVector("Obs", "Ndn", Nfi.at(1));
-
   ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc1, 0, ham, nHam);
   VecInit.normalize();
   ComplexVectorType VecT = VecInit;
@@ -293,21 +294,28 @@ int main(int argc, char const *argv[]) {
   file->saveVector(gname, "wf", VecT);
   file->saveVector(gname, "Nup", Nfi.at(0));
   file->saveVector(gname, "Ndn", Nfi.at(1));
+  delete file;
 
+  std::cout << "Time evolution - T " << std::endl;
+  std::cout << " H dim = " << nHam.getTotalHilbertSpace() << " WF dim = " << VecT.rows() << std::endl;
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     nHam.expH(Prefactor, VecT);
-    // if ( cntT % 20 == 0 ){
-    //   gname = "t-";
-    //   gname.append(std::to_string((unsigned long long)cntT));
-    //   Nfi = Ni( nBases, VecT, nHam );
-    //   file->saveVector(gname, "wf", VecT);
-    //   file->saveVector(gname, "Nup", Nfi.at(0));
-    //   file->saveVector(gname, "Ndn", Nfi.at(1));
-    // }
+      if ( cntT % 20 == 0 ){
+        HDF5IO file2("XASDYN.h5");
+        std::string gname = "Obs-";
+        gname.append(std::to_string((unsigned long long)cntT));
+        gname.append("/");
+        ComplexType Lecho = VecInit.dot(VecT);
+        Nfi = Ni( nBases, VecT, nHam );
+        file2.saveNumber(gname, "Lecho", Lecho);
+        file2.saveVector(gname, "Nup", Nfi.at(0));
+        file2.saveVector(gname, "Ndn", Nfi.at(1));
+      }
   }
 
   if ( S2 ){
+    std::cout << "New basis required due to spin flip" << std::endl;
     /* Build New Basis */
     Bases.clear();
     Basis sF1(L, N1+1, true);
@@ -330,31 +338,40 @@ int main(int argc, char const *argv[]) {
     ham.BuildTotalHamiltonian();
   }
 
+  std::cout << "Destroy core-hole state" << std::endl;
   ComplexVectorType VecS = OperateC( nBases, VecT, Bases, CHloc2, S2, nHam, ham);
   VecS.normalize();
-  Nfi = Ni( nBases, VecS, nHam );
+  Nfi = Ni( Bases, VecS, ham );
   Niall = Nfi.at(0) + Nfi.at(1);
 
+  std::string filename2 = "SData-";
+  filename2.append(std::to_string((unsigned long long)CHloc1));
+  filename2.append("-");
+  filename2.append(std::to_string((unsigned long long)CHloc2));
+  filename2.append(".h5");
+  HDF5IO *file2 = new HDF5IO(filename2);
   gname = "s-0";
-  file->saveVector(gname, "wf", VecS);
-  file->saveVector(gname, "Nup", Nfi.at(0));
-  file->saveVector(gname, "Ndn", Nfi.at(1));
+  file2->saveVector(gname, "wf", VecS);
+  file2->saveVector(gname, "Nup", Nfi.at(0));
+  file2->saveVector(gname, "Ndn", Nfi.at(1));
+  delete file2;
 
+  std::cout << "Time evolution - S " << std::endl;
+  std::cout << " H dim = " << ham.getTotalHilbertSpace() << " WF dim = " << VecS.rows() << std::endl;
   Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   for (size_t cntT = 1; cntT <= 3000; cntT++) {
     ham.expH(Prefactor, VecS);
     if ( cntT % 20 == 0 ){
+      file2 = new HDF5IO(filename2);
       gname = "s-";
       gname.append(std::to_string((unsigned long long)cntT));
-      Nfi = Ni( Bases, Vecs, ham );
-      file->saveVector(gname, "wf", VecS);
-      file->saveVector(gname, "Nup", Nfi.at(0));
-      file->saveVector(gname, "Ndn", Nfi.at(1));
+      Nfi = Ni( Bases, VecS, ham );
+      file2->saveVector(gname, "wf", VecS);
+      file2->saveVector(gname, "Nup", Nfi.at(0));
+      file2->saveVector(gname, "Ndn", Nfi.at(1));
+      delete file2;
     }
   }
-
-  delete file;
-
 #ifdef MPIPARALLEL
   MPI_Finalize();
 #else

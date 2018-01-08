@@ -119,7 +119,6 @@ target/
 *.app
 
 data
-sync*
 .vscode
 tags
 *.h5

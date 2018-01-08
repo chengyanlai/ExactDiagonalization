@@ -35,6 +35,11 @@ for U, V in UVls:
     Job_Name = TPrefix + UVPrefix.replace("-", "")
     workdir = os.path.join(DATADIR, UVPrefix, TPrefix)
     os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
-    Filename = os.path.join(workdir, 'job.mpi')
-    Executable = [" ".join(["mpirun", "-n", "196", "-ppn", "1", os.path.join(SrcDir, "build", "rixs.mpi"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
-    sg.GenerateScript("SLURM", Filename, Job_Name, Executable, workdir, Nodes=196, NumCore=20, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint', MPI=1, PPN=1)
+    if Cluster == "Kagome":
+      Filename = os.path.join(workdir, 'job')
+      Executable = [" ".join([os.path.join(SrcDir, "build", "rixs"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
+      sg.GenerateScript("PBS", Filename, Job_Name, Executable, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+    elif Cluster == "LANL":
+      Filename = os.path.join(workdir, 'job.mpi')
+      Executable = [" ".join(["mpirun", "-n", "196", "-ppn", "1", os.path.join(SrcDir, "build", "rixs.mpi"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
+      sg.GenerateScript("SLURM", Filename, Job_Name, Executable, workdir, Nodes=196, NumCore=20, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint', MPI=1, PPN=1)
