@@ -13,7 +13,7 @@ if platform.system() == "Linux":
         MaxWallTime = '720:0:0'
         SrcDir = "/home/chengyanlai/GitRepo/ExactDiagonalization"
         ExecDir = "/home/chengyanlai/Data"
-    elif socket.gethostname() == 'merced.cluster':
+    elif socket.gethostname() == 'merced':
         Cluster = "Merced"
         Partition = ""
         Project = ""

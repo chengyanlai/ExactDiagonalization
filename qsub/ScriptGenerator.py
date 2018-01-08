@@ -16,7 +16,7 @@ def GenerateScript(QueueingSystem, Filename, JobName, Executable, FolderName, No
         JobScript.append("#$ -V ")
         JobScript.append("#$ -j y")
         JobScript.append("#$ -S /bin/bash")
-        JobScript.append("".join(["#$ -pe smp", str(NumCore)]))
+        JobScript.append("".join(["#$ -pe smp ", str(NumCore)]))
         JobScript.append("".join(["#$ -l h_rt=", WallTime]))
         JobScript.append("".join(["#$ -N ", JobName]))
         JobScript.append("".join(["#$ -cwd"]))
