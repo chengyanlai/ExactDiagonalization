@@ -38,12 +38,12 @@ for U, V in UVls:
     if Cluster == "Kagome":
       Filename = os.path.join(workdir, 'job')
       Executable = [" ".join([os.path.join(SrcDir, "build", "rixs"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
-      sg.GenerateScript("PBS", Filename, Job_Name, Executable, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+      sg.GenerateScript("PBS", Filename, Job_Name, Executable, workdir, Nodes=1, NumCore=8, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "Merced":
       Filename = os.path.join(workdir, 'job')
       Executable = [" ".join([os.path.join(SrcDir, "build", "rixs"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
       sg.GenerateScript("TORQUE", Filename, Job_Name, Executable, workdir, Nodes=1, NumCore=10, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "LANL":
       Filename = os.path.join(workdir, 'job.mpi')
-      Executable = [" ".join(["mpirun", "-n", "196", "-ppn", "1", os.path.join(SrcDir, "build", "rixs.mpi"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
+      Executable = [" ".join(["mpirun", "-n", str(L), "-ppn", "1", os.path.join(SrcDir, "build", "rixs.mpi"), str(L), str(N1), str(S2), str(Tstep), str(Uinit), str(V), str(U)]),]
       sg.GenerateScript("SLURM", Filename, Job_Name, Executable, workdir, Nodes=196, NumCore=20, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint', MPI=1, PPN=1)

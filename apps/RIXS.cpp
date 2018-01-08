@@ -161,6 +161,17 @@ int main(int argc, char const *argv[]) {
 #ifdef MKL
   mkl_set_num_threads(NumCores);
 #endif
+  INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
+  int L = std::atoi(argv[1]);
+  const int OBC = 0;
+  int N1 = std::atoi(argv[2]);
+  int N2 = N1;
+  int S2 = std::atoi(argv[3]);;
+  int Tsteps = std::atoi(argv[4]);
+  const RealType dt = 0.005;
+  RealType Uinit  = std::atof(argv[5]);
+  RealType Vin = std::atof(argv[6]);
+  RealType Uin = std::atof(argv[7]);
 #ifdef MPIPARALLEL
   // Initialize MPI
   MPI_Init(NULL, NULL);
@@ -173,19 +184,8 @@ int main(int argc, char const *argv[]) {
 #else
   int world_size = 1;
   // int world_rank = 196;
-  for ( size_t world_rank = 0; world_rank < 196; world_rank++ ){
+  for ( size_t world_rank = 0; world_rank < L; world_rank++ ){
 #endif
-  INFO("Eigen3 uses " << Eigen::nbThreads() << " threads.");
-  int L = std::atoi(argv[1]);
-  const int OBC = 0;
-  int N1 = std::atoi(argv[2]);
-  int N2 = N1;
-  int S2 = std::atoi(argv[3]);;
-  int Tsteps = std::atoi(argv[4]);
-  const RealType dt = 0.005;
-  RealType Uinit  = std::atof(argv[5]);
-  RealType Vin = std::atof(argv[6]);
-  RealType Uin = std::atof(argv[7]);
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
   if ( OBC ){
@@ -242,15 +242,12 @@ int main(int argc, char const *argv[]) {
   std::vector< RealVectorType > Nfi = Ni( Bases, Vec, ham );
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
 
-  int CHloc1 = world_rank / L;
-  int CHloc2 = world_rank % L;
-  std::cout << CHloc1 << " " << CHloc2 << std::endl;
+  int CHloc = world_rank % L;
+  std::cout << "Core-hole at " << CHloc << std::endl;
 
   /* Save the initial G.S. wavefunction */
-  std::string filename1 = "WF";
-  filename1.append(std::to_string((unsigned long long)CHloc1));
-  filename1.append("-");
-  filename1.append(std::to_string((unsigned long long)CHloc2));
+  std::string filename1 = "WF-";
+  filename1.append(std::to_string((unsigned long long)CHloc));
   filename1.append(".h5");
   HDF5IO *file = new HDF5IO(filename1);
   file->saveVector("GS", "EVec", Vec);
@@ -270,11 +267,11 @@ int main(int argc, char const *argv[]) {
   /* Update the new Hamiltonian */
   std::cout << "Build core-hole Hamiltonian" << std::endl;
   Hamiltonian<ComplexType> nHam( nBases );
-  Vtmp.at(CHloc1) = Vin;
+  Vtmp.at(CHloc) = Vin;
   Vloc.clear();
   Vloc.push_back(Vtmp);
   Vloc.push_back(Vtmp);
-  Utmp.at(CHloc1) = Uin;
+  Utmp.at(CHloc) = Uin;
   Uloc.clear();
   Uloc.push_back(Utmp);
   Uloc.push_back(Utmp);
@@ -284,7 +281,7 @@ int main(int argc, char const *argv[]) {
 
   /* Apply the operator */
   std::cout << "Create core-hole state" << std::endl;
-  ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc1, 0, ham, nHam);
+  ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc, 0, ham, nHam);
   VecInit.normalize();
   ComplexVectorType VecT = VecInit;
   Nfi = Ni( nBases, VecT, nHam );
@@ -339,15 +336,13 @@ int main(int argc, char const *argv[]) {
   }
 
   std::cout << "Destroy core-hole state" << std::endl;
-  ComplexVectorType VecS = OperateC( nBases, VecT, Bases, CHloc2, S2, nHam, ham);
+  ComplexVectorType VecS = OperateC( nBases, VecT, Bases, CHloc, S2, nHam, ham);
   VecS.normalize();
   Nfi = Ni( Bases, VecS, ham );
   Niall = Nfi.at(0) + Nfi.at(1);
 
   std::string filename2 = "SData-";
-  filename2.append(std::to_string((unsigned long long)CHloc1));
-  filename2.append("-");
-  filename2.append(std::to_string((unsigned long long)CHloc2));
+  filename2.append(std::to_string((unsigned long long)CHloc));
   filename2.append(".h5");
   HDF5IO *file2 = new HDF5IO(filename2);
   gname = "s-0";
