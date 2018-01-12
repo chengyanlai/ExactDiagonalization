@@ -26,13 +26,13 @@
 // #define DTYPE 0//comment out this to use complex
 
 // #ifndef DTYPE
-// #define DT ComplexType
-// #define DTV ComplexVectorType
-// #define DTM ComplexMatrixType
+#define DT ComplexType
+#define DTV ComplexVectorType
+#define DTM ComplexMatrixType
 // #else
-#define DT RealType
-#define DTV RealVectorType
-#define DTM RealMatrixType
+// #define DT RealType
+// #define DTV RealVectorType
+// #define DTM RealMatrixType
 // #endif
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
@@ -51,14 +51,11 @@ void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int 
     dt = file.loadReal("Parameters", "dt");
 }
 
-std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT> &ham );
-DTM NupNdn( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT> &ham );
-DTM NupNup( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT> &ham );
-DTM NdnNdn( const std::vector<Basis> &Bases, const DTV &Vec,
-  Hamiltonian<DT> &ham );
+std::vector< DTV > Current( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham );
+std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham );
+DTM NupNdn( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham );
+DTM NupNup( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham );
+DTM NdnNdn( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham );
 
 int main(int argc, char const *argv[]) {
   Eigen::setNbThreads(NumCores);
@@ -79,12 +76,12 @@ int main(int argc, char const *argv[]) {
     LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
     std::cout << "Parameters for calculation loaded!" << std::endl;
   }catch(H5::FileIException){
-    L = 14;
+    L = 12;
     OBC = 1;
     N1 = 6;
     N2 = 6;
     Jin = std::vector<RealType>(L-1, 1.0);
-    Uin = std::vector<RealType>(L, 9.0);
+    Uin = std::vector<RealType>(L, 0.0);
     Vin = std::vector<RealType>(L, 0.0);
     dynamics = 0;
     Tsteps = 0;
@@ -163,7 +160,7 @@ int main(int argc, char const *argv[]) {
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
   RealVectorType Vals;
-  RealMatrixType Vecs;
+  DTM Vecs;
   ham.eigh(Vals, Vecs, 2);
   INFO("GS energy = " << Vals[0]);
   // file->saveVector("GS", "EVec", Vec);
@@ -227,8 +224,11 @@ int main(int argc, char const *argv[]) {
   return 0;
 }
 
-std::vector< DTV > Ni( const std::vector<Basis> &Bases,
-  const DTV &Vec, Hamiltonian<DT> &ham ){
+std::vector< DTV > Current( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham ){
+
+}
+
+std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &ham ){
   std::vector< DTV > out;
   DTV tmp1 = DTV::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
   DTV tmp2 = DTV::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);

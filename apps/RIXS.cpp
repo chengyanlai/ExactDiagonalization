@@ -299,15 +299,18 @@ int main(int argc, char const *argv[]) {
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     nHam.expH(Prefactor, VecT);
       if ( cntT % 20 == 0 ){
-        HDF5IO file2("XASDYN.h5");
+        std::string filename3 = "XASDYN-";
+        filename3.append( std::to_string((unsigned long long)CHloc) );
+        filename3.append(".h5");
+        HDF5IO file3(filename3);
         std::string gname = "Obs-";
         gname.append(std::to_string((unsigned long long)cntT));
         gname.append("/");
         ComplexType Lecho = VecInit.dot(VecT);
         Nfi = Ni( nBases, VecT, nHam );
-        file2.saveNumber(gname, "Lecho", Lecho);
-        file2.saveVector(gname, "Nup", Nfi.at(0));
-        file2.saveVector(gname, "Ndn", Nfi.at(1));
+        file3.saveNumber(gname, "Lecho", Lecho);
+        file3.saveVector(gname, "Nup", Nfi.at(0));
+        file3.saveVector(gname, "Ndn", Nfi.at(1));
       }
   }
 

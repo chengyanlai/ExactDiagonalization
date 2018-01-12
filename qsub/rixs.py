@@ -12,14 +12,14 @@ from Clusters import *
 import ScriptGenerator as sg
 
 L = 12
-N1 = 4
+N1 = 6
 N2 = N1
 
 Uinit = 0
 # Uinit = 9
 UVls = [(9,-3)]
 
-Tsteps = np.arange(0, 2100, 100, dtype=np.int)
+Tsteps = np.arange(0, 3050, 50, dtype=np.int)
 dt = 0.005
 
 S2 = 0# no flip spin

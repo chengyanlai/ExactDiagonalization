@@ -118,6 +118,27 @@ RealVectorType AdaggerState( const int site, const std::vector<Basis> &bs,
   return psi;
 }
 
+RealVectorType AState( const int site, const std::vector<Basis> &bs,
+  Hamiltonian<double> Ham, const RealVectorType State, const int maxLocalB ){
+  assert( !(bs.at(0).getType()) );
+  RealVectorType psi = RealVectorType::Zero(State.rows());
+  size_t bid1 = 0;
+  for ( std::vector<int> b : bs.at(0).getBStates() ){
+    std::vector<int> nb = b;
+    if( b.at(site) > 0 && maxLocalB ){
+      nb.at(site) -= 1;
+      size_t bid2 = bs.at(0).getIndexFromTag( BosonBasisTag(nb) );
+      for ( size_t j = 0; j < bs.at(1).getHilbertSpace(); j++ ){
+        size_t id1 = Ham.DetermineTotalIndex(vec<size_t>(bid1, j));
+        size_t id2 = Ham.DetermineTotalIndex(vec<size_t>(bid2, j));
+        psi(id2) = State(id1);
+      }
+    }
+    bid1++;
+  }
+  return psi;
+}
+
 void peaks( const double EG, const RealVectorType AS, const RealVectorType &EigVal, const RealMatrixType &EigVec,
   std::vector<double> &PeakLocation, std::vector<double> &PeakWeight, const int MaxNumPeak){
   PeakLocation.clear();

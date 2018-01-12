@@ -9,8 +9,8 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
-BL = 2
-FL = 1
+BL = 1
+FL = 6
 maxLocalB = 1
 if BL == 1:
   Jds = [0.0,]
@@ -21,10 +21,10 @@ if FL == 1:
   Vcs = [0.00]
 else:
   Jcs = [0.0, 0.05, 0.10]
-  Vcs = [0.0,]#-3.0,-4.0, 0.10, 0.50]
-  # Vcs = [-4.1,]
+  # Vcs = [0.0,]#-3.0,-4.0, 0.10, 0.50]
+  Vcs = [-4.1,]
 Eds = [3.50, ]#3.20, 3.80]
-Ecs = [3.40, 3.20, 3.60]
+Ecs = [3.30, ]
 DeltaDCs = [-0.080, ]#-0.020, -0.050, -0.0080]
 CouplingForm = "uniform"# uniform, angle1
 # CouplingForm = "angle1"
