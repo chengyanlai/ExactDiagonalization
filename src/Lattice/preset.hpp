@@ -7,7 +7,7 @@
 template<typename T>
 std::vector< Node<T>* > NN_1D_Chain(const int &L, const std::vector<T> J, const bool OBC = true);
 template<typename T>
-std::vector< Node<T>* > NNN_1D_Chain(const int &L, const std::vector<T> J, const bool OBC = true);
+std::vector< Node<T>* > NNN_1D_Chain(const int &L, const T J1, const T J2, const bool OBC = true);
 
 template<typename T>
 std::vector< Node<T>* > SawTooth(const int &L, const std::vector<T> J1, const std::vector<T> J2, const bool OBC = true);

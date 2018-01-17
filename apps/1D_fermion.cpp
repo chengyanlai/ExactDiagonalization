@@ -36,6 +36,24 @@
 // #endif
 
 void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
+  RealType &J1, RealType &J2, RealType &Phase, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
+  int &dynamics, int &Tsteps, RealType &dt){
+    HDF5IO file(filename);
+    L = file.loadInt("Parameters", "L");
+    OBC = file.loadInt("Parameters", "OBC");
+    N1 = file.loadInt("Parameters", "N1");
+    N2 = file.loadInt("Parameters", "N2");
+    J1 = file.loadReal("Parameters", "J1");
+    J2 = file.loadReal("Parameters", "J2");
+    Phase = file.loadReal("Parameters", "Phase");
+    file.loadStdVector("Parameters", "U", Uls);
+    file.loadStdVector("Parameters", "V", Vls);
+    dynamics = file.loadInt("Parameters", "dynamics");
+    Tsteps = file.loadInt("Parameters", "Tsteps");
+    dt = file.loadReal("Parameters", "dt");
+}
+
+void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
   std::vector<RealType> &Jls, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
   int &dynamics, int &Tsteps, RealType &dt){
     HDF5IO file(filename);
@@ -69,11 +87,13 @@ int main(int argc, char const *argv[]) {
   int dynamics, Tsteps;
   RealType dt;
   std::vector<RealType> Jin, Uin, Vin;
+  RealType J1in, J2in, Phase;// Benzene
   // Load parameters from file
   try{
     H5::Exception::dontPrint();
     H5::H5File::isHdf5("conf.h5");
-    LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
+    // LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
+    LoadParameters( "conf.h5", L, OBC, N1, N2, J1in, J2in, Phase, Uin, Vin, dynamics, Tsteps, dt);// Benzene
     std::cout << "Parameters for calculation loaded!" << std::endl;
   }catch(H5::FileIException){
     L = 6;
@@ -83,6 +103,9 @@ int main(int argc, char const *argv[]) {
     Jin = std::vector<RealType>(L, 1.0);
     Uin = std::vector<RealType>(L, 0.0);
     Vin = std::vector<RealType>(L, 0.0);
+    J1in = 1.00;// Benzene
+    J2in = 0.50;// Benzene
+    Phase = 0.50;// Benzene
     dynamics = 0;
     Tsteps = 0;
     dt = 0.005;
@@ -91,13 +114,17 @@ int main(int argc, char const *argv[]) {
   INFO("Build Lattice - ");
   std::vector<DT> J;
   for ( size_t i = 0; i < Jin.size(); i++ ){
-    J.push_back(DT( Jin.at(i)*exp2l(0.50e0*PI) ));
+    J.push_back(DT( Jin.at(i) ));
   }
   for ( auto &val : J ){
     INFO_NONEWLINE(val << " ");
   }
   INFO("");
-  std::vector< Node<DT>* > lattice = NN_1D_Chain(L, J, OBC);
+  /* Temporory for Benzene */
+  DT J1 = J1in * exp2l(Phase*PI);// Benzene
+  DT J2 = J2in * exp2l(Phase*PI);// Benzene
+  std::vector< Node<DT>* > lattice = NNN_1D_Chain(L, J1, J2, OBC);// Benzene
+  // std::vector< Node<DT>* > lattice = NN_1D_Chain(L, J, OBC);
   file->saveNumber("1DChain", "L", L);
   file->saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
@@ -188,7 +215,9 @@ int main(int argc, char const *argv[]) {
   DTM Ni2 = Nuu.diagonal() + Ndd.diagonal() + 2.0e0 * Nud.diagonal();
   INFO(Ni2);
   ComplexMatrixType CMUp = SingleParticleDensityMatrix( 0, Bases, Vec, ham );
+  INFO(CMUp);
   ComplexMatrixType CMDn = SingleParticleDensityMatrix( 1, Bases, Vec, ham );
+  INFO(CMDn);
   file->saveVector("Obs", "Nup", Nfi.at(0));
   file->saveVector("Obs", "Ndn", Nfi.at(1));
   file->saveMatrix("Obs", "NupNdn", Nud);
@@ -197,35 +226,6 @@ int main(int argc, char const *argv[]) {
   file->saveMatrix("Obs", "CMUp", CMUp);
   file->saveMatrix("Obs", "CMDn", CMDn);
   delete file;
-  // if ( dynamics ){
-  //   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-  //   std::cout << "Begin dynamics......" << std::endl;
-  //   std::cout << "Cut the boundary." << std::endl;
-  //   J.pop_back();
-  //   std::vector< Node<DT>* > lattice2 = NN_1D_Chain(L, J, true);// cut to open
-  //   ham.BuildHoppingHamiltonian(Bases, lattice2);
-  //   INFO(" - Update Hopping Hamiltonian DONE!");
-  //   ham.BuildTotalHamiltonian();
-  //   INFO(" - Update Total Hamiltonian DONE!");
-  //   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-  //     ham.expH(Prefactor, Vec);
-  //     if ( cntT % 2 == 0 ){
-  //       HDF5IO file2("DYN.h5");
-  //       std::string gname = "Obs-";
-  //       gname.append(std::to_string((unsigned long long)cntT));
-  //       gname.append("/");
-  //       Nfi = Ni( Bases, Vec, ham );
-  //       Nud = NupNdn( Bases, Vec, ham );
-  //       Nuu = NupNup( Bases, Vec, ham );
-  //       Ndd = NdnNdn( Bases, Vec, ham );
-  //       file2.saveVector(gname, "Nup", Nfi.at(0));
-  //       file2.saveVector(gname, "Ndn", Nfi.at(1));
-  //       file2.saveMatrix(gname, "NupNdn", Nud);
-  //       file2.saveMatrix(gname, "NupNup", Nuu);
-  //       file2.saveMatrix(gname, "NdnNdn", Ndd);
-  //     }
-  //   }
-  // }
   return 0;
 }
 
