@@ -17,8 +17,9 @@ N2 = N1
 
 J1 = 1.0
 J2 = 0.5
-Phases = np.linspace(-1, 1, 101)
-Uin = 0
+# Phases = np.linspace(-1.5, 1.5, 91)
+Phases = np.linspace(0.5, 1.5, 2001)
+Uin = 1
 
 dynamics = 0
 Tsteps = 0
@@ -27,11 +28,11 @@ dt = 0.005
 if OBC:
   LN1N2 = "-".join(["FO", "".join(["L", str(L)]), str(N1), str(N2)])
 else:
-  LN1N2 = "-".join(["Benzene", "".join(["L", str(L)]), str(N1), str(N2)])
+  LN1N2 = "-".join(["Benzene", "".join(["J1", str(J1)]), "".join(["J2", str(J2)]), ])
 DATADIR = os.path.join(ExecDir, "ED", LN1N2)
 
 for Phase in Phases:
-  JobName =  "".join(["Phi", str(Phase)])
+  JobName =  "".join(["Phi", str(np.round(Phase,4))])
 
   workdir = os.path.join(DATADIR, "".join(["Uin", str(Uin)]), JobName )
 

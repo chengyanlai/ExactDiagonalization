@@ -29,7 +29,7 @@ public:
     return tmp;
   };
   inline void BuildTotalHamiltonian(){H_total = H_hop + H_local + H_hybridization;};
-  // inline void CheckTotalHamiltonian(){H_total.isApprox(H_total)};
+  inline void CheckTotalHamiltonian(){std::cout << H_total.isApprox(H_total) << std::endl;};
   void BuildLocalHamiltonian(
     const std::vector< std::vector<Tnum> > &Vloc,
     const std::vector< std::vector<Tnum> > &Uloc,

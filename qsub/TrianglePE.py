@@ -17,10 +17,10 @@ Vin = 0.0
 
 # remember to set FIXJ to 0 in main program
 cntGStart = 0
-t13List = np.linspace(0.1, 1.9, 19)
+t13List = np.array([0.6, 0.8, 1.0, 1.2, 1.4])
 # Uin = [0.0, 1.0, 0.1, 5.0, 10.0]
-Uin = [0.1, 1.0, 5.0]
-GammaList = np.logspace(0., 1.2, num=20)
+Uin = [0.0, 0.1, 1.0, 5.0]
+GammaList = np.logspace(-1.8, 2.8, num=200)
 TargetJ = 0.0# not used
 
 # t13List = np.linspace(0.9, 1.2, 31)# For searching
@@ -55,7 +55,7 @@ for U in Uin:
     if len(GammaList) == 1:
       DATADIR = os.path.join( EXEC_DIR, "TriPXSearch", "".join(["TriU", str(U), "-t", str(t13)]) )
     else:
-      DATADIR = os.path.join( EXEC_DIR, "TriPX", "".join(["Tri2U", str(U), "-t", str(t13)]) )
+      DATADIR = os.path.join( EXEC_DIR, "TriPX", "".join(["TriU", str(U), "-t", str(t13)]) )
     cntG = cntGStart
     for GammaL in GammaList:
       GammaR = GammaL
@@ -74,9 +74,10 @@ for U in Uin:
           para = f.create_group("Parameters")
           dset = para.create_dataset("t13", data=t13)
           dset = para.create_dataset("t23", data=t23)
-          # Uls = np.ones(3, dtype=np.float64) * U
-          Uls = np.zeros(3, dtype=np.float64)
-          Uls[1] = U
+          Uls = np.ones(3, dtype=np.float64) * U
+          # Disorder U
+          # Uls = np.zeros(3, dtype=np.float64)
+          # Uls[1] = U
           dset = para.create_dataset("U", data=Uls)
           Vls = np.zeros(3, dtype=np.float64)
           dset = para.create_dataset("V", data=Vls)
