@@ -5,7 +5,6 @@ import os
 import numpy as np
 import h5py
 import ScriptGenerator as sg
-from Clusters import *
 
 # Get all platform settings
 from Clusters import *
