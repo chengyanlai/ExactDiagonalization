@@ -26,7 +26,7 @@
 void LoadParameters( const std::string filename, int &L,
   int &OBC, int &N1, int &N2, std::vector<RealType> &Uinit,
   std::vector<RealType> &Uloc, std::vector<RealType> &Vloc,
-  int &CHloc, int &dynamics, int &Tsteps, RealType &RealType){
+  int &CHloc, int &dynamics, int &Tsteps, RealType &dt, std::vector<RealType> &At){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
@@ -38,7 +38,8 @@ void LoadParameters( const std::string filename, int &L,
     file.loadStdVector("Parameters", "V", Vloc);
     dynamics = file.loadInt("Parameters", "dynamics");
     Tsteps = file.loadInt("Parameters", "Tsteps");
-    RealType = file.loadReal("Parameters", "dt");
+    dt = file.loadReal("Parameters", "dt");
+    file.loadStdVector("Parameters", "At", At);
 }
 
 ComplexVectorType OperateCdagger( const std::vector<Basis> OldBases, const ComplexVectorType Vin,
@@ -181,8 +182,8 @@ int main(int argc, char const *argv[]) {
   int N1, N2;
   int dynamics, Tsteps;
   RealType dt;
-  std::vector<RealType> Uinit, Vin, Uin;
-  LoadParameters( "conf.h5", L, OBC, N1, N2, Uinit, Uin, Vin, CHloc, dynamics, Tsteps, dt);
+  std::vector<RealType> Uinit, Vin, Uin, At;
+  LoadParameters( "conf.h5", L, OBC, N1, N2, Uinit, Uin, Vin, CHloc, dynamics, Tsteps, dt, At);
   HDF5IO *file = new HDF5IO("XASEQM.h5");
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
@@ -190,9 +191,6 @@ int main(int argc, char const *argv[]) {
     J = std::vector<ComplexType>(L - 1, 1.0);
   } else{
     J = std::vector<ComplexType>(L, 1.0);
-  }
-  for ( auto &val : J ){
-    INFO_NONEWLINE(val << " ");
   }
   INFO("");
   const std::vector< Node<ComplexType>* > lattice = NN_1D_Chain(L, J, OBC);
@@ -253,8 +251,28 @@ int main(int argc, char const *argv[]) {
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
   file->saveVector("Obs", "Nup", Nfi.at(0));
   file->saveVector("Obs", "Ndn", Nfi.at(1));
-  std::cout << "Build core-hole Basis" << std::endl;
+
+  /* Update Pumping Hamiltonian */
+  size_t Psteps = At.size();
+  std::vector<ComplexType> Jp;
+  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+  std::cout << "Begin pumping......" << std::endl;
+  for (size_t cntP = 1; cntP <= Psteps; cntP++) {
+    if ( OBC ){
+      Jp = std::vector<ComplexType>(L - 1, exp( ));
+    } else{
+      Jp = std::vector<ComplexType>(L, exp( ));
+    }
+  INFO("");
+  const std::vector< Node<ComplexType>* > lattice = NN_1D_Chain(L, J, OBC);
+  for ( auto &lt : lattice ){
+    if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
+  }
+  INFO("DONE!");
+
+
   /* Build New Basis */
+  std::cout << "Build core-hole Basis" << std::endl;
   Basis nF1(L, N1+1, true);
   nF1.Fermion();
   Basis nF2(L, N2, true);
@@ -292,22 +310,20 @@ int main(int argc, char const *argv[]) {
   file->saveVector("Obs", "NewNup", Nfi.at(0));
   file->saveVector("Obs", "NewNdn", Nfi.at(1));
   delete file;
-  if ( dynamics ){
-    ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-    std::cout << "Begin dynamics......" << std::endl;
-    for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-      nHam.expH(Prefactor, VecT);
-      if ( cntT % 2 == 0 ){
-        HDF5IO file2("XASDYN.h5");
-        std::string gname = "Obs-";
-        gname.append(std::to_string((unsigned long long)cntT));
-        gname.append("/");
-        ComplexType Lecho = VecInit.dot(VecT);
-        Nfi = Ni( nBases, VecT, nHam );
-        file2.saveNumber(gname, "Lecho", Lecho);
-        file2.saveVector(gname, "Nup", Nfi.at(0));
-        file2.saveVector(gname, "Ndn", Nfi.at(1));
-      }
+  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+  std::cout << "Begin dynamics......" << std::endl;
+  for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
+    nHam.expH(Prefactor, VecT);
+    if ( cntT % 2 == 0 ){
+      HDF5IO file2("XASDYN.h5");
+      std::string gname = "Obs-";
+      gname.append(std::to_string((unsigned long long)cntT));
+      gname.append("/");
+      ComplexType Lecho = VecInit.dot(VecT);
+      Nfi = Ni( nBases, VecT, nHam );
+      file2.saveNumber(gname, "Lecho", Lecho);
+      file2.saveVector(gname, "Nup", Nfi.at(0));
+      file2.saveVector(gname, "Ndn", Nfi.at(1));
     }
   }
   return 0;

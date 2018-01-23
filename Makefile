@@ -35,8 +35,8 @@ build/apps/%.o: apps/%.cpp
 build/1D.f: build/apps/1D_fermion.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
-# build/xas.f: build/apps/XAS_fermion.o $(OBJ)
-build/xas.f: build/apps/XAS2.o $(OBJ)
+build/xas.f: build/apps/TRXAS.o $(OBJ)
+# build/xas.f: build/apps/XAS2.o $(OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
