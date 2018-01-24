@@ -26,7 +26,7 @@
 void LoadParameters( const std::string filename, int &L,
   int &OBC, int &N1, int &N2, std::vector<RealType> &Uinit,
   std::vector<RealType> &Uloc, std::vector<RealType> &Vloc,
-  int &CHloc, int &dynamics, int &Tsteps, RealType &dt, std::vector<RealType> &At){
+  int &CHloc, int &Tsteps, RealType &dt, std::vector<RealType> &At){
     HDF5IO file(filename);
     L = file.loadInt("Parameters", "L");
     OBC = file.loadInt("Parameters", "OBC");
@@ -36,7 +36,6 @@ void LoadParameters( const std::string filename, int &L,
     file.loadStdVector("Parameters", "Uinit", Uinit);
     file.loadStdVector("Parameters", "U", Uloc);
     file.loadStdVector("Parameters", "V", Vloc);
-    dynamics = file.loadInt("Parameters", "dynamics");
     Tsteps = file.loadInt("Parameters", "Tsteps");
     dt = file.loadReal("Parameters", "dt");
     file.loadStdVector("Parameters", "At", At);
@@ -180,10 +179,10 @@ int main(int argc, char const *argv[]) {
   int L, CHloc;
   int OBC;
   int N1, N2;
-  int dynamics, Tsteps;
+  int Tsteps;
   RealType dt;
   std::vector<RealType> Uinit, Vin, Uin, At;
-  LoadParameters( "conf.h5", L, OBC, N1, N2, Uinit, Uin, Vin, CHloc, dynamics, Tsteps, dt, At);
+  LoadParameters( "conf.h5", L, OBC, N1, N2, Uinit, Uin, Vin, CHloc, Tsteps, dt, At);
   HDF5IO *file = new HDF5IO("XASEQM.h5");
   INFO("Build Lattice - ");
   std::vector<ComplexType> J;
@@ -256,20 +255,30 @@ int main(int argc, char const *argv[]) {
   size_t Psteps = At.size();
   std::vector<ComplexType> Jp;
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+  ComplexVectorType VecP = Vec;
   std::cout << "Begin pumping......" << std::endl;
-  for (size_t cntP = 1; cntP <= Psteps; cntP++) {
+  for (size_t cntP = 0; cntP <= Psteps; cntP++) {
     if ( OBC ){
-      Jp = std::vector<ComplexType>(L - 1, exp( ));
+      Jp = std::vector<ComplexType>(L - 1, exp( ComplexType(0.0, 1.0) * At.at(cntP)) );
     } else{
-      Jp = std::vector<ComplexType>(L, exp( ));
+      Jp = std::vector<ComplexType>(L, exp( ComplexType(0.0, 1.0) * At.at(cntP)) );
     }
-  INFO("");
-  const std::vector< Node<ComplexType>* > lattice = NN_1D_Chain(L, J, OBC);
-  for ( auto &lt : lattice ){
-    if ( !(lt->VerifySite()) ) RUNTIME_ERROR("Wrong lattice setup!");
+    std::vector< Node<ComplexType>* > PLattice = NN_1D_Chain(L, J, OBC);
+    ham.BuildHoppingHamiltonian(Bases, lattice);
+    ham.BuildTotalHamiltonian();
+    ham.expH(Prefactor, VecP);
+    if ( cntT % 10 == 0 ){
+      HDF5IO file2("Pump.h5");
+      std::string gname = "Obs-";
+      gname.append(std::to_string((unsigned long long)cntT));
+      gname.append("/");
+      ComplexType Lecho = Vec.dot(VecP);
+      Nfi = Ni( Bases, VecP, ham );
+      file2.saveNumber(gname, "Lecho", Lecho);
+      file2.saveVector(gname, "Nup", Nfi.at(0));
+      file2.saveVector(gname, "Ndn", Nfi.at(1));
+    }
   }
-  INFO("DONE!");
-
 
   /* Build New Basis */
   std::cout << "Build core-hole Basis" << std::endl;
@@ -302,7 +311,7 @@ int main(int argc, char const *argv[]) {
   nHam.BuildTotalHamiltonian();
   /* Apply the operator */
   std::cout << "Create core-hole state" << std::endl;
-  ComplexVectorType VecInit = OperateCdagger( Bases, Vec, nBases, CHloc, 0, ham, nHam);
+  ComplexVectorType VecInit = OperateCdagger( Bases, VecP, nBases, CHloc, 0, ham, nHam);
   VecInit.normalize();
   ComplexVectorType VecT = VecInit;
   Nfi = Ni( nBases, VecT, nHam );
@@ -310,7 +319,7 @@ int main(int argc, char const *argv[]) {
   file->saveVector("Obs", "NewNup", Nfi.at(0));
   file->saveVector("Obs", "NewNdn", Nfi.at(1));
   delete file;
-  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+
   std::cout << "Begin dynamics......" << std::endl;
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     nHam.expH(Prefactor, VecT);

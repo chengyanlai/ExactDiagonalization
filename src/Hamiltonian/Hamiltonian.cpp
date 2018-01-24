@@ -81,9 +81,7 @@ void Hamiltonian<Tnum>::BuildLocalHamiltonian(const std::vector< std::vector<Tnu
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
-  const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt )
-{
+void Hamiltonian<Tnum>::BuildHoppingHamiltonian( const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt ){
   /* NOTE: This functiuon assume all bases live in the same lattice
   and have the same hopping amplitude. */
   std::vector<Triplet> hhop;
@@ -108,8 +106,7 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BuildHoppingHamiltonian(
-  const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt ){
+void Hamiltonian<Tnum>::BuildHoppingHamiltonian( const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt ){
   /* NOTE: This functiuon assume bases live in its own lattice */
   assert( bs.size() == lt.size() );
   assert( bs.size() == 2);//NOTE: Only support this right now due to FermionIntraHoppingPart.

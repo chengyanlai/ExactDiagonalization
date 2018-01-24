@@ -12,30 +12,43 @@ from Clusters import *
 
 L = 14
 OBC = 1# 1:True
-N1 = 6
+N1 = 7
 N2 = N1
+Uinit = 9
+
+# XAS Parameters
 CHloc = np.int(L / 2)
-
-Uinit = 0
 UVls = [(9., -3.)]
-
-dynamics = 1
 Tsteps = 2000
 dt = 0.005
 
+# For pumping pulse
+A0 = 1# Amplitude
+Tau = 2#
+W0 = 3#
+Td = np.int(Tau * np.rint(np.sqrt(2. * np.log(100 * A0))) )
+tl = np.arange(0, 2*Td, dt)
+def getAt(tlist, td, tau=12, W=3, A0=1):
+  p = []
+  for t in tlist:
+      val = A0 * np.exp( -(t - td) * (t - td) / (2. * tau * tau) ) * np.cos(W * (t - td))
+      p.append(val)
+  return np.array(p)
+At = getAt(tl, td=Td, tau=Tau, W=W0, A0=A0)
+
 APPs = []
-APPs.append(os.path.join(SrcDir, "build", "xas.f"))
+APPs.append(os.path.join(SrcDir, "build", "trxas.f"))
 
 if OBC:
-  LN1N2 = "-".join(["xasO", "".join(["L", str(L)]), str(N1), str(N2)])
+  Prefix = "-".join(["trxasO", "".join(["L", str(L)]), str(N1), str(N2)])
 else:
-  LN1N2 = "-".join(["xasP", "".join(["L", str(L)]), str(N1), str(N2)])
-DATADIR = os.path.join(ExecDir, "ED", LN1N2)
+  Prefix = "-".join(["trxasP", "".join(["L", str(L)]), str(N1), str(N2)])
+DataDir = os.path.join(ExecDir, "ED", Prefix)
 
 for U, V in UVls:
-  JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["U", str(U)]), "".join(["V", str(V)])])
+  JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["U", str(U), "V", str(V)]), "".join(["T",str(Tau), "W", str(W0), "A", str(A0)]) ])
 
-  workdir = os.path.join(DATADIR, JobName)
+  workdir = os.path.join(DataDir, JobName)
 
   os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
 
@@ -53,9 +66,15 @@ for U, V in UVls:
   Vls = np.zeros(L, dtype=np.float64)
   Vls[CHloc] += V
   dset = para.create_dataset("V", data=Vls)
-  dset = para.create_dataset("dynamics", data=dynamics)
+  dset = para.create_dataset("At", data=At)
   dset = para.create_dataset("Tsteps", data=Tsteps)
   dset = para.create_dataset("dt", data=dt)
   f.close()
 
-  sg.GenerateScript("SLURM", os.path.join(workdir, 'job'), JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
+  Filename = os.path.join(workdir, 'job')
+  if Cluster == "Kagome":
+    sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+  elif Cluster == "Merced":
+    sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=20, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+  elif Cluster == "LANL":
+    sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
