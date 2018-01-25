@@ -241,7 +241,7 @@ int main(int argc, char const *argv[]) {
   RealVectorType Vals;
   ComplexMatrixType Vecs;
   ham.eigh(Vals, Vecs);
-  ComplexVectorType Vec = Vecs.col(0);
+  ComplexVectorType Vec = Vecs.row(0);
   INFO("GS energy = " << Vals[0]);
   file->saveVector("GS", "EVec", Vec);
   file->saveVector("GS", "EVal", Vals);
@@ -250,6 +250,7 @@ int main(int argc, char const *argv[]) {
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
   file->saveVector("Obs", "Nup", Nfi.at(0));
   file->saveVector("Obs", "Ndn", Nfi.at(1));
+  delete file;
 
   /* Update Pumping Hamiltonian */
   size_t Psteps = At.size();
@@ -257,11 +258,11 @@ int main(int argc, char const *argv[]) {
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   ComplexVectorType VecP = Vec;
   std::cout << "Begin pumping......" << std::endl;
-  for (size_t cntP = 0; cntP <= Psteps; cntP++) {
+  for (size_t cntP = 1; cntP <= Psteps; cntP++) {
     if ( OBC ){
-      Jp = std::vector<ComplexType>(L - 1, exp( ComplexType(0.0, 1.0) * At.at(cntP)) );
+      Jp = std::vector<ComplexType>(L - 1, exp( ComplexType(0.0, 1.0) * At.at(cntP-1)) );
     } else{
-      Jp = std::vector<ComplexType>(L, exp( ComplexType(0.0, 1.0) * At.at(cntP)) );
+      Jp = std::vector<ComplexType>(L, exp( ComplexType(0.0, 1.0) * At.at(cntP-1)) );
     }
     std::vector< Node<ComplexType>* > PLattice = NN_1D_Chain(L, J, OBC);
     ham.BuildHoppingHamiltonian(Bases, lattice);
@@ -316,11 +317,12 @@ int main(int argc, char const *argv[]) {
   ComplexVectorType VecT = VecInit;
   Nfi = Ni( nBases, VecT, nHam );
   Niall = Nfi.at(0) + Nfi.at(1);
-  file->saveVector("Obs", "NewNup", Nfi.at(0));
-  file->saveVector("Obs", "NewNdn", Nfi.at(1));
+  file = new HDF5IO("XASDYN.h5");
+  file->saveVector("Initial", "Nup", Nfi.at(0));
+  file->saveVector("Initial", "Ndn", Nfi.at(1));
   delete file;
 
-  std::cout << "Begin dynamics......" << std::endl;
+  std::cout << "Begin XAS dynamics......" << std::endl;
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     nHam.expH(Prefactor, VecT);
     if ( cntT % 2 == 0 ){
@@ -335,6 +337,7 @@ int main(int argc, char const *argv[]) {
       file2.saveVector(gname, "Ndn", Nfi.at(1));
     }
   }
+  std::cout << "XAS DONE." << std::endl;
   return 0;
 }
 
