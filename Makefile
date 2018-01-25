@@ -25,7 +25,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/loop.f build/xas.f build/plex build/1D.f build/rixs
+all: checkdirs build/loop.f build/trxas.f build/plex build/1D.f build/rixs
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 

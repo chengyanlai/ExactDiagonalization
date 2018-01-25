@@ -323,8 +323,11 @@ int main(int argc, char const *argv[]) {
   j12.push_back( t12 * (CM0(0,1) + CM1(0,1)) );
   j23.push_back( t23 * (CM0(1,2) + CM1(1,2)) );
   j13.push_back( t13 * (CM0(0,2) + CM1(0,2)) );
-  INFO("Trace = " << TraceRhos(Rhos));
-  for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
+  INFO("Before dynamics, trace = " << TraceRhos(Rhos));
+  bool Converged = false;
+  int cntT = 1;
+  while ( !Converged ){
+  // for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     FRK4( dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Bases, Hams, Rhos);
     if ( cntT % 20 == 0 ){
       /* NOTE: Check trace of Rhos */
@@ -333,6 +336,7 @@ int main(int argc, char const *argv[]) {
       /* NOTE: Expectation values */
       CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
       CM1 = SingleParticleDensityMatrix( 1, Bases, Rhos, Hams);
+      if ( (std::abs(Na.back() - (CM0(0,0) + CM1(0,0))) < 1.0e-8) && (std::abs(Nb.back() - (CM0(1,1) + CM1(1,1))) < 1.0e-8) ) Converged = true;
       Nij0 = NiNj( 0, Bases, Rhos );
       Nij1 = NiNj( 1, Bases, Rhos );
       NaUp.push_back(CM0(0,0));
@@ -347,7 +351,9 @@ int main(int argc, char const *argv[]) {
       j13.push_back( t13 * (CM0(0,2) + CM1(0,2)) );
       tls.push_back(cntT * dt);
     }
+    cntT++;
   }
+  INFO("After dynamics, trace = " << TraceRhos(Rhos));
 #if FIXJ
   CurrentGamma = Gammas.at(0);
   // CurrentJ = j13.at(j13.size()-1).imag();

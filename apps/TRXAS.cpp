@@ -267,10 +267,10 @@ int main(int argc, char const *argv[]) {
     ham.BuildHoppingHamiltonian(Bases, lattice);
     ham.BuildTotalHamiltonian();
     ham.expH(Prefactor, VecP);
-    if ( cntT % 10 == 0 ){
+    if ( cntP % 10 == 0 ){
       HDF5IO file2("Pump.h5");
       std::string gname = "Obs-";
-      gname.append(std::to_string((unsigned long long)cntT));
+      gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
       ComplexType Lecho = Vec.dot(VecP);
       Nfi = Ni( Bases, VecP, ham );

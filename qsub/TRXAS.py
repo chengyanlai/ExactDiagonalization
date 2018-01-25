@@ -14,12 +14,12 @@ L = 14
 OBC = 1# 1:True
 N1 = 7
 N2 = N1
-Uinit = 9
+Uinit = 5
 
 # XAS Parameters
 CHloc = np.int(L / 2)
-UVls = [(9., -3.)]
-Tsteps = 2000
+UVls = [(0., -3.)]
+Tsteps = 4000
 dt = 0.005
 
 # For pumping pulse
