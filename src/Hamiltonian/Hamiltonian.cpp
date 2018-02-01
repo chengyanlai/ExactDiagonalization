@@ -219,7 +219,7 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorT
     Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
   }
   // ComplexVectorType work = Dmat * (KVecs * Vec);
-  Vec = (KVecs.adjoint() * Dmat) * (KVecs * Vec);
+  Vec = (KVecs.transpose() * Dmat) * (KVecs.conjugate() * Vec);
 }
 
 template<>
