@@ -212,16 +212,14 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorT
   RealVectorType KVals = RealVectorType::Zero(Kmax);
   ComplexMatrixType KVecs = ComplexMatrixType::Zero(Kmax, Vec.rows());
   KVecs.row(0) = Vec;
-  std::cout << Vec << std::endl;
-  std::cout << KVecs.data()[0] << " " << KVecs.data()[1] << " " << KVecs.data()[2] << " " << std::endl;
-  std::cin.get();
-  eigh( KVals, KVecs, Kmax, false);
+  eigh( KVals, KVecs, Kmax, false );
+  // ComplexMatrixType Dmat = (Prefactor * KVals).exp().matrix();
   ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kmax, Kmax);
   for (size_t cnt = 0; cnt < Kmax; cnt++) {
     Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
   }
-  ComplexVectorType work = Dmat * (KVecs * Vec);
-  Vec = KVecs.adjoint() * work;
+  // ComplexVectorType work = Dmat * (KVecs * Vec);
+  Vec = (KVecs.adjoint() * Dmat) * (KVecs * Vec);
 }
 
 template<>
