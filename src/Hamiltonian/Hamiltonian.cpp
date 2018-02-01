@@ -1,5 +1,4 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
-#include "src/Lanczos/krylov.hpp"
 #include "src/numeric/lapack.h"
 
 #ifndef DEBUG
@@ -210,26 +209,27 @@ void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Ve
 
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax ){
-  krylov(H_total, Vec, Prefactor, Kmax);
-  // RealVectorType KVals = RealVectorType::Zero(Kmax);
-  // ComplexMatrixType KVecs = ComplexMatrixType::Zero(Kmax, Vec.cols());
-  // KVecs.row(0) = Vec;
-  // eigh( KVals, KVecs, Kmax, false);
+  RealVectorType KVals = RealVectorType::Zero(Kmax);
+  ComplexMatrixType KVecs = ComplexMatrixType::Zero(Kmax, Vec.rows());
+  KVecs.row(0) = Vec;
+  std::cout << Vec << std::endl;
+  std::cout << KVecs.data()[0] << " " << KVecs.data()[1] << " " << KVecs.data()[2] << " " << std::endl;
+  std::cin.get();
+  eigh( KVals, KVecs, Kmax, false);
+  ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kmax, Kmax);
+  for (size_t cnt = 0; cnt < Kmax; cnt++) {
+    Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
+  }
+  ComplexVectorType work = Dmat * (KVecs * Vec);
+  Vec = KVecs.adjoint() * work;
 }
 
 template<>
-RealVectorType Hamiltonian<RealType>::expVals( const RealType Prefactor,
-  const RealVectorType Vec){
+RealVectorType Hamiltonian<RealType>::expVals( const RealType Prefactor, const RealVectorType Vec){
   RealVectorType out = Prefactor * Vec;
   Eigen::ArrayXd work = out.array().exp();
   return work.matrix();
 }
-
-// template<>
-// void Hamiltonian<RealType>::krylovExpansion( const RealVectorType InputVec, RealVectorType &EigVals, RealMatrixType &EigVecs
-//   , const size_t Kmax, const double threshNorm ){
-//   krylov(H_total, InputVec, EigVals, EigVecs, Kmax, threshNorm);
-// }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y
  * @param x the input vector

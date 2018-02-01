@@ -324,7 +324,7 @@ int main(int argc, char const *argv[]) {
 
   std::cout << "Begin XAS dynamics......" << std::endl;
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
-    nHam.expH(Prefactor, VecT);
+    nHam.expH(Prefactor, VecT, 20);
     if ( cntT % 2 == 0 ){
       HDF5IO file2("XASDYN.h5");
       std::string gname = "Obs-";

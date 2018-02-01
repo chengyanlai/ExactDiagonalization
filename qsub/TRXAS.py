@@ -23,18 +23,21 @@ Tsteps = 4000
 dt = 0.005
 
 # For pumping pulse
-A0 = 1# Amplitude
-Tau = 2#
-W0 = 3#
-Td = np.int(Tau * np.rint(np.sqrt(2. * np.log(100 * A0))) )
-tl = np.arange(0, 2*Td, dt)
+A0 = 0#1
+Tau = 0#2
+W0 = 0#3
 def getAt(tlist, td, tau=12, W=3, A0=1):
   p = []
   for t in tlist:
       val = A0 * np.exp( -(t - td) * (t - td) / (2. * tau * tau) ) * np.cos(W * (t - td))
       p.append(val)
   return np.array(p)
-At = getAt(tl, td=Td, tau=Tau, W=W0, A0=A0)
+if A0:
+  Td = np.int(Tau * np.rint(np.sqrt(2. * np.log(100 * A0))) )
+  tl = np.arange(0, 2*Td, dt)
+  At = getAt(tl, td=Td, tau=Tau, W=W0, A0=A0)
+else:
+  At = np.array([])
 
 APPs = []
 APPs.append(os.path.join(SrcDir, "build", "trxas.f"))
@@ -46,7 +49,11 @@ else:
 DataDir = os.path.join(ExecDir, "ED", Prefix)
 
 for U, V in UVls:
-  JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["U", str(U), "V", str(V)]), "".join(["T",str(Tau), "W", str(W0), "A", str(A0)]) ])
+  if A0:
+    Pump = "".join(["T",str(Tau), "W", str(W0), "A", str(A0)])
+  else:
+    Pump = "NP"
+  JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["U", str(U), "V", str(V)]), Pump ])
 
   workdir = os.path.join(DataDir, JobName)
 
