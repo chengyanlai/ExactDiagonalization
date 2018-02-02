@@ -29,8 +29,6 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::BuildLocalHamiltonian(const std::vector< std::vector<Tnum> > &Vloc,const std::vector< std::vector<Tnum> > &Uloc,const std::vector<Basis> &bs ){
-  // std::vector<Triplet> hloc;// Eigen3
-  // hloc.clear();// Eigen3
   ULongMatrixType Locations;
   VectorType Values;
   assert( Vloc.size() == Uloc.size() );
@@ -167,26 +165,13 @@ void Hamiltonian<Tnum>::BuildHoppingHamiltonian( const std::vector<Basis> &bs, c
 template<typename Tnum>
 void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial){
   size_t dim = getTotalHilbertSpace();
-  if ( randomInitial ) Vecs = MatrixType(nev, dim, arma::fill::randu);// Eigen3
+  if ( randomInitial ) Vecs = MatrixType(nev, dim, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
-  // Vals = dMapVector(&Val[0], nev);// Eigen3
-  // Vecs = MapMatrix(input_ptr, nev, dim);// Eigen3
   Vecs = MatrixType(input_ptr, nev, dim);
   Vals = RealVectorType(Val);
 }
-
-// template<>
-// void Hamiltonian<ComplexType>::eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev, const bool randomInitial){
-//   size_t dim = getTotalHilbertSpace();
-//   // if ( randomInitial ) Vecs = MatrixType::Random(nev, dim);// Eigen3
-//   // ComplexType* input_ptr = Vecs.data();// Eigen3
-//   std::vector<RealType> Val;
-//   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
-//   // Vals = dMapVector(&Val[0], nev);// Eigen3
-//   // Vecs = MapMatrix(input_ptr, nev, dim);// Eigen3
-// }
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
@@ -201,34 +186,16 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
   Vals = RealVectorType(Eig, dim);
 }
 
-// template<>
-// void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Vecs){
-//   size_t dim = getTotalHilbertSpace();
-//   // convert H_total to dense matrix
-//   // ComplexMatrixType dMat = MatrixType(H_total);// Eigen3
-//   ComplexMatrixType dMat(H_total);// armadillo
-//   // working space
-//   ComplexType* EigVec = (ComplexType*)malloc( dim * dim * sizeof(ComplexType) );
-//   RealType* Eig = (RealType*)malloc( dim * sizeof(RealType) );
-//   // syDiag(dMat.data(), dim, Eig, EigVec);// Eigen3
-//   // Vecs = MapMatrix(EigVec, dim, dim);// Eigen3
-//   // Vals = dMapVector(Eig, dim);// Eigen3
-// }
-
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax ){
-  // RealVectorType KVals = RealVectorType::Zero(Kmax);// Eigen3
-  // ComplexMatrixType KVecs = ComplexMatrixType::Zero(Vec.rows(), Kmax);// Eigen3 - this need testing!!
   RealVectorType KVals(Kmax);// armadillo
   ComplexMatrixType KVecs(Kmax, Vec.n_rows);// armadillo
   KVecs.row(0) = Vec;
   eigh( KVals, KVecs, Kmax, false );
-  // ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kmax, Kmax);// Eigen3
   ComplexMatrixType Dmat(Kmax, Kmax);// armadillo
   for (size_t cnt = 0; cnt < Kmax; cnt++) {
     Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
   }
-  // Vec = (KVecs.transpose() * Dmat) * (KVecs.conjugate() * Vec);// Eigen3
   ComplexMatrixType KVecsT = KVecs.st();// copy of transpose without conj
   Vec = (KVecsT * Dmat) * (conj(KVecsT) * Vec);// armadillo
 }
@@ -241,23 +208,17 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorT
 template<>
 void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)const {
   size_t dim = getTotalHilbertSpace();
-  // Eigen::Map<RealVectorType> Vin(x, dim);// Eigen3
-  // Eigen::Map<RealVectorType> Vout(y, dim);// Eigen3
   RealVectorType Vin(x, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   RealVectorType Vout(y, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   Vout = H_total * Vin + alpha * Vout;
-  // memcpy(y, Vout.data(), dim * sizeof(RealType) );// Eigen3
   memcpy(y, Vout.memptr(), dim * sizeof(RealType) );// armadillo
 }
 template<>
 void Hamiltonian<ComplexType>::mvprod(ComplexType* x, ComplexType* y, RealType alpha)const {
   size_t dim = getTotalHilbertSpace();
-  // Eigen::Map<ComplexVectorType> Vin(x, dim);// Eigen3
-  // Eigen::Map<ComplexVectorType> Vout(y, dim);// Eigen3
   ComplexVectorType Vin(x, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   ComplexVectorType Vout(y, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   Vout = H_total * Vin + alpha * Vout;
-  // memcpy(y, Vout.data(), dim * sizeof(ComplexType) );// Eigen3
   memcpy(y, Vout.memptr(), dim * sizeof(ComplexType) );// armadillo
 }
 
