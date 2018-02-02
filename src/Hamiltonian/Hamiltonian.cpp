@@ -17,115 +17,55 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
   }
   size_t TotalDim = getTotalHilbertSpace();
   if (DEBUG) std::cout << "Total Hilbert Space = " << TotalDim << std::endl;
-  // H_total.resize(TotalDim, TotalDim);// Eigen3
-  // H_total.reserve(3*TotalDim);
-  // H_local.resize(TotalDim, TotalDim);
-  // H_local.reserve(TotalDim);
-  // H_hop.resize(TotalDim, TotalDim);
-  // H_hop.reserve(2*TotalDim);
-  // H_hybridization.resize(TotalDim,TotalDim);
-  // H_hybridization.reserve(2*TotalDim);
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BuildLocalHamiltonian(const std::vector< std::vector<Tnum> > &Vloc,const std::vector< std::vector<Tnum> > &Uloc,const std::vector<Basis> &bs ){
-  ULongMatrixType Locations;
-  VectorType Values;
+void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lattice, const std::vector< std::vector<Tnum> > &Vloc, const std::vector< std::vector<Tnum> > &Uloc ){
+  // Both species live in the same lattice and the same happing amplitudes
+  assert( bs.size() == 2 );//NOTE: Only support two or one species right now.
+  // ULongMatrixType Locations;
+  // VectorType Values;
   assert( Vloc.size() == Uloc.size() );
   assert( Vloc.size() == bs.size() );
   int cnt = 0;
-  /* For intra-species local terms*/
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
   for ( auto &b : bs ){
+    /* For intra-species local terms: Potential */
     assert( b.getL() == Vloc.at(cnt).size() );
     assert( b.getL() == Uloc.at(cnt).size() );
-    if( !(b.getType()) ){//boson
-      if ( bs.size() == 1 ){
-        // BosonIntraLocalPart( Vloc.at(cnt), Uloc.at(cnt), b, hloc );// Eigen3
-      }else{
-        // BosonIntraLocalPart( cnt, Vloc.at(cnt), Uloc.at(cnt), b, hloc );// Eigen3
-      }
-    }else{//fermion only has potential
-      assert( bs.size() < 3 );//NOTE: Only support this right now.
-      // FermionIntraLocalPart( cnt, Vloc.at(cnt), b, hloc );// Eigen3
-    }
+    LocalPotential( cnt, Vloc.at(cnt), b, MatElemts );
+    /* For intra-species N-N hopping */
+    assert( b.getL() == lt.size() );
+    NNHopping( cnt, lt, b, MatElemts );
     cnt++;
   }
-  /* For inter-species local terms
-     NOTE: Only support two species fermion
-           due to FermionInterLocalPart
-  */
+  /* For inter-species local terms: Hubbard U */
   std::vector<int> sid;
   sid.push_back(0);
   sid.push_back(1);
-  if ( bs.size() == 2 && bs.at(0).getType() && bs.at(1).getType() ){
-    // FermionInterLocalPart(sid, Uloc.at(0), bs, hloc);// Eigen3
-  }else if ( bs.size() == 2 && !(bs.at(0).getType()) && bs.at(1).getType() ){
-    /* NOTE: it is hard coded for only OBC now! */
-    std::vector<std::tuple<int, int, Tnum> > betweenSitesVals;
-    for ( size_t i = 0; i < bs.at(1).getL()-1; i++ ){
-      betweenSitesVals.push_back( std::make_tuple(i, i+1, Uloc.at(1).at(i)) );
-    }
-    // FermionIntraNN(1, betweenSitesVals, bs.at(1), hloc);// Eigen3
-  }else if ( bs.size() == 2 && bs.at(0).getType() && !(bs.at(1).getType()) ){
-    /* NOTE: Same as above, it is hard coded for only OBC now! */
-    std::vector<std::tuple<int, int, Tnum> > betweenSitesVals;
-    for ( size_t i = 0; i < bs.at(1).getL()-1; i++ ){
-      betweenSitesVals.push_back( std::make_tuple(i, i+1, Uloc.at(0).at(i)) );
-    }
-    // FermionIntraNN(0, betweenSitesVals, bs.at(0), hloc);// Eigen3
-  }
-  // H_local.setFromTriplets(hloc.begin(), hloc.end());// Eigen3
-  // if (DEBUG) std::cout << "Non-zero matrix elements = " << hloc.size() << std::endl;// Eigen3
+  HubbardInteraction(sid, Uloc.at(0), bs, MatElemts );
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::BuildHoppingHamiltonian( const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt ){
-  /* NOTE: This functiuon assume all bases live in the same lattice
-  and have the same hopping amplitude. */
-  // std::vector<Triplet> hhop;// Eigen3
-  // hhop.clear();
-  ULongMatrixType Locations;
-  VectorType Values;
-  int cnt = 0;
-  for ( auto &b : bs ){
-    assert( b.getL() == lt.size() );
-    if( !(b.getType()) ){//boson
-      if ( bs.size() == 1){
-        // BosonIntraHoppingPart( lt, b, hhop );// Eigen3
-      }else{
-        // BosonIntraHoppingPart( cnt, lt, b, hhop );// Eigen3
-      }
-    }else{//fermion
-      assert( bs.size() == 2);//NOTE: Only support this right now.
-      // FermionIntraHoppingPart( cnt, lt, b, hhop );// Eigen3
-    }
+void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
+  ULongMatrixType Locations(2, MatElemts.size());
+  VectorType Values( MatElemts.size() );
+  std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
+  size_t cnt = 0;
+  for (; it != MatElemts.end(); ++it ){
+    int row, col;
+    Tnum val;
+    std::tie(row, col, val) = *it;
+    // armadillo
+    Locations(0,cnt) = row;
+    Locations(1,cnt) = col;
+    Values(cnt) = val;
+    // Eigen3
     cnt++;
   }
-  // H_hop.setFromTriplets(hhop.begin(), hhop.end());// Eigen3
-  // if (DEBUG) std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;// Eigen3
-}
-
-template<typename Tnum>
-void Hamiltonian<Tnum>::BuildHoppingHamiltonian( const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt ){
-  /* NOTE: This functiuon assume bases live in its own lattice */
-  assert( bs.size() == lt.size() );
-  assert( bs.size() == 2);//NOTE: Only support this right now due to FermionIntraHoppingPart.
-  // std::vector<Triplet> hhop;// Eigen3
-  // hhop.clear();
-  ULongMatrixType Locations;
-  VectorType Values;
-  int cnt = 0;
-  for ( size_t i = 0; i < bs.size(); i++ ){
-    assert( bs.at(i).getL() == lt.at(i).size() );
-    if( bs.at(i).getType() ){//fermion
-      // FermionIntraHoppingPart( i, lt.at(i), bs.at(i), hhop );// Eigen3
-    }else{//boson
-      // BosonIntraHoppingPart( i, lt.at(i), bs.at(i), hhop );// Eigen3
-    }
-    cnt++;
-  }
-  // H_hop.setFromTriplets(hhop.begin(), hhop.end());// Eigen3
-  // if (DEBUG) std::cout << "Non-zero matrix elements = " << hhop.size() << std::endl;// Eigen3
+  // First true allows repeated matrix elements
+  H_total = SparseMatrixType(true, Locations, Values, getTotalHilbertSpace(), getTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
 }
 
 // template<typename Tnum>
@@ -188,16 +128,16 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
 
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax ){
-  RealVectorType KVals(Kmax);// armadillo
-  ComplexMatrixType KVecs(Kmax, Vec.n_rows);// armadillo
-  KVecs.row(0) = Vec;
-  eigh( KVals, KVecs, Kmax, false );
-  ComplexMatrixType Dmat(Kmax, Kmax);// armadillo
-  for (size_t cnt = 0; cnt < Kmax; cnt++) {
-    Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
-  }
-  ComplexMatrixType KVecsT = KVecs.st();// copy of transpose without conj
-  Vec = (KVecsT * Dmat) * (conj(KVecsT) * Vec);// armadillo
+  // RealVectorType KVals(Kmax);// armadillo
+  // ComplexMatrixType KVecs(Kmax, Vec.n_rows);// armadillo
+  // KVecs.row(0) = Vec;
+  // eigh( KVals, KVecs, Kmax, false );
+  // ComplexMatrixType Dmat(Kmax, Kmax);// armadillo
+  // for (size_t cnt = 0; cnt < Kmax; cnt++) {
+  //   Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
+  // }
+  // ComplexMatrixType KVecsT = KVecs.st();// copy of transpose without conj
+  // Vec = (KVecsT * Dmat) * (conj(KVecsT) * Vec);// armadillo
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y

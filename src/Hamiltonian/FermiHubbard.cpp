@@ -1,12 +1,12 @@
 #include <cassert>
 #include <cmath>//sqrt
 #include <map>
+#include <tuple>
 #include "src/bitwise.h"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermionIntraLocalPart( const size_t species_id,
-  const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc ){
+void Hamiltonian<Tnum>::LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<sts::tuple<int, int, Tnum> > &MatElemts ){
   int state_id = 0;
   for ( int b : bs.FStates ){
     Tnum val = (Tnum)0.0;
@@ -21,13 +21,13 @@ void Hamiltonian<Tnum>::FermionIntraLocalPart( const size_t species_id,
         for (size_t id2 = 0; id2 < HilbertSpaces.at(1); id2++) {
           ids.at(1) = id2;
           size_t idx = DetermineTotalIndex( ids );
-          hloc.push_back(Triplet(idx, idx, val));
+          MatElemts.push_back(std::make_tuple(idx, idx, val));
         }
       } else if (species_id == 1){
         for (size_t id2 = 0; id2 < HilbertSpaces.at(0); id2++) {
           ids.at(0) = id2;
           size_t idx = DetermineTotalIndex( ids );
-          hloc.push_back(Triplet(idx, idx, val));
+          MatElemts.push_back(std::make_tuple(idx, idx, val));
         }
       } else{
         RUNTIME_ERROR("Not support more than 2 species fermion yet!");
@@ -38,117 +38,7 @@ void Hamiltonian<Tnum>::FermionIntraLocalPart( const size_t species_id,
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermionInterLocalPart(
-  const std::vector<int> species_id, const Tnum &Uloc,
-  const std::vector<Basis> &bs, std::vector<Triplet> &hloc ){
-  /*NOTE: Calculate interaction between any two input bases.
-  Assume two input bases has the same L.
-  Assume the interaction is uniform in space.*/
-  assert( bs.size() == 2 );
-  assert( bs.at(0).getL() == bs.at(1).getL() );
-  std::vector< std::vector<size_t> > IndexU1;
-  std::vector< std::vector<size_t> > IndexU2;
-  size_t point1, point2;
-  int TotalN = bs.at(0).getN() + bs.at(1).getN();
-  /*NOTE: Build the IndexU1 and IndexU2.
-          IndexU has all index of species-1 which has occupied particle at site-i (if filling is less than half)
-  */
-  for (size_t i = 0; i < bs.at(0).getL(); i++) {
-    std::vector<size_t> work;
-    point1 = 0;// point1 will be the same for all i
-    for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(species_id.at(0)); cnt_up++) {
-      if ( TotalN <= bs.at(0).getL() ) {
-        if ( btest(bs.at(0).FStates.at(cnt_up), i) ) {
-          point1++;
-          work.push_back(cnt_up);
-        }
-      }
-      else{
-        if ( !(btest(bs.at(0).FStates.at(cnt_up), i)) ) {
-          point1++;
-          work.push_back(cnt_up);
-        }
-      }
-    }
-    IndexU1.push_back(work);
-    work.clear();
-  }
-  if ( bs.at(0).getN() == bs.at(1).getN() ) {
-    point2 = point1;
-    IndexU2 = IndexU1;
-  }
-  else{
-    for (size_t i = 0; i < bs.at(1).getL(); i++) {
-      std::vector<size_t> work;
-      point2 = 0;// point2 will be the same for all i
-      for (size_t cnt_dn = 0; cnt_dn < HilbertSpaces.at(species_id.at(1)); cnt_dn++) {
-        if ( TotalN <= bs.at(1).getL() ) {
-          if ( btest(bs.at(1).FStates.at(cnt_dn), i) ) {
-            point2++;
-            work.push_back(cnt_dn);
-          }
-        }
-        else{
-          if ( !(btest(bs.at(1).FStates.at(cnt_dn), i)) ) {
-            point2++;
-            work.push_back(cnt_dn);
-          }
-        }
-      }
-      IndexU2.push_back(work);
-      work.clear();
-    }
-  }
-  /*NOTE: Add the overall interaction. */
-  Tnum g = (Tnum)0.0e0;
-  if ( TotalN > bs.at(1).getL() ) {
-    g = Uloc * (Tnum)( TotalN - bs.at(0).getL() );
-    for (size_t cnt = 0; cnt < getTotalHilbertSpace(); cnt++) {
-      hloc.push_back(Triplet(cnt, cnt, g));
-      // std::cout << "1 " << cnt << " " << cnt << " " << g << std::endl;
-    }
-  }
-  if ( bs.at(0).getN() == bs.at(1).getN() ) {
-    if ( TotalN <= bs.at(0).getL() ) {
-      g = Uloc * (Tnum)(bs.at(0).getN());
-    }
-    else{
-      g = Uloc * (Tnum)( bs.at(0).getL() - bs.at(0).getN() );
-    }
-    for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(species_id.at(1)); cnt_up++) {
-      size_t id = DetermineTotalIndex( std::vector<size_t>(2, cnt_up) );
-      hloc.push_back(Triplet(id, id, g));
-    }
-  }
-  /*NOTE: for detatil difference*/
-  for (size_t i = 0; i < bs.at(0).getL(); i++) {
-    for (size_t up = 0; up < point1; up++) {
-      for (size_t dn = 0; dn < point2; dn++) {
-        if ( bs.at(0).getN() == bs.at(1).getN() ) {
-          if ( up != dn ) {
-            std::vector<size_t> ids(2,0);
-            ids.at(0) = IndexU1.at(i).at(up);
-            ids.at(1) = IndexU2.at(i).at(dn);
-            size_t id = DetermineTotalIndex( ids );
-            hloc.push_back(Triplet(id, id, Uloc));
-            // std::cout << "2 " << id << " " << id << " " << Uloc << std::endl;
-          }
-        }else {
-          std::vector<size_t> ids(2,0);
-          ids.at(0) = IndexU1.at(i).at(up);
-          ids.at(1) = IndexU2.at(i).at(dn);
-          size_t id = DetermineTotalIndex( ids );
-          hloc.push_back(Triplet(id, id, Uloc));
-        }
-      }
-    }
-  }
-}
-
-template<typename Tnum>
-void Hamiltonian<Tnum>::FermionInterLocalPart(
-  const std::vector<int> species_id, const std::vector<Tnum> &Uloc,
-  const std::vector<Basis> &bs, std::vector<Triplet> &hloc ){
+void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
   /*NOTE: Calculate interaction between any two input bases.
           Assume two input bases has the same L. */
   assert( bs.size() == 2 );
@@ -197,7 +87,7 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
         ids.at(0) = IndexU1.at(i).at(up);
         ids.at(1) = IndexU2.at(i).at(dn);
         size_t id = DetermineTotalIndex( ids );
-        hloc.push_back(Triplet(id, id, Uloc.at(i)));
+        MatElemts.push_back( std::make_tuple(id, id, Uloc.at(i)) );
         // std::cout << "2 " << id << " " << id << " " << Uloc << std::endl;
       }
     }
@@ -205,9 +95,7 @@ void Hamiltonian<Tnum>::FermionInterLocalPart(
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
-  const std::vector< Node<Tnum>* > &lt,
-  const Basis &bs, std::vector<Triplet> &hhop ){
+void Hamiltonian<Tnum>::NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
   size_t bid = 0, pid = 0;//l and p's index
   for ( int b : bs.FStates ){
     for ( Node<Tnum>* l : lt ) {
@@ -266,7 +154,7 @@ void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
             size_t rid = DetermineTotalIndex( rids );
             size_t cid = DetermineTotalIndex( cids );
             Tnum value = (Tnum)(-1.0e0) * tsign * nnJ.at(cnt);
-            hhop.push_back(Triplet(rid, cid, value));
+            MatElemts.push_back( std::make_tuple(rid, cid, value) );
           }
         }
       }
@@ -274,106 +162,40 @@ void Hamiltonian<Tnum>::FermionIntraHoppingPart( const size_t species_id,
   }
 }
 
-template<typename Tnum>
-void Hamiltonian<Tnum>::FermionIntraNN( const int speciesId,
-  const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
-  const Basis &bs, std::vector<Triplet> &hloc ){
-  size_t count;
-  if ( speciesId == 0 ) {
-    count = HilbertSpaces.at(1);
-  } else {
-    count = HilbertSpaces.at(0);
-  }
-  int stateId = 0;
-  for ( int b : bs.FStates ){
-    Tnum FinalVal = (Tnum)(0.0e0);
-    // for ( auto obj : betweenSitesVals){
-    for ( typename std::vector<std::tuple<int, int, Tnum> >::const_iterator obj=betweenSitesVals.begin(); obj != betweenSitesVals.end(); ++obj ){
-      int site1, site2;
-      Tnum val;
-      // std::tie(site1, site2, val) = obj;
-      std::tie(site1, site2, val) = *obj;
-      if ( btest(b, site1) && btest(b, site2) ){
-        FinalVal += val;
-      }
-    }
-    if ( std::abs(FinalVal) > 1.0e-12 ){
-      std::vector<size_t> ids(2,stateId);
-      for ( size_t p=0; p < count; p++){
-        if ( speciesId == 0 ) {
-          ids.at(1) = p;
-        } else {
-          ids.at(0) = p;
-        }
-        size_t id = DetermineTotalIndex( ids );
-        hloc.push_back(Triplet(id, id, FinalVal));
-      }
-    }
-    stateId++;
-  }
-}
-
-// template<typename Tnum>
-// void Hamiltonian<Tnum>::FermionDensityDensity(
-//   const std::vector<std::pair<int,int> > betweenSpecies, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
-//   const std::vector<Basis> &bs, std::vector<Triplet> &hloc ){
-//   /*NOTE: Calculate interaction between any two input bases.
-//           Assume two input bases has the same L. */
-//   assert( bs.size() < 3 );
-//   for ( std::vector<std::pair<int,int> >::const_iterator species = betweenSpecies.begin(); species != betweenSpecies.end(); ++species ){
-//     int s1 = species->first;
-//     int s2 = species->second;
-//     assert( bs.at(s1).getL() == bs.at(s2).getL() );
-//     std::vector< std::vector<size_t> > IndexU1;
-//     std::vector< std::vector<size_t> > IndexU2;
-//     size_t point1, point2;
-//     /*NOTE: Build the IndexU1 and IndexU2.
-//             IndexU has all index of species-1 which has occupied particle at site-i
-//     */
-//     for (size_t i = 0; i < bs.at(s1).getL(); i++) {
-//       std::vector<size_t> work;
-//       point1 = 0;// point1 will be the same for all i
-//       for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(s1); cnt_up++) {
-//         if ( btest(bs.at(s1).FStates.at(cnt_up), i) ) {
-//           point1++;
-//           work.push_back(cnt_up);
-//         }
-//       }
-//       IndexU1.push_back(work);
-//       work.clear();
-//     }
-//     if ( s1 == s2 ){
-//       point2 = point2;
-//       IndexU2 = IndexU1;
-//     }else{
-//       for (size_t i = 0; i < bs.at(s2).getL(); i++) {
-//         std::vector<size_t> work;
-//         point2 = 0;// point2 will be the same for all i
-//         for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(s2); cnt_up++) {
-//           if ( btest(bs.at(s2).FStates.at(cnt_up), i) ) {
-//             point1++;
-//             work.push_back(cnt_up);
-//           }
-//         }
-//         IndexU2.push_back(work);
-//         work.clear();
-//       }
-//     }
-//     for ( std::vector<std::tuple<int,int,Tnum> >::const_iterator obj = betweenSpecies.begin(); obj != betweenSpecies.end(); ++obj ){
+// template<typename Tnum>// Extended Hubbard
+// void Hamiltonian<Tnum>::FermionIntraNN( const int speciesId, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+//   size_t count;
+//   if ( speciesId == 0 ) {
+//     count = HilbertSpaces.at(1);
+//   } else {
+//     count = HilbertSpaces.at(0);
+//   }
+//   int stateId = 0;
+//   for ( int b : bs.FStates ){
+//     Tnum FinalVal = (Tnum)(0.0e0);
+//     // for ( auto obj : betweenSitesVals){
+//     for ( typename std::vector<std::tuple<int, int, Tnum> >::const_iterator obj=betweenSitesVals.begin(); obj != betweenSitesVals.end(); ++obj ){
 //       int site1, site2;
 //       Tnum val;
-//       std::tie(site1, site2, val) = obj;
-//       for (size_t up = 0; up < point1; up++) {
-//         for (size_t dn = 0; dn < point2; dn++) {
-//           std::vector<size_t> ids(2,0);
-//           ids.at(0) = IndexU1.at(i).at(up);
-//           ids.at(1) = IndexU2.at(i).at(dn);
-//           size_t id = DetermineTotalIndex( ids );
-//           hloc.push_back(Triplet(id, id, Uloc.at(i)));
-//           // std::cout << "2 " << id << " " << id << " " << Uloc << std::endl;
-//         }
+//       // std::tie(site1, site2, val) = obj;
+//       std::tie(site1, site2, val) = *obj;
+//       if ( btest(b, site1) && btest(b, site2) ){
+//         FinalVal += val;
 //       }
 //     }
+//     if ( std::abs(FinalVal) > 1.0e-12 ){
+//       std::vector<size_t> ids(2,stateId);
+//       for ( size_t p=0; p < count; p++){
+//         if ( speciesId == 0 ) {
+//           ids.at(1) = p;
+//         } else {
+//           ids.at(0) = p;
+//         }
+//         size_t id = DetermineTotalIndex( ids );
+//         MatElemts.push_back( std::make_tuple(id, id, FinalVal) );
+//       }
+//     }
+//     stateId++;
 //   }
 // }
 
