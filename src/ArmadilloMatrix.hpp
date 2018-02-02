@@ -7,9 +7,9 @@
 /** Dense complex matrix. */
 typedef arma::Mat<ComplexType> ComplexMatrixType;
 /** Dense real matrix. */
-typedef arma::Matrix<RealType> RealMatrixType;
+typedef arma::Mat<RealType> RealMatrixType;
 /** Dense unsigned long matrix. */
-typedef arma::Matrix<unsigned long> ULongMatrixType;
+typedef arma::Mat<unsigned long> ULongMatrixType;
 
 /** Dense complex vector. */
 typedef arma::Col<ComplexType> ComplexVectorType;

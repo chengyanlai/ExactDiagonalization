@@ -11,6 +11,7 @@
 template<typename Tnum = RealType>
 class Hamiltonian{
 public:
+  typedef arma::Col<Tnum> VectorType;
   typedef arma::Mat<Tnum> MatrixType;
   typedef arma::SpaMat<Tnum> SparseMatrixType;
   Hamiltonian(){};
