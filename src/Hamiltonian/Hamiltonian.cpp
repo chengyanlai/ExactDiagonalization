@@ -17,19 +17,19 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
   }
   size_t TotalDim = getTotalHilbertSpace();
   if (DEBUG) std::cout << "Total Hilbert Space = " << TotalDim << std::endl;
-  H_total.resize(TotalDim, TotalDim);
-  H_total.reserve(3*TotalDim);
-  H_local.resize(TotalDim, TotalDim);
-  H_local.reserve(TotalDim);
-  H_hop.resize(TotalDim, TotalDim);
-  H_hop.reserve(2*TotalDim);
-  H_hybridization.resize(TotalDim,TotalDim);
-  H_hybridization.reserve(2*TotalDim);
+  // H_total.resize(TotalDim, TotalDim);// Eigen3
+  // H_total.reserve(3*TotalDim);
+  // H_local.resize(TotalDim, TotalDim);
+  // H_local.reserve(TotalDim);
+  // H_hop.resize(TotalDim, TotalDim);
+  // H_hop.reserve(2*TotalDim);
+  // H_hybridization.resize(TotalDim,TotalDim);
+  // H_hybridization.reserve(2*TotalDim);
 }
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::BuildLocalHamiltonian(const std::vector< std::vector<Tnum> > &Vloc,const std::vector< std::vector<Tnum> > &Uloc,const std::vector<Basis> &bs ){
-  std::vector<Triplet> hloc;
+  // std::vector<Triplet> hloc;// Eigen3
   hloc.clear();
   assert( Vloc.size() == Uloc.size() );
   assert( Vloc.size() == bs.size() );
