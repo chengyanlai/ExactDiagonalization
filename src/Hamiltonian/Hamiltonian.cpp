@@ -1,4 +1,5 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Lanczos/krylov.hpp"
 #include "src/numeric/lapack.h"
 
 #ifndef DEBUG
@@ -209,17 +210,7 @@ void Hamiltonian<ComplexType>::diag( RealVectorType &Vals, ComplexMatrixType &Ve
 
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax ){
-  RealVectorType KVals = RealVectorType::Zero(Kmax);
-  ComplexMatrixType KVecs = ComplexMatrixType::Zero(Kmax, Vec.rows());
-  KVecs.row(0) = Vec;
-  eigh( KVals, KVecs, Kmax, false );
-  // ComplexMatrixType Dmat = (Prefactor * KVals).exp().matrix();
-  ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kmax, Kmax);
-  for (size_t cnt = 0; cnt < Kmax; cnt++) {
-    Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
-  }
-  // ComplexVectorType work = Dmat * (KVecs * Vec);
-  Vec = (KVecs.transpose() * Dmat) * (KVecs.conjugate() * Vec);
+  krylov(H_total, Vec, Prefactor, Kmax);
 }
 
 template<>
