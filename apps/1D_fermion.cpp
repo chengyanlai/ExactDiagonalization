@@ -97,32 +97,29 @@ int main(int argc, char const *argv[]) {
     std::cout << "Parameters for calculation loaded!" << std::endl;
   }catch(H5::FileIException){
     L = 6;
-    OBC = 0;
+    OBC = 1;
     N1 = 3;
     N2 = 3;
-    Jin = std::vector<RealType>(L, 1.0);
+    Jin = std::vector<RealType>(L-1, 1.0);
     Uin = std::vector<RealType>(L, 1.0);
     Vin = std::vector<RealType>(L, 0.0);
-    J1in = 1.00;// Benzene
-    J2in = 0.50;// Benzene
-    Phase = 5.0 / 6.0 - 0.035;// Benzene
+    // J1in = 1.00;// Benzene
+    // J2in = 0.50;// Benzene
+    // Phase = 5.0 / 6.0 - 0.035;// Benzene
     dynamics = 0;
     Tsteps = 0;
     dt = 0.005;
   }
   HDF5IO *file = new HDF5IO("FData.h5");
   INFO("Build Lattice - ");
-  std::vector<DT> J;
-  for ( size_t i = 0; i < Jin.size(); i++ ){
-    J.push_back(DT( Jin.at(i) * exp(ComplexType(0.0, Phase)*PI) ));
-  }
+  std::vector<DT> J( Jin.begin(), Jin.end() );
   INFO("");
   /* Temporory for Benzene */
-  DT J1 = J1in * exp(ComplexType(0.0, Phase)*PI);// Benzene
-  DT J2 = J2in * exp(ComplexType(0.0, Phase)*PI);// Benzene
+  // DT J1 = J1in * exp(ComplexType(0.0, Phase)*PI);// Benzene
+  // DT J2 = J2in * exp(ComplexType(0.0, Phase)*PI);// Benzene
   // DT J2 = J2in;// Benzene
-  std::vector< Node<DT>* > lattice = NNN_1D_Chain(L, J1, J2, OBC);// Benzene
-  // std::vector< Node<DT>* > lattice = NN_1D_Chain(L, J, OBC);
+  // std::vector< Node<DT>* > lattice = NNN_1D_Chain(L, J1, J2, OBC);// Benzene
+  std::vector< Node<DT>* > lattice = NN_1D_Chain(L, J, OBC);
   file->saveNumber("1DChain", "L", L);
   file->saveStdVector("1DChain", "J", J);
   for ( auto &lt : lattice ){
