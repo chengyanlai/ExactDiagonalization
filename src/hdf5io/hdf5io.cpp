@@ -180,23 +180,61 @@ void HDF5IO::LoadRawBuffer(const std::string& GroupName, const std::string& SetN
    | Load/Save armadillo matrix/vector |
    +-----------------------------------+ */
 template<typename T>
-void HDF5IO::SaveVector(const std::string& GroupName, const arma::Col<T> Vec){
-  // Create Group
-  H5::Group FG = GetGroup( GroupName );
-  SaveNumber(GroupName, "col", Vec.n_cols);
-  SaveRawBuffer(GroupName, "Elem", Vec.n_cols, Vec.memptr());
+void HDF5IO::SaveVector(const std::string& GroupName, const std::string& SetName, const arma::Col<T> Vec){
+  std::string gname = GroupName;
+  H5::Group FG1 = GetGroup( GroupName );
+  gname.append("/");
+  gname.append(SetName);
+  H5::Group FG2 = GetGroup( gname );
+  int cols = Vec.n_cols;
+  SaveNumber(gname, "col", cols);
+  SaveRawBuffer(gname, "Elem", cols, Vec.memptr());
 }
-template void HDF5IO::SaveVector(const std::string& GroupName, const arma::Col<double> Vec);
-template void HDF5IO::SaveVector(const std::string& GroupName, const arma::Col<std::complex<double> > Vec);
+template void HDF5IO::SaveVector(const std::string& GroupName, const std::string& SetName, const arma::Col<double> Vec);
+template void HDF5IO::SaveVector(const std::string& GroupName, const std::string& SetName, const arma::Col<std::complex<double> > Vec);
 
 template<typename T>
-void HDF5IO::LoadVector(const std::string& GroupName, arma::Col<T>& Vec){
+void HDF5IO::LoadVector(const std::string& GroupName, const std::string& SetName, arma::Col<T>& Vec){
   std::string gname = GroupName;
+  gname.append("/");
+  gname.append(SetName);
   T* Elem;
   size_t ElemNum;
   LoadNumber(gname, "col", ElemNum);
   LoadRawBuffer(gname, "Elem", ElemNum, Elem);
   Vec = arma::Col<T>(Elem, ElemNum);//, copy_aux_mem = true, strict = false);
 }
-template void HDF5IO::LoadVector(const std::string& GroupName, arma::Col<double>& Ten);
-template void HDF5IO::LoadVector(const std::string& GroupName, arma::Col<std::complex<double> >& Ten);
+template void HDF5IO::LoadVector(const std::string& GroupName, const std::string& SetName, arma::Col<double>& Ten);
+template void HDF5IO::LoadVector(const std::string& GroupName, const std::string& SetName, arma::Col<std::complex<double> >& Ten);
+
+template<typename T>
+void HDF5IO::SaveMatrix(const std::string& GroupName, const std::string& SetName, const arma::Mat<T> Mat){
+  std::string gname = GroupName;
+  H5::Group FG1 = GetGroup( GroupName );
+  gname.append("/");
+  gname.append(SetName);
+  H5::Group FG2 = GetGroup( gname );
+  int rows = Mat.n_rows;
+  SaveNumber(gname, "row", rows);
+  int cols = Mat.n_cols;
+  SaveNumber(gname, "col", cols);
+  SaveRawBuffer(gname, "Elem", Mat.n_rows*Mat.n_cols, Mat.memptr());
+}
+template void HDF5IO::SaveMatrix(const std::string& GroupName, const std::string& SetName, const arma::Mat<double> Mat);
+template void HDF5IO::SaveMatrix(const std::string& GroupName, const std::string& SetName, const arma::Mat<std::complex<double> > Mat);
+
+template<typename T>
+void HDF5IO::LoadMatrix(const std::string& GroupName, const std::string& SetName, arma::Mat<T>& Mat){
+  std::string gname = GroupName;
+  gname.append("/");
+  gname.append(SetName);
+  T* Elem;
+  size_t rows, cols;
+  LoadNumber(gname, "col", cols);
+  LoadNumber(gname, "row", rows);
+  size_t NumElem = rows * cols;
+  LoadRawBuffer(gname, "Elem", NumElem, Elem);
+  Mat = arma::Mat<T>(Elem, rows, cols);//, copy_aux_mem = true, strict = false);
+}
+template void HDF5IO::LoadMatrix(const std::string& GroupName, const std::string& SetName, arma::Mat<double>& Mat);
+template void HDF5IO::LoadMatrix(const std::string& GroupName, const std::string& SetName, arma::Mat<std::complex<double> >& Mat);

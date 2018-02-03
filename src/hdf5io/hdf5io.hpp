@@ -67,13 +67,13 @@ class HDF5IO: public H5::H5File {
       };
 
     template<typename T>
-      void SaveVector(const std::string& GroupName, const arma::Col<T> Ten);
+      void SaveVector(const std::string& GroupName, const std::string& SetName, const arma::Col<T> Vec);
     template<typename T>
-      void LoadVector(const std::string& GroupName, arma::Col<T>& Ten);
+      void LoadVector(const std::string& GroupName, const std::string& SetName, arma::Col<T>& Vec);
     template<typename T>
-      void SaveMatrix(const std::string& GroupName, const arma::Mat<T> Ten);
+      void SaveMatrix(const std::string& GroupName, const std::string& SetName, const arma::Mat<T> Mat);
     template<typename T>
-      void LoadMaxtrix(const std::string& GroupName, arma::Mat<T>& Ten);
+      void LoadMatrix(const std::string& GroupName, const std::string& SetName, arma::Mat<T>& Mat);
 };
 
 #endif  /* end of include guard: __HDF5IO_HPP__ */

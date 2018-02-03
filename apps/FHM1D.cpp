@@ -318,10 +318,8 @@ void Equilibrium(const std::string prefix){
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;
   DTV Vec(Vecs.col(0));
-  // std::cout << Vec.n_rows << " " << Vec.n_cols << std::endl;
-  // Vec = Vecs.row(0);
-  // file->saveVector("GS", "EVec", Vec);
-  // file->saveVector("GS", "EVal", Vals);
+  file->SaveVector("GS", "EVec", Vec);
+  file->SaveVector("GS", "EVal", Vals);
   // std::vector< DTV > Nfi = Ni( Bases, Vec, Ham0 );
   // INFO(" Up Spin - ");
   // INFO(Nfi.at(0));
