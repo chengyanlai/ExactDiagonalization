@@ -25,19 +25,18 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/loop.f build/trxas.f build/plex build/1D.f build/rixs
+all: checkdirs build/fhm.1d
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
-build/1D.f: build/apps/1D_fermion.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/fhm.1d: build/apps/FHM1D.o $(OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/trxas.f: build/apps/TRXAS.o $(OBJ)
 # build/xas.f: build/apps/XAS2.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
 
 build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
 	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)

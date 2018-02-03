@@ -6,7 +6,7 @@
 #endif
 
 template<typename Tnum>
-Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
+Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis>& bs )
 {
   /* Get each hilbert space and calculate total Hilbert space.
      This has nothing to do with Fermion / Boson modeling.
@@ -20,7 +20,7 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis> &bs )
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lattice, const std::vector< std::vector<Tnum> > &Vloc, const std::vector< std::vector<Tnum> > &Uloc ){
+void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector< std::vector<Tnum> >& Uloc ){
   // Both species live in the same lattice and the same happing amplitudes
   assert( bs.size() == 2 );//NOTE: Only support two or one species right now.
   // ULongMatrixType Locations;
@@ -36,8 +36,8 @@ void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis> &bs, const s
     assert( b.getL() == Uloc.at(cnt).size() );
     LocalPotential( cnt, Vloc.at(cnt), b, MatElemts );
     /* For intra-species N-N hopping */
-    assert( b.getL() == lt.size() );
-    NNHopping( cnt, lt, b, MatElemts );
+    assert( b.getL() == lattice.size() );
+    NNHopping( cnt, lattice, b, MatElemts );
     cnt++;
   }
   /* For inter-species local terms: Hubbard U */
@@ -45,13 +45,15 @@ void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis> &bs, const s
   sid.push_back(0);
   sid.push_back(1);
   HubbardInteraction(sid, Uloc.at(0), bs, MatElemts );
+  /* Build H_total */
+  BuildTotalHamiltonian( MatElemts );
 }
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
   ULongMatrixType Locations(2, MatElemts.size());
   VectorType Values( MatElemts.size() );
-  std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
+  typename std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
   size_t cnt = 0;
   for (; it != MatElemts.end(); ++it ){
     int row, col;
@@ -109,6 +111,7 @@ void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int 
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
+  std::cout << "done arpack" << std::endl;
   Vecs = MatrixType(input_ptr, nev, dim);
   Vals = RealVectorType(Val);
 }
@@ -119,9 +122,9 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
   // convert H_total to dense matrix
   MatrixType Mat(H_total);
   // working space
-  RealType* EigVec = (T*)malloc( dim * dim * sizeof(T) );
+  Tnum* EigVec = (Tnum*)malloc( dim * dim * sizeof(Tnum) );
   RealType* Eig = (RealType*)malloc( dim * sizeof(RealType) );
-  syDiag(dMat.memptr(), dim, Eig, EigVec);
+  syDiag(Mat.memptr(), dim, Eig, EigVec);
   Vecs = MatrixType(EigVec, dim, dim);
   Vals = RealVectorType(Eig, dim);
 }
@@ -156,8 +159,8 @@ void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)cons
 template<>
 void Hamiltonian<ComplexType>::mvprod(ComplexType* x, ComplexType* y, RealType alpha)const {
   size_t dim = getTotalHilbertSpace();
-  ComplexVectorType Vin(x, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
-  ComplexVectorType Vout(y, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
+  ComplexVectorType Vin(x, dim, false, false);//, copy_aux_mem = true, strict = false)// armadillo
+  ComplexVectorType Vout(y, dim, false, false);//, copy_aux_mem = true, strict = false)// armadillo
   Vout = H_total * Vin + alpha * Vout;
   memcpy(y, Vout.memptr(), dim * sizeof(ComplexType) );// armadillo
 }

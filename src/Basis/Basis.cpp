@@ -27,17 +27,17 @@ Basis::~Basis(){
 void Basis::Save( const std::string filename, const std::string gname ){
   HDF5IO file(filename);
   if ( isFermion ) {
-    file.saveStdVector(gname, "Tags", FTags);
-    file.saveStdVector(gname, "State", FStates);
+    file.SaveStdVector(gname, "Tags", FTags);
+    file.SaveStdVector(gname, "State", FStates);
   }else {
-    file.saveStdVector(gname, "Tags", BTags);
+    file.SaveStdVector(gname, "Tags", BTags);
     size_t cnt = 0;
     std::string sub_gname = gname;
     sub_gname.append("/Fock/");
     for ( auto &st : BStates){
       std::string dset_name = "State-";
       dset_name.append(std::to_string((unsigned long long)cnt));
-      file.saveStdVector(sub_gname, dset_name, st);
+      file.SaveStdVector(sub_gname, dset_name, st);
       cnt++;
     }
   }
@@ -46,10 +46,10 @@ void Basis::Save( const std::string filename, const std::string gname ){
 void Basis::Load( const std::string filename, const std::string gname ){
   HDF5IO file(filename);
   if ( isFermion ) {
-    file.loadStdVector(gname, "Tags", FTags);
-    file.loadStdVector(gname, "State", FStates);
+    file.LoadStdVector(gname, "Tags", FTags);
+    file.LoadStdVector(gname, "State", FStates);
   } else {
-    file.loadStdVector(gname, "Tags", BTags);
+    file.LoadStdVector(gname, "Tags", BTags);
     BStates.clear();
     std::string sub_gname = gname;
     sub_gname.append("/Fock/");
@@ -57,7 +57,7 @@ void Basis::Load( const std::string filename, const std::string gname ){
       std::string dset_name = "State-";
       dset_name.append(std::to_string((unsigned long long)cnt));
       std::vector<int> tmp;
-      file.loadStdVector(sub_gname, dset_name, tmp);
+      file.LoadStdVector(sub_gname, dset_name, tmp);
       BStates.push_back(tmp);
     }
     assert( BStates.size() == BTags.size() );

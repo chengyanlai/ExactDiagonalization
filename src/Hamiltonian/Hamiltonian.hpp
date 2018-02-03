@@ -13,7 +13,7 @@ class Hamiltonian{
 public:
   typedef arma::Col<Tnum> VectorType;
   typedef arma::Mat<Tnum> MatrixType;
-  typedef arma::SpaMat<Tnum> SparseMatrixType;
+  typedef arma::SpMat<Tnum> SparseMatrixType;
   Hamiltonian(){};
   Hamiltonian( const std::vector<Basis> &bs );
   virtual ~Hamiltonian(){};
@@ -24,7 +24,7 @@ public:
     }
     return tmp;
   };
-  inline void CheckTotalHamiltonian(){std::cout << arma::approx_equal(H_local, H_local.t(), "absdiff", 1.0e-5) << std::endl;};// armadillo
+  inline void CheckTotalHamiltonian(){std::cout << arma::approx_equal(H_total, H_total.t(), "absdiff", 1.0e-5) << std::endl;};// armadillo
   void BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts );
   // inline void CheckTotalHamiltonian(){std::cout << H_total.isApprox( H_total.adjoint() ) << std::endl;};// Eigen3
   // void BuildLocalHamiltonian( const std::vector< std::vector<Tnum> > &Vloc, const std::vector< std::vector<Tnum> > &Uloc, const std::vector<Basis> &bs );
@@ -39,6 +39,7 @@ public:
   // void BosonIntraHoppingPart( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop );
   /* ^^^^^^^ Boson Functions ^^^^^^^ */
   /* vvvvvvv Fermion Functions vvvvvvv */
+  void FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector< std::vector<Tnum> >& Uloc );
   void LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   void HubbardInteraction( const std::vector<int> species_id, const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   void NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
@@ -55,10 +56,8 @@ public:
   // void BuildHybridHamiltonian( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, const int maxLocalB = 0);
   // void Hybridization( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
   /* ^^^^^^^ Hybrid systems ^^^^^^^ */
-  void eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
-  void eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
-  void diag( RealVectorType &Vals, RealMatrixType &Vec);
-  void diag( RealVectorType &Vals, ComplexMatrixType &Vec);
+  void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true);
+  void diag( RealVectorType &Vals, MatrixType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
@@ -75,7 +74,7 @@ public:
   };
 private:
   std::vector<size_t> HilbertSpaces;
-  SparseMatrix H_total;
+  SparseMatrixType H_total;
   void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0);
 };
 #endif//__HAMILTONIAN_HPP__

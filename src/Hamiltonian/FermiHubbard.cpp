@@ -6,7 +6,7 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<sts::tuple<int, int, Tnum> > &MatElemts ){
+void Hamiltonian<Tnum>::LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
   int state_id = 0;
   for ( int b : bs.FStates ){
     Tnum val = (Tnum)0.0;

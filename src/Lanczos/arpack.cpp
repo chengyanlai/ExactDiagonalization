@@ -155,7 +155,6 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, 
     znaupd_(&ido, &bmat, &n, &which[0], &nev, &tol, resid, &ncv, v, &ldv,
             iparam, ipntr, workd, workl, &lworkl, rwork, &info);
   }
-
   if( info < 0 )
     std::cerr << "Error with znaupd, info = " << info << std::endl;
   else if ( info == 1 )
