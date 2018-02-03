@@ -11,6 +11,16 @@ elif [[ "$1" == "to" ]]; then
     --exclude-from 'code-exclude.txt' \
     $(pwd) $2:~/GitRepo/
   fi
+elif [[ "$1" == "ad" ]]; then
+  echo "Upload source code to (advance)" $2
+  if [[ "$2" == "lanl" ]]; then
+    scp -r Makefile src qsub apps lanl:gr-fe.lanl.gov:/usr/projects/cint/cint_sces/advance/ExactDiagonalization/
+  else
+    rsync -avzh \
+    --include-from 'code-include.txt' \
+    --exclude-from 'code-exclude.txt' \
+    $(pwd) $2:~/GitRepo/advance
+  fi
 elif [[ "$1" == "from" ]]; then
   echo "Get data from" $2
   if [[ "$2" == "lanl" ]]; then

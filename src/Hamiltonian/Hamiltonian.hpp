@@ -24,7 +24,7 @@ public:
     }
     return tmp;
   };
-  inline void CheckTotalHamiltonian(){std::cout << arma::approx_equal(H_total, H_total.t(), "absdiff", 1.0e-5) << std::endl;};// armadillo
+  inline int CheckHermitian(){return arma::approx_equal(H_total, H_total.t(), "absdiff", 1.0e-5);};// armadillo
   void BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts );
   // inline void CheckTotalHamiltonian(){std::cout << H_total.isApprox( H_total.adjoint() ) << std::endl;};// Eigen3
   // void BuildLocalHamiltonian( const std::vector< std::vector<Tnum> > &Vloc, const std::vector< std::vector<Tnum> > &Uloc, const std::vector<Basis> &bs );
