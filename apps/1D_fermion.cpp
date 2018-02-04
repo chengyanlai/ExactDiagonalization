@@ -96,10 +96,10 @@ int main(int argc, char const *argv[]) {
     LoadParameters( "conf.h5", L, OBC, N1, N2, J1in, J2in, Phase, Uin, Vin, dynamics, Tsteps, dt);// Benzene
     std::cout << "Parameters for calculation loaded!" << std::endl;
   }catch(H5::FileIException){
-    L = 6;
+    L = 12;
     OBC = 1;
-    N1 = 3;
-    N2 = 3;
+    N1 = 6;
+    N2 = 6;
     Jin = std::vector<RealType>(L-1, 1.0);
     Uin = std::vector<RealType>(L, 1.0);
     Vin = std::vector<RealType>(L, 0.0);
@@ -154,7 +154,7 @@ int main(int argc, char const *argv[]) {
   file->saveStdVector("Basis", "F2States", st2);
   file->saveStdVector("Basis", "F2Tags", tg2);
   INFO("DONE!");
-  INFO_NONEWLINE("Build Hamiltonian - ");
+  INFO("Build Hamiltonian - ");
   std::vector<Basis> Bases;
   Bases.push_back(F1);
   Bases.push_back(F2);
@@ -179,13 +179,13 @@ int main(int argc, char const *argv[]) {
   ham.BuildHoppingHamiltonian(Bases, lattice);
   INFO(" - BuildHoppingHamiltonian DONE!");
   ham.BuildTotalHamiltonian();
-  ham.CheckTotalHamiltonian();
+  // ham.CheckTotalHamiltonian();
   INFO("DONE!");
   INFO_NONEWLINE("Diagonalize Hamiltonian - ");
   RealVectorType Vals;
   DTM Vecs;
-  // ham.eigh(Vals, Vecs, 2);
-  ham.diag(Vals, Vecs);
+  ham.eigh(Vals, Vecs, 2);
+  // ham.diag(Vals, Vecs);
   INFO("GS energy = " << Vals[0]);
   INFO("FES energy = " << Vals[1]);
   DTV Vec = Vecs.row(0);

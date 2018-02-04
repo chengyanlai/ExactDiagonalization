@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 if [[ -z "$1" ]]; then
     echo "No action supplied"
 elif [[ "$1" == "to" ]]; then
