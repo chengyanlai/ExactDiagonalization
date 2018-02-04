@@ -28,39 +28,39 @@
 // #define DTM RealMatrixType
 
 
-// void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
-//   RealType &J1, RealType &J2, RealType &Phase, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
-//   int &dynamics, int &Tsteps, RealType &dt){
-//     HDF5IO file(filename);
-//     L = file.loadInt("Parameters", "L");
-//     OBC = file.loadInt("Parameters", "OBC");
-//     N1 = file.loadInt("Parameters", "N1");
-//     N2 = file.loadInt("Parameters", "N2");
-//     J1 = file.loadReal("Parameters", "J1");
-//     J2 = file.loadReal("Parameters", "J2");
-//     Phase = file.loadReal("Parameters", "Phase");
-//     file.loadStdVector("Parameters", "U", Uls);
-//     file.loadStdVector("Parameters", "V", Vls);
-//     dynamics = file.loadInt("Parameters", "dynamics");
-//     Tsteps = file.loadInt("Parameters", "Tsteps");
-//     dt = file.loadReal("Parameters", "dt");
-// }
+void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
+  RealType &J1, RealType &J2, RealType &Phase, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
+  int &dynamics, int &Tsteps, RealType &dt){
+    HDF5IO file(filename);
+    file.LoadNumber("Parameters", "L", L);
+    file.LoadNumber("Parameters", "OBC", OBC);
+    file.LoadNumber("Parameters", "N1", N1);
+    file.LoadNumber("Parameters", "N2", N2);
+    file.LoadNumber("Parameters", "J1", J1);
+    file.LoadNumber("Parameters", "J2", J2);
+    file.LoadNumber("Parameters", "Phase", Phase);
+    file.LoadStdVector("Parameters", "U", Uls);
+    file.LoadStdVector("Parameters", "V", Vls);
+    file.LoadNumber("Parameters", "dynamics", dynamics);
+    file.LoadNumber("Parameters", "Tsteps", Tsteps);
+    file.LoadNumber("Parameters", "dt", dt);
+}
 
-// void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
-//   std::vector<RealType> &Jls, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
-//   int &dynamics, int &Tsteps, RealType &dt){
-//     HDF5IO file(filename);
-//     L = file.loadInt("Parameters", "L");
-//     OBC = file.loadInt("Parameters", "OBC");
-//     N1 = file.loadInt("Parameters", "N1");
-//     N2 = file.loadInt("Parameters", "N2");
-//     file.loadStdVector("Parameters", "J", Jls);
-//     file.loadStdVector("Parameters", "U", Uls);
-//     file.loadStdVector("Parameters", "V", Vls);
-//     dynamics = file.loadInt("Parameters", "dynamics");
-//     Tsteps = file.loadInt("Parameters", "Tsteps");
-//     dt = file.loadReal("Parameters", "dt");
-// }
+void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
+  std::vector<RealType> &Jls, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
+  int &dynamics, int &Tsteps, RealType &dt){
+    HDF5IO file(filename);
+    file.LoadNumber("Parameters", "L", L);
+    file.LoadNumber("Parameters", "OBC", OBC);
+    file.LoadNumber("Parameters", "N1", N1);
+    file.LoadNumber("Parameters", "N2", N2);
+    file.LoadStdVector("Parameters", "J", Jls);
+    file.LoadStdVector("Parameters", "U", Uls);
+    file.LoadStdVector("Parameters", "V", Vls);
+    file.LoadNumber("Parameters", "dynamics", dynamics);
+    file.LoadNumber("Parameters", "Tsteps", Tsteps);
+    file.LoadNumber("Parameters", "dt", dt);
+}
 
 ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Hamiltonian<ComplexType> &Ham0 ){
   size_t L = Bases.at(species).getL();
@@ -112,7 +112,6 @@ ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vec
 
 std::vector<DTV> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
   std::vector<DTV> out;
-std::cout << "Ni " << Vec.n_cols << std::endl;
   DTV tmp1(Bases.at(0).getL(), arma::fill::zeros);//(Bases.at(0).getL(), 0.0e0);
   DTV tmp2(Bases.at(1).getL(), arma::fill::zeros);//(Bases.at(1).getL(), 0.0e0);
   std::vector<int> f1 = Bases.at(0).getFStates();
@@ -175,26 +174,24 @@ void Equilibrium(const std::string prefix){
   int dynamics, Tsteps;
   RealType dt;
   std::vector<RealType> Jin, Uin, Vin;
-  RealType J1in, J2in, Phase;// Benzene
-  // Load parameters from file
-  // try{
-  //   H5::Exception::dontPrint();
-  //   H5::H5File::isHdf5("conf.h5");
-  //   // LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
-  //   LoadParameters( "conf.h5", L, OBC, N1, N2, J1in, J2in, Phase, Uin, Vin, dynamics, Tsteps, dt);// Benzene
-  //   std::cout << "Parameters for calculation loaded!" << std::endl;
-  // }catch(H5::FileIException){
-    L = 6;
+  try{
+    /* Load parameters from file */
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5("conf.h5");
+    LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
+    std::cout << "Parameters for calculation loaded!" << std::endl;
+  }catch(H5::FileIException){
+    L = 12;
     OBC = 1;
-    N1 = 3;
-    N2 = 3;
+    N1 = 6;
+    N2 = 6;
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
     Uin = std::vector<RealType>(L, 1.0);
     Vin = std::vector<RealType>(L, 0.0);
     dynamics = 0;
     Tsteps = 0;
     dt = 0.005;
-  // }
+  }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
   LogOut << "Build Lattice - " << std::endl;
   std::vector<DT> J(Jin.begin(), Jin.end());
