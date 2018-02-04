@@ -62,161 +62,109 @@
 //     dt = file.loadReal("Parameters", "dt");
 // }
 
-// ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Ham0iltonian<ComplexType> &Ham0 ){
-//   size_t L = Bases.at(species).getL();
-//   ComplexMatrixType CM = ComplexMatrixType::Zero(L,L);
-//   std::vector< int > bs = Bases.at(species).getFStates();
-//   std::vector<size_t> tg = Bases.at(species).getFTags();
-//   for ( const int &b : bs ){
-//     size_t bid = tg.at(b);// Find their indices
-//     for ( size_t i=0; i < L; i++){
-//       for ( size_t j=i; j < L; j++){
-//         /* see if hopping exist */
-//         if ( btest(b, j) && !(btest(b, i)) ) {
-//           /* c^\dagger_i c_j if yes, no particle in i and one particle in j. */
-//           int CrossFermionNumber = 0;
-//           ComplexType tsign = (ComplexType)(1.0e0);
-//           if ( j - i > 1 ){
-//             // possible cross fermions and sign change.
-//             for ( int k = i+1; k < j; k++){
-//               CrossFermionNumber += btest(b, k);
-//             }
-//           }
-//           if (CrossFermionNumber % 2 == 1) tsign = (ComplexType)(-1.0e0);
-//           int p = ibset(b, i);
-//           p = ibclr(p, j);
-//           size_t pid = tg.at(p);// Find their indices
-//           size_t count;
-//           if ( species == 0 ) count = Bases.at(1).getHilbertSpace();
-//           else if ( species == 1 ) count = Bases.at(0).getHilbertSpace();
-//           std::vector<size_t> rids(2, bid);
-//           std::vector<size_t> cids(2, pid);
-//           for (size_t loop_id = 0; loop_id < count; loop_id++) {
-//             if ( species == 0 ){
-//               rids.at(1) = loop_id;
-//               cids.at(1) = loop_id;
-//             }else if ( species == 1 ){
-//               rids.at(0) = loop_id;
-//               cids.at(0) = loop_id;
-//             }
-//             size_t rid = Ham0.DetermineTotalIndex( rids );
-//             size_t cid = Ham0.DetermineTotalIndex( cids );
-//             CM(i, j) +=  tsign * Vec(cid) * std::conj( Vec(rid) );//Vec(id) * std::conj( Vec(id) );
-//           }
-//         }
-//       }
-//     }
-//   }
-//   return CM;
-// }
+ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Hamiltonian<ComplexType> &Ham0 ){
+  size_t L = Bases.at(species).getL();
+  ComplexMatrixType CM(L, L, arma::fill::zeros);
+  std::vector< int > bs = Bases.at(species).getFStates();
+  std::vector<size_t> tg = Bases.at(species).getFTags();
+  for ( const int &b : bs ){
+    size_t bid = tg.at(b);// Find their indices
+    for ( size_t i=0; i < L; i++){
+      for ( size_t j=i; j < L; j++){
+        /* see if hopping exist */
+        if ( btest(b, j) && !(btest(b, i)) ) {
+          /* c^\dagger_i c_j if yes, no particle in i and one particle in j. */
+          int CrossFermionNumber = 0;
+          ComplexType tsign = (ComplexType)(1.0e0);
+          if ( j - i > 1 ){
+            // possible cross fermions and sign change.
+            for ( int k = i+1; k < j; k++){
+              CrossFermionNumber += btest(b, k);
+            }
+          }
+          if (CrossFermionNumber % 2 == 1) tsign = (ComplexType)(-1.0e0);
+          int p = ibset(b, i);
+          p = ibclr(p, j);
+          size_t pid = tg.at(p);// Find their indices
+          size_t count;
+          if ( species == 0 ) count = Bases.at(1).getHilbertSpace();
+          else if ( species == 1 ) count = Bases.at(0).getHilbertSpace();
+          std::vector<size_t> rids(2, bid);
+          std::vector<size_t> cids(2, pid);
+          for (size_t loop_id = 0; loop_id < count; loop_id++) {
+            if ( species == 0 ){
+              rids.at(1) = loop_id;
+              cids.at(1) = loop_id;
+            }else if ( species == 1 ){
+              rids.at(0) = loop_id;
+              cids.at(0) = loop_id;
+            }
+            size_t rid = Ham0.DetermineTotalIndex( rids );
+            size_t cid = Ham0.DetermineTotalIndex( cids );
+            CM(i, j) +=  tsign * Vec(cid) * std::conj( Vec(rid) );//Vec(id) * std::conj( Vec(id) );
+          }
+        }
+      }
+    }
+  }
+  return CM;
+}
 
-// std::vector< DTV > Ni( const std::vector<Basis> &Bases, const DTV &Vec, Ham0iltonian<DT> &Ham0 ){
-//   std::vector< DTV > out;
-//   DTV tmp1 = DTV::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
-//   DTV tmp2 = DTV::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
-//   std::vector< int > f1 = Bases.at(0).getFStates();
-//   std::vector< int > f2 = Bases.at(1).getFStates();
-//   size_t f1id = 0, f2id = 0;
-//   for ( int &nf2 : f2 ){
-//     std::vector<size_t> ids(2,f2id);
-//     f1id = 0;
-//     for ( int &nf1 : f1 ){
-//       ids.at(0) = f1id;
-//       size_t id = Ham0.DetermineTotalIndex(ids);
-//       for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
-//         if ( btest(nf1, cnt) ) tmp1(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
-//       }
-//       for (size_t cnt = 0; cnt < Bases.at(1).getL(); cnt++) {
-//         if ( btest(nf2, cnt) ) tmp2(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
-//       }
-//       f1id++;
-//     }
-//     f2id++;
-//   }
-//   out.push_back(tmp1);
-//   out.push_back(tmp2);
-//   return out;
-// }
+std::vector<DTV> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
+  std::vector<DTV> out;
+std::cout << "Ni " << Vec.n_cols << std::endl;
+  DTV tmp1(Bases.at(0).getL(), arma::fill::zeros);//(Bases.at(0).getL(), 0.0e0);
+  DTV tmp2(Bases.at(1).getL(), arma::fill::zeros);//(Bases.at(1).getL(), 0.0e0);
+  std::vector<int> f1 = Bases.at(0).getFStates();
+  std::vector<int> f2 = Bases.at(1).getFStates();
+  size_t f1id = 0, f2id = 0;
+  for ( int &nf2 : f2 ){
+    std::vector<size_t> ids(2,f2id);
+    f1id = 0;
+    for ( int &nf1 : f1 ){
+      ids.at(0) = f1id;
+      size_t id = Ham0.DetermineTotalIndex(ids);
+      for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
+        if ( btest(nf1, cnt) ) tmp1(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
+      }
+      for (size_t cnt = 0; cnt < Bases.at(1).getL(); cnt++) {
+        if ( btest(nf2, cnt) ) tmp2(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
+      }
+      f1id++;
+    }
+    f2id++;
+  }
+  out.push_back(tmp1);
+  out.push_back(tmp2);
+  return out;
+}
 
-// DTM NupNdn( const std::vector<Basis> &Bases,
-//   const DTV &Vec, Ham0iltonian<DT> &Ham0 ){
-//   DTM out = DTM::Zero(
-//     Bases.at(0).getL(), Bases.at(1).getL() );
-//   std::vector< int > f1 = Bases.at(0).getFStates();
-//   std::vector< int > f2 = Bases.at(1).getFStates();
-//   size_t f1id = 0, f2id = 0;
-//   for ( int &nf2 : f2 ){
-//     std::vector<size_t> ids(2,f2id);
-//     f1id = 0;
-//     for ( int &nf1 : f1 ){
-//       ids.at(0) = f1id;
-//       size_t id = Ham0.DetermineTotalIndex(ids);
-//       for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
-//         for (size_t cnt2 = 0; cnt2 < Bases.at(1).getL(); cnt2++) {
-//           if ( btest(nf2, cnt1) && btest(nf1, cnt2) ) {
-//             out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
-//           }
-//         }
-//       }
-//       f1id++;
-//     }
-//     f2id++;
-//   }
-//   return out;
-// }
-
-// DTM NupNup( const std::vector<Basis> &Bases,
-//   const DTV &Vec, Ham0iltonian<DT> &Ham0 ){
-//   DTM out = DTM::Zero(Bases.at(0).getL(), Bases.at(0).getL() );
-//   std::vector< int > f1 = Bases.at(0).getFStates();
-//   std::vector< int > f2 = Bases.at(1).getFStates();
-//   size_t f1id = 0, f2id = 0;
-//   for ( int &nf2 : f2 ){
-//     std::vector<size_t> ids(2,f2id);
-//     f1id = 0;
-//     for ( int &nf1 : f1 ){
-//       ids.at(0) = f1id;
-//       size_t id = Ham0.DetermineTotalIndex(ids);
-//       for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
-//         for (size_t cnt2 = 0; cnt2 < Bases.at(0).getL(); cnt2++) {
-//           if ( btest(nf1, cnt1) && btest(nf1, cnt2) ) {
-//             out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
-//           }
-//         }
-//       }
-//       f1id++;
-//     }
-//     f2id++;
-//   }
-//   return out;
-// }
-
-// DTM NdnNdn( const std::vector<Basis> &Bases,
-//   const DTV &Vec, Ham0iltonian<DT> &Ham0 ){
-//   DTM out = DTM::Zero(
-//     Bases.at(0).getL(), Bases.at(1).getL() );
-//   std::vector< int > f1 = Bases.at(0).getFStates();
-//   std::vector< int > f2 = Bases.at(1).getFStates();
-//   size_t f1id = 0, f2id = 0;
-//   for ( int &nf2 : f2 ){
-//     std::vector<size_t> ids(2,f2id);
-//     f1id = 0;
-//     for ( int &nf1 : f1 ){
-//       ids.at(0) = f1id;
-//       size_t id = Ham0.DetermineTotalIndex(ids);
-//       for (size_t cnt1 = 0; cnt1 < Bases.at(1).getL(); cnt1++) {
-//         for (size_t cnt2 = 0; cnt2 < Bases.at(1).getL(); cnt2++) {
-//           if ( btest(nf2, cnt1) && btest(nf2, cnt2) ) {
-//             out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
-//           }
-//         }
-//       }
-//       f1id++;
-//     }
-//     f2id++;
-//   }
-//   return out;
-// }
+DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0, const int species1, const int species2 ){
+  DTM out(Bases.at(0).getL(), Bases.at(1).getL(), arma::fill::zeros );
+  std::vector<int> f1 = Bases.at(0).getFStates();
+  std::vector<int> f2 = Bases.at(1).getFStates();
+  size_t f1id = 0, f2id = 0;
+  for ( int &nf2 : f2 ){
+    std::vector<size_t> ids(2,f2id);
+    f1id = 0;
+    for ( int &nf1 : f1 ){
+      ids.at(0) = f1id;
+      size_t id = Ham0.DetermineTotalIndex(ids);
+      int Ns1 = (species1 == 1)? nf1 : nf2;
+      int Ns2 = (species2 == 1)? nf1 : nf2;
+      for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
+        for (size_t cnt2 = 0; cnt2 < Bases.at(1).getL(); cnt2++) {
+          if ( btest(Ns1, cnt1) && btest(Ns2, cnt2) ) {
+            out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
+          }
+        }
+      }
+      f1id++;
+    }
+    f2id++;
+  }
+  return out;
+}
 
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
@@ -288,7 +236,7 @@ void Equilibrium(const std::string prefix){
   file->SaveStdVector("Basis", "F2States", st2);
   file->SaveStdVector("Basis", "F2Tags", tg2);
   LogOut << "DONE!" << std::endl;
-  LogOut << "Build Ham0iltonian - " << std::flush;
+  LogOut << "Build Hamiltonian - " << std::flush;
   Hamiltonian<DT> Ham0( Bases );
   // Potential
   std::vector< std::vector<DT> > Vloc;
@@ -309,48 +257,52 @@ void Equilibrium(const std::string prefix){
   Ham0.FermiHubbardModel(Bases, lattice, Vloc, Uloc);
   Ham0.CheckHermitian();
   LogOut << "DONE!" << std::endl;
-  LogOut << "Diagonalize Ham0iltonian - " << std::flush;
+  LogOut << "Diagonalize Hamiltonian - " << std::flush;
   RealVectorType Vals;
   DTM Vecs;
-  // Ham0.eigh(Vals, Vecs, 2);
-  Ham0.diag(Vals, Vecs);// Full spectrum
+  Ham0.eigh(Vals, Vecs, 2);
+  // Ham0.diag(Vals, Vecs);// Full spectrum
   LogOut << "DONE!" << std::endl;
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;
-  DTV Vec(Vecs.col(0));
+// std::cout << Vecs.n_rows << " " << Vecs.n_cols << std::endl;
+// std::cout << Vecs.col(0).n_rows << " " << Vecs.col(0).n_cols << std::endl;
+  DTV Vec = Vecs.col(0);
+// ComplexSparseMatrixType H0 = Ham0.getTotalHamiltonian();
+// std::cout << arma::cdot(Vec, H0 * Vec) << std::endl;
   file->SaveVector("GS", "EVec", Vec);
   file->SaveVector("GS", "EVal", Vals);
-  // std::vector< DTV > Nfi = Ni( Bases, Vec, Ham0 );
-  // INFO(" Up Spin - ");
-  // INFO(Nfi.at(0));
-  // INFO(" Down Spin - ");
-  // INFO(Nfi.at(1));
-  // INFO(" N_i - ");
-  // DTV Niall = Nfi.at(0) + Nfi.at(1);
-  // INFO(Niall);
-  // DTM Nud = NupNdn( Bases, Vec, Ham0 );
-  // INFO(" Correlation NupNdn");
-  // INFO(Nud);
-  // DTM Nuu = NupNup( Bases, Vec, Ham0 );
-  // INFO(" Correlation NupNup");
-  // INFO(Nuu);
-  // DTM Ndd = NdnNdn( Bases, Vec, Ham0 );
-  // INFO(" Correlation NdnNdn");
-  // INFO(Ndd);
-  // INFO(" N_i^2 - ");
-  // DTM Ni2 = Nuu.diagonal() + Ndd.diagonal() + 2.0e0 * Nud.diagonal();
-  // INFO(Ni2);
-  // ComplexMatrixType CMUp = SingleParticleDensityMatrix( 0, Bases, Vec, Ham0 );
-  // INFO(CMUp);
-  // ComplexMatrixType CMDn = SingleParticleDensityMatrix( 1, Bases, Vec, Ham0 );
-  // INFO(CMDn);
-  // file->saveVector("Obs", "Nup", Nfi.at(0));
-  // file->saveVector("Obs", "Ndn", Nfi.at(1));
-  // file->saveMatrix("Obs", "NupNdn", Nud);
-  // file->saveMatrix("Obs", "NupNup", Nuu);
-  // file->saveMatrix("Obs", "NdnNdn", Ndd);
-  // file->saveMatrix("Obs", "CMUp", CMUp);
-  // file->saveMatrix("Obs", "CMDn", CMDn);
+  std::vector<DTV> Nfi = Ni( Bases, Vec, Ham0 );
+  LogOut << " Up Spin - " << std::endl;
+  LogOut << Nfi.at(0) << std::endl;
+  LogOut << " Down Spin - " << std::endl;
+  LogOut << Nfi.at(1) << std::endl;
+  LogOut << " N_i - " << std::endl;
+  DTV Niall = Nfi.at(0) + Nfi.at(1);
+  LogOut << Niall << std::endl;
+  DTM NupNdn = NiNj( Bases, Vec, Ham0, 0, 1 );
+  LogOut << " Correlation NupNdn" << std::endl;
+  LogOut << NupNdn << std::endl;
+  DTM NupNup = NiNj( Bases, Vec, Ham0, 0, 0 );
+  LogOut << " Correlation NupNup" << std::endl;
+  LogOut << NupNup << std::endl;
+  DTM NdnNdn = NiNj( Bases, Vec, Ham0, 1, 1 );
+  LogOut << " Correlation NdnNdn" << std::endl;
+  LogOut << NdnNdn << std::endl;
+  LogOut << " N_i^2 - " << std::endl;
+  DTM Ni2 = NupNup.diag() + NdnNdn.diag() + 2.0e0 * NupNdn.diag();
+  LogOut << Ni2 << std::endl;
+  ComplexMatrixType CMUp = SingleParticleDensityMatrix( 0, Bases, Vec, Ham0 );
+  LogOut << CMUp << std::endl;
+  ComplexMatrixType CMDn = SingleParticleDensityMatrix( 1, Bases, Vec, Ham0 );
+  LogOut << CMDn << std::endl;
+  file->SaveVector("Obs", "Nup", Nfi.at(0));
+  file->SaveVector("Obs", "Ndn", Nfi.at(1));
+  file->SaveMatrix("Obs", "NupNdn", NupNdn);
+  file->SaveMatrix("Obs", "NupNup", NupNup);
+  file->SaveMatrix("Obs", "NdnNdn", NdnNdn);
+  file->SaveMatrix("Obs", "CMUp", CMUp);
+  file->SaveMatrix("Obs", "CMDn", CMDn);
   delete file;
 }
 

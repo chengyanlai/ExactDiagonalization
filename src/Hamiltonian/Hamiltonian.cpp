@@ -107,12 +107,11 @@ void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int,
 template<typename Tnum>
 void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial){
   size_t dim = getTotalHilbertSpace();
-  if ( randomInitial ) Vecs = MatrixType(nev, dim, arma::fill::randu);
+  if ( randomInitial ) Vecs = MatrixType(dim, nev, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
-  std::cout << "done arpack" << std::endl;
-  Vecs = MatrixType(input_ptr, nev, dim);
+  Vecs = MatrixType(input_ptr, dim, nev);
   Vals = RealVectorType(Val);
 }
 
