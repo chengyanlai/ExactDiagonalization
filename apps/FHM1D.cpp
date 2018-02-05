@@ -16,23 +16,12 @@
   #include "mkl.h"
 #endif
 
-#ifndef DEBUG
-#define DEBUG 1
-#endif
-
-#define DT ComplexType
-#define DTV ComplexVectorType
-#define DTM ComplexMatrixType
-// #define DT RealType
-// #define DTV RealVectorType
-// #define DTM RealMatrixType
-
-DTV LoadWF( const std::string filename, const std::string GroupName, const std::string SetName ){
-  HDF5IO file(filename);
-  DTV WF;
-  file.LoadVector(GroupName, SetName, WF);
-  return WF:
-}
+// #define DT ComplexType
+// #define DTV ComplexVectorType
+// #define DTM ComplexMatrixType
+#define DT RealType
+#define DTV RealVectorType
+#define DTM RealMatrixType
 
 // void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2, RealType &J1, RealType &J2, RealType &Phase, std::vector<RealType> &Uls, std::vector<RealType> &Vls){
 //     HDF5IO file(filename);
@@ -74,9 +63,9 @@ void LoadDynParameters( const std::string filename, int &L, int &OBC, int &N1, i
   file.LoadNumber("Parameters", "dt", dt);
 }
 
-ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Hamiltonian<ComplexType> &Ham0 ){
+DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
   size_t L = Bases.at(species).getL();
-  ComplexMatrixType CM(L, L, arma::fill::zeros);
+  DTM CM(L, L, arma::fill::zeros);
   std::vector< int > bs = Bases.at(species).getFStates();
   std::vector<size_t> tg = Bases.at(species).getFTags();
   for ( const int &b : bs ){
@@ -87,14 +76,14 @@ ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vec
         if ( btest(b, j) && !(btest(b, i)) ) {
           /* c^\dagger_i c_j if yes, no particle in i and one particle in j. */
           int CrossFermionNumber = 0;
-          ComplexType tsign = (ComplexType)(1.0e0);
+          DT tsign = (DT)(1.0e0);
           if ( j - i > 1 ){
             // possible cross fermions and sign change.
             for ( int k = i+1; k < j; k++){
               CrossFermionNumber += btest(b, k);
             }
           }
-          if (CrossFermionNumber % 2 == 1) tsign = (ComplexType)(-1.0e0);
+          if (CrossFermionNumber % 2 == 1) tsign = (DT)(-1.0e0);
           int p = ibset(b, i);
           p = ibclr(p, j);
           size_t pid = tg.at(p);// Find their indices
@@ -113,7 +102,7 @@ ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vec
             }
             size_t rid = Ham0.DetermineTotalIndex( rids );
             size_t cid = Ham0.DetermineTotalIndex( cids );
-            CM(i, j) +=  tsign * Vec(cid) * std::conj( Vec(rid) );//Vec(id) * std::conj( Vec(id) );
+            CM(i, j) +=  tsign * Vec(cid) * Conjg( Vec(rid) );//Vec(id) * std::conj( Vec(id) );
           }
         }
       }
@@ -179,7 +168,7 @@ DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0
 
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "eqm.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "fhm.1d.eqm", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -221,24 +210,13 @@ void Equilibrium(const std::string prefix){
   LogOut << "Build Hamiltonian - " << std::flush;
   Hamiltonian<DT> Ham0( Bases );
   // Potential
-  std::vector< std::vector<DT> > Vloc;
-  std::vector<DT> Vtmp;
-  for ( RealType &val : Vin ){
-    Vtmp.push_back((DT)val);
-  }
-  Vloc.push_back(Vtmp);
-  Vloc.push_back(Vtmp);
+  std::vector<DT> Vtmp(Vin.begin(), Vin.end());
+  std::vector< std::vector<DT> > Vloc = vec(Vtmp, Vtmp);
   // Interaction
-  std::vector< std::vector<DT> > Uloc;
-  std::vector<DT> Utmp;
-  for ( RealType &val : Uin ){
-    Utmp.push_back((DT)val);
-  }
-  Uloc.push_back(Utmp);
-  Uloc.push_back(Utmp);
+  std::vector<DT> Uloc(Uin.begin(), Uin.end());
   Ham0.FermiHubbardModel(Bases, lattice, Vloc, Uloc);
   Ham0.CheckHermitian();
-  LogOut << "DONE!" << std::endl;
+  LogOut << Ham0.GetTotalHilbertSpace() << " DONE!" << std::endl;
   LogOut << "Diagonalize Hamiltonian - " << std::flush;
   RealVectorType Vals;
   DTM Vecs;
@@ -248,15 +226,19 @@ void Equilibrium(const std::string prefix){
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;
   DTV Vec = Vecs.col(0);
-// ComplexSparseMatrixType H0 = Ham0.getTotalHamiltonian();
+// ComplexSparseMatrixType H0 = Ham0.GetTotalHamiltonian();
 // std::cout << arma::cdot(Vec, H0 * Vec) << std::endl;
   file->SaveVector("GS", "EVec", Vec);
   file->SaveVector("GS", "EVal", Vals);
   std::vector<DTV> Nfi = Ni( Bases, Vec, Ham0 );
   LogOut << " Up Spin - " << std::endl;
   LogOut << Nfi.at(0) << std::endl;
+  DT NupT = arma::sum(Nfi.at(0));
+  LogOut << "Total N_up = " << NupT << std::endl;
   LogOut << " Down Spin - " << std::endl;
   LogOut << Nfi.at(1) << std::endl;
+  DT NdnT = arma::sum(Nfi.at(1));
+  LogOut << "Total N_down = " << NdnT << std::endl;
   LogOut << " N_i - " << std::endl;
   DTV Niall = Nfi.at(0) + Nfi.at(1);
   LogOut << Niall << std::endl;
@@ -272,12 +254,14 @@ void Equilibrium(const std::string prefix){
   LogOut << " N_i^2 - " << std::endl;
   DTM Ni2 = NupNup.diag() + NdnNdn.diag() + 2.0e0 * NupNdn.diag();
   LogOut << Ni2 << std::endl;
-  ComplexMatrixType CMUp = SingleParticleDensityMatrix( 0, Bases, Vec, Ham0 );
+  DTM CMUp = SingleParticleDensityMatrix( 0, Bases, Vec, Ham0 );
   LogOut << CMUp << std::endl;
-  ComplexMatrixType CMDn = SingleParticleDensityMatrix( 1, Bases, Vec, Ham0 );
+  DTM CMDn = SingleParticleDensityMatrix( 1, Bases, Vec, Ham0 );
   LogOut << CMDn << std::endl;
   file->SaveVector("Obs", "Nup", Nfi.at(0));
+  file->SaveNumber("Obs", "NupT", NupT);
   file->SaveVector("Obs", "Ndn", Nfi.at(1));
+  file->SaveNumber("Obs", "NdnT", NdnT);
   file->SaveMatrix("Obs", "NupNdn", NupNdn);
   file->SaveMatrix("Obs", "NupNup", NupNup);
   file->SaveMatrix("Obs", "NdnNdn", NdnNdn);
@@ -320,7 +304,7 @@ void Dynamics(const std::string prefix){
   LogOut << "Load eqm wf - " << std::flush;
   HDF5IO *EqmFile = new HDF5IO("FHMChainData.h5");
   DTV Vec0;
-  EqmFile.LoadVector("GS", "Vec", Vec0);
+  EqmFile->LoadVector("GS", "Vec", Vec0);
   delete EqmFile;
   LogOut << "DONE!" << std::endl;
   LogOut.close();
@@ -333,11 +317,11 @@ int main(int argc, char *argv[]){
   mkl_set_dynamic(0);
   mkl_set_num_threads(NumCores);
 #endif
-  if ( argv[1] == 0 ){
+  if ( std::atoi(argv[1]) == 0 ){
     Equilibrium("");
-  }else if ( argv[1] == 1 ){
+  }else if ( std::atoi(argv[1]) == 1 ){
     Dynamics("");
-  }else if ( argv[1] == 2 ){
+  }else if ( std::atoi(argv[1]) == 2 ){
     Equilibrium("");
     Dynamics("");
   }

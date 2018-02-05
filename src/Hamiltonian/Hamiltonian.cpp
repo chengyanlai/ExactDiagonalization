@@ -15,7 +15,7 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis>& bs )
   for ( auto &b : bs ){
     HilbertSpaces.push_back(b.getHilbertSpace());
   }
-  size_t TotalDim = getTotalHilbertSpace();
+  size_t TotalDim = GetTotalHilbertSpace();
   if (DEBUG) std::cout << "Total Hilbert Space = " << TotalDim << std::endl;
 }
 
@@ -37,12 +37,12 @@ void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int,
     cnt++;
   }
   // First true allows repeated matrix elements
-  H_total = SparseMatrixType(true, Locations, Values, getTotalHilbertSpace(), getTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
+  H_total = SparseMatrixType(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
 }
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial){
-  size_t dim = getTotalHilbertSpace();
+  size_t dim = GetTotalHilbertSpace();
   if ( randomInitial ) Vecs = MatrixType(dim, nev, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
@@ -53,7 +53,7 @@ void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int 
 
 template<typename Tnum>
 void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
-  size_t dim = getTotalHilbertSpace();
+  size_t dim = GetTotalHilbertSpace();
   // convert H_total to dense matrix
   MatrixType Mat(H_total);
   // working space
@@ -85,7 +85,7 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorT
  */
 template<>
 void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)const {
-  size_t dim = getTotalHilbertSpace();
+  size_t dim = GetTotalHilbertSpace();
   RealVectorType Vin(x, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   RealVectorType Vout(y, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   Vout = H_total * Vin + alpha * Vout;
@@ -93,7 +93,7 @@ void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)cons
 }
 template<>
 void Hamiltonian<ComplexType>::mvprod(ComplexType* x, ComplexType* y, RealType alpha)const {
-  size_t dim = getTotalHilbertSpace();
+  size_t dim = GetTotalHilbertSpace();
   ComplexVectorType Vin(x, dim, false, false);//, copy_aux_mem = true, strict = false)// armadillo
   ComplexVectorType Vout(y, dim, false, false);//, copy_aux_mem = true, strict = false)// armadillo
   Vout = H_total * Vin + alpha * Vout;

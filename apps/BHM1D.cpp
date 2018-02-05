@@ -11,32 +11,40 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
+#ifdef MKL
+  #include "mkl.h"
+#endif
 
-RealVectorType Ni( const std::vector<Basis> &Bases, const RealVectorType &Vec ){
-  RealVectorType tmp(Bases.at(0).getL(), arma::fill::zeros);
+// #define DT ComplexType
+// #define DTV ComplexVectorType
+// #define DTM ComplexMatrixType
+#define DT RealType
+#define DTV RealVectorType
+#define DTM RealMatrixType
+
+DTV Ni( const std::vector<Basis> &Bases, const DTV &Vec ){
+  DTV tmp(Bases.at(0).getL(), arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).getBStates();
   assert( b.size() == Vec.size() );
   int coff = 0;
   for ( auto &nbi : b ){
     for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
-      tmp.at(cnt) += (RealType)nbi.at(cnt) * Vec(coff) * Vec(coff);
+      tmp.at(cnt) += (RealType)nbi.at(cnt) * std::pow(std::abs(Vec(coff)), 2);
     }
     coff++;
   }
   return tmp;
 }
 
-RealMatrixType NiNj( const std::vector<Basis> &Bases,
-  const RealVectorType &Vec ){
-  RealMatrixType tmp(Bases.at(0).getL(), Bases.at(0).getL(), arma::fill::zeros);
+DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec ){
+  DTM tmp(Bases.at(0).getL(), Bases.at(0).getL(), arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).getBStates();
   assert( b.size() == Vec.size() );
   int coff = 0;
   for ( auto &nbi : b ){
     for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
       for (size_t cnt2 = 0; cnt2 < Bases.at(0).getL(); cnt2++) {
-        tmp(cnt1, cnt2) += (RealType)nbi.at(cnt1) * (RealType)nbi.at(cnt2) *
-          Vec(coff) * Vec(coff);
+        tmp(cnt1, cnt2) += (RealType)nbi.at(cnt1) * (RealType)nbi.at(cnt2) * std::pow(std::abs(Vec(coff)), 2);
       }
     }
     coff++;
@@ -46,7 +54,7 @@ RealMatrixType NiNj( const std::vector<Basis> &Bases,
 
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "eqm.bhm.1d", std::ios::app);
+  LogOut.open(prefix + "bhm.1d.eqm", std::ios::app);
   int L = 10;
   int OBC = 1;
   int N = 10;
@@ -60,7 +68,8 @@ void Equilibrium(const std::string prefix){
 
   HDF5IO* file = new HDF5IO("BHMChainData.h5");
   LogOut << "Build Lattice - " << std::endl;
-  const std::vector< Node<RealType>* > lattice = NN_1D_Chain(L, Jin, OBC);
+  std::vector<DT> JWork(Jin.begin(), Jin.end());
+  const std::vector< Node<DT>* > lattice = NN_1D_Chain(L, JWork, OBC);
   file->SaveNumber("1DChain", "L", L);
   file->SaveNumber("1DChain", "N", N);
   file->SaveStdVector("1DChain", "U", Uin);
@@ -77,31 +86,37 @@ void Equilibrium(const std::string prefix){
   Bases.push_back(B1);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
-  Hamiltonian<RealType> Ham0( Bases );
-  Ham0.BoseHubbardModel(Bases, lattice, Vin, Uin);
+  Hamiltonian<DT> Ham0( Bases );
+  std::vector<DT> UWork(Uin.begin(), Uin.end());
+  std::vector<DT> VWork(Vin.begin(), Vin.end());
+  Ham0.BoseHubbardModel(Bases, lattice, VWork, UWork);
   Ham0.CheckHermitian();
-  LogOut << "DONE!" << std::endl;
+  LogOut << Ham0.GetTotalHilbertSpace() << " DONE!" << std::endl;
   LogOut << "Diagonalize Hamiltonian - " << std::flush;
   RealVectorType Vals;
-  RealMatrixType Vecs;
+  DTM Vecs;
   Ham0.eigh(Vals, Vecs, 2);
   // Ham0.diag(Vals, Vecs);// Full spectrum
   LogOut << "DONE!" << std::endl;
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;
-  RealVectorType Vec = Vecs.col(0);
+  DTV Vec = Vecs.col(0);
 // RealSparseMatrixType H0 = Ham0.getTotalHamiltonian();
 // std::cout << arma::cdot(Vec, H0 * Vec) << std::endl;
   file->SaveVector("GS", "EVec", Vec);
   file->SaveVector("GS", "EVal", Vals);
-  RealVectorType Nbi = Ni( Bases, Vec );
+  DTV Nbi = Ni( Bases, Vec );
+  DT NbT = arma::sum(Nbi);
   LogOut << " Nbi - " << std::endl;
   LogOut << Nbi << std::endl;
-  RealMatrixType Nij = NiNj( Bases, Vec );
+  LogOut << "Total Nb = " << NbT << std::endl;
+  DTM Nij = NiNj( Bases, Vec );
   LogOut << " NiNj - " << std::endl;
   LogOut << Nij << std::endl;
   file->SaveVector("Obs", "Nb", Nbi);
+  file->SaveNumber("Obs", "NbT", NbT);
   file->SaveMatrix("Obs", "Nij", Nij);
+  delete file;
 }
 
 /* main program */

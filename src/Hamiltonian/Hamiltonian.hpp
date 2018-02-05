@@ -17,7 +17,7 @@ public:
   Hamiltonian(){};
   Hamiltonian( const std::vector<Basis> &bs );
   virtual ~Hamiltonian(){};
-  inline size_t getTotalHilbertSpace()const{
+  inline size_t GetTotalHilbertSpace()const{
     size_t tmp = 1;
     for (auto &j : HilbertSpaces){
       tmp *= j;
@@ -32,7 +32,7 @@ public:
   void NNHopping( const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   /* ^^^^^^^ Bose Hubbard model ^^^^^^^ */
   /* vvvvvvv Fermi Hubbard model vvvvvvv */
-  void FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector< std::vector<Tnum> >& Uloc );
+  void FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc );
   void LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   void HubbardInteraction( const std::vector<int> species_id, const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   void NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
@@ -54,7 +54,7 @@ public:
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
-  inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
+  inline SparseMatrixType GetTotalHamiltonian()const{return H_total;};
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
     assert( ids.size() == HilbertSpaces.size() );
     size_t tidx = 0;

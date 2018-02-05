@@ -327,7 +327,7 @@ int main(int argc, char const *argv[]) {
     int MaxNumPeak = 20;
     std::vector<double> PeakLocation, PeakWeight;
     RealVectorType EigVals = RealVectorType::Zero(MaxNumPeak);
-    ComplexMatrixType EigVecs = ComplexMatrixType::Zero(MaxNumPeak, nHam.getTotalHilbertSpace());
+    ComplexMatrixType EigVecs = ComplexMatrixType::Zero(MaxNumPeak, nHam.GetTotalHilbertSpace());
     EigVecs.row(0) = VecInit;
     nHam.eigh(EigVals, EigVecs, MaxNumPeak, false);
     std::cout << "new " << EigVals[0] << " " << EigVals[1] << std::endl;

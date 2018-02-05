@@ -269,7 +269,7 @@ void OAS(const std::string prefix, const int dynamics=0){
 
   /* Get ground state and excited states */
   int GetFullSpectrum = 1;
-  if ( Ham.getTotalHilbertSpace() > 5000 ){
+  if ( Ham.GetTotalHilbertSpace() > 5000 ){
     GetFullSpectrum = 0;
   }
   RealVectorType EigVals, GS;
@@ -287,7 +287,7 @@ void OAS(const std::string prefix, const int dynamics=0){
 
   /* Get equilibrium spectrum */
   size_t MaxNumPeak;
-  if ( GetFullSpectrum ) MaxNumPeak =  Ham.getTotalHilbertSpace();
+  if ( GetFullSpectrum ) MaxNumPeak =  Ham.GetTotalHilbertSpace();
   else MaxNumPeak = 20;
   std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){

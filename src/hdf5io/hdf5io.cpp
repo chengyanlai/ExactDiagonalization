@@ -186,9 +186,9 @@ void HDF5IO::SaveVector(const std::string& GroupName, const std::string& SetName
   gname.append("/");
   gname.append(SetName);
   H5::Group FG2 = GetGroup( gname );
-  int cols = Vec.n_cols;
-  SaveNumber(gname, "col", cols);
-  SaveRawBuffer(gname, "Elem", cols, Vec.memptr());
+  int rows = Vec.n_rows;
+  SaveNumber(gname, "col", rows);
+  SaveRawBuffer(gname, "Elem", rows, Vec.memptr());
 }
 template void HDF5IO::SaveVector(const std::string& GroupName, const std::string& SetName, const arma::Col<double> Vec);
 template void HDF5IO::SaveVector(const std::string& GroupName, const std::string& SetName, const arma::Col<std::complex<double> > Vec);

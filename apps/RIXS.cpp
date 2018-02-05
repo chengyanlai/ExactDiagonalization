@@ -294,7 +294,7 @@ int main(int argc, char const *argv[]) {
   delete file;
 
   std::cout << "Time evolution - T " << std::endl;
-  std::cout << " H dim = " << nHam.getTotalHilbertSpace() << " WF dim = " << VecT.rows() << std::endl;
+  std::cout << " H dim = " << nHam.GetTotalHilbertSpace() << " WF dim = " << VecT.rows() << std::endl;
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   for (size_t cntT = 1; cntT <= Tsteps; cntT++) {
     nHam.expH(Prefactor, VecT);
@@ -355,7 +355,7 @@ int main(int argc, char const *argv[]) {
   delete file2;
 
   std::cout << "Time evolution - S " << std::endl;
-  std::cout << " H dim = " << ham.getTotalHilbertSpace() << " WF dim = " << VecS.rows() << std::endl;
+  std::cout << " H dim = " << ham.GetTotalHilbertSpace() << " WF dim = " << VecS.rows() << std::endl;
   Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   for (size_t cntT = 1; cntT <= 3000; cntT++) {
     ham.expH(Prefactor, VecS);

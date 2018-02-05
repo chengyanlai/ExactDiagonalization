@@ -31,7 +31,22 @@ inline RealType ImaginaryPart( ComplexType number ){return number.imag();};
 
 const RealType PI = std::atan(1.0)*4.0;
 
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0) ;
 template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2, const Tnum& a3) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2, const Tnum& a3, const Tnum& a4) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2, const Tnum& a3, const Tnum& a4, const Tnum& a5) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2, const Tnum& a3, const Tnum& a4, const Tnum& a5, const Tnum& a6) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2, const Tnum& a3, const Tnum& a4, const Tnum& a5, const Tnum& a6, const Tnum& a7) ;
+template <typename Tnum> std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2, const Tnum& a3, const Tnum& a4, const Tnum& a5, const Tnum& a6, const Tnum& a7, const Tnum& a8) ;
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  return A ;
+}
 
 template <typename Tnum>
 std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1){
@@ -40,4 +55,96 @@ std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1){
   A.push_back(a1) ;
   return A ;
 }
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  return A ;
+}
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
+  const Tnum& a3){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  A.push_back(a3) ;
+  return A ;
+}
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
+  const Tnum& a3, const Tnum& a4){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  A.push_back(a3) ;
+  A.push_back(a4) ;
+  return A ;
+}
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
+  const Tnum& a3, const Tnum& a4, const Tnum& a5){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  A.push_back(a3) ;
+  A.push_back(a4) ;
+  A.push_back(a5) ;
+  return A ;
+}
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
+  const Tnum& a3, const Tnum& a4, const Tnum& a5, const Tnum& a6){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  A.push_back(a3) ;
+  A.push_back(a4) ;
+  A.push_back(a5) ;
+  A.push_back(a6) ;
+  return A ;
+}
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
+  const Tnum& a3, const Tnum& a4, const Tnum& a5, const Tnum& a6, const Tnum& a7){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  A.push_back(a3) ;
+  A.push_back(a4) ;
+  A.push_back(a5) ;
+  A.push_back(a6) ;
+  A.push_back(a7) ;
+  return A ;
+}
+
+template <typename Tnum>
+std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
+  const Tnum& a3, const Tnum& a4, const Tnum& a5, const Tnum& a6, const Tnum& a7,
+  const Tnum& a8){
+  std::vector<Tnum> A ;
+  A.push_back(a0) ;
+  A.push_back(a1) ;
+  A.push_back(a2) ;
+  A.push_back(a3) ;
+  A.push_back(a4) ;
+  A.push_back(a5) ;
+  A.push_back(a6) ;
+  A.push_back(a7) ;
+  A.push_back(a8) ;
+  return A ;
+}
+
 #endif//__EDTYPE_H__
