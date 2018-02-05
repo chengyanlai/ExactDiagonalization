@@ -162,6 +162,34 @@ void Hamiltonian<Tnum>::NNHopping( const size_t species_id, const std::vector< N
   }
 }
 
+template<typename Tnum>
+void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector< std::vector<Tnum> >& Uloc ){
+  // Both species live in the same lattice and the same happing amplitudes
+  assert( bs.size() == 2 );//NOTE: Only support two or one species right now.
+  assert( Vloc.size() == Uloc.size() );
+  assert( Vloc.size() == bs.size() );
+  int cnt = 0;
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
+  for ( auto &b : bs ){
+    /* For intra-species local terms: Potential */
+    assert( b.getL() == Vloc.at(cnt).size() );
+    assert( b.getL() == Uloc.at(cnt).size() );
+    LocalPotential( cnt, Vloc.at(cnt), b, MatElemts );
+    /* For intra-species N-N hopping */
+    assert( b.getL() == lattice.size() );
+    NNHopping( cnt, lattice, b, MatElemts );
+    cnt++;
+  }
+  /* For inter-species local terms: Hubbard U */
+  std::vector<int> sid;
+  sid.push_back(0);
+  sid.push_back(1);
+  HubbardInteraction(sid, Uloc.at(0), bs, MatElemts );
+  /* Build H_total */
+  BuildTotalHamiltonian( MatElemts );
+}
+
 // template<typename Tnum>// Extended Hubbard
 // void Hamiltonian<Tnum>::FermionIntraNN( const int speciesId, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
 //   size_t count;

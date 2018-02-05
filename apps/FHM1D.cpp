@@ -27,39 +27,51 @@
 // #define DTV RealVectorType
 // #define DTM RealMatrixType
 
-
-void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
-  RealType &J1, RealType &J2, RealType &Phase, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
-  int &dynamics, int &Tsteps, RealType &dt){
-    HDF5IO file(filename);
-    file.LoadNumber("Parameters", "L", L);
-    file.LoadNumber("Parameters", "OBC", OBC);
-    file.LoadNumber("Parameters", "N1", N1);
-    file.LoadNumber("Parameters", "N2", N2);
-    file.LoadNumber("Parameters", "J1", J1);
-    file.LoadNumber("Parameters", "J2", J2);
-    file.LoadNumber("Parameters", "Phase", Phase);
-    file.LoadStdVector("Parameters", "U", Uls);
-    file.LoadStdVector("Parameters", "V", Vls);
-    file.LoadNumber("Parameters", "dynamics", dynamics);
-    file.LoadNumber("Parameters", "Tsteps", Tsteps);
-    file.LoadNumber("Parameters", "dt", dt);
+DTV LoadWF( const std::string filename, const std::string GroupName, const std::string SetName ){
+  HDF5IO file(filename);
+  DTV WF;
+  file.LoadVector(GroupName, SetName, WF);
+  return WF:
 }
 
-void LoadParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2,
-  std::vector<RealType> &Jls, std::vector<RealType> &Uls, std::vector<RealType> &Vls,
-  int &dynamics, int &Tsteps, RealType &dt){
-    HDF5IO file(filename);
-    file.LoadNumber("Parameters", "L", L);
-    file.LoadNumber("Parameters", "OBC", OBC);
-    file.LoadNumber("Parameters", "N1", N1);
-    file.LoadNumber("Parameters", "N2", N2);
-    file.LoadStdVector("Parameters", "J", Jls);
-    file.LoadStdVector("Parameters", "U", Uls);
-    file.LoadStdVector("Parameters", "V", Vls);
-    file.LoadNumber("Parameters", "dynamics", dynamics);
-    file.LoadNumber("Parameters", "Tsteps", Tsteps);
-    file.LoadNumber("Parameters", "dt", dt);
+// void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2, RealType &J1, RealType &J2, RealType &Phase, std::vector<RealType> &Uls, std::vector<RealType> &Vls){
+//     HDF5IO file(filename);
+//     file.LoadNumber("Parameters", "L", L);
+//     file.LoadNumber("Parameters", "OBC", OBC);
+//     file.LoadNumber("Parameters", "N1", N1);
+//     file.LoadNumber("Parameters", "N2", N2);
+//     file.LoadNumber("Parameters", "J1", J1);
+//     file.LoadNumber("Parameters", "J2", J2);
+//     file.LoadNumber("Parameters", "Phase", Phase);
+//     file.LoadStdVector("Parameters", "U", Uls);
+//     file.LoadStdVector("Parameters", "V", Vls);
+// }
+
+void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2, std::vector<RealType> &Jls, std::vector<RealType> &Uls, std::vector<RealType> &Vls){
+  HDF5IO file(filename);
+  file.LoadNumber("Parameters", "L", L);
+  file.LoadNumber("Parameters", "OBC", OBC);
+  file.LoadNumber("Parameters", "N1", N1);
+  file.LoadNumber("Parameters", "N2", N2);
+  file.LoadStdVector("Parameters", "J", Jls);
+  file.LoadStdVector("Parameters", "U", Uls);
+  file.LoadStdVector("Parameters", "V", Vls);
+}
+
+void LoadDynParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2, std::vector<RealType> &Jils, std::vector<RealType> &Uils, std::vector<RealType> &Vils, std::vector<RealType> &At, std::vector<RealType> &Ufls, std::vector<RealType> &Vfls, int& TSteps, RealType& dt){
+  HDF5IO file(filename);
+  file.LoadNumber("Parameters", "L", L);
+  file.LoadNumber("Parameters", "OBC", OBC);
+  file.LoadNumber("Parameters", "N1", N1);
+  file.LoadNumber("Parameters", "N2", N2);
+  file.LoadStdVector("Parameters", "J", Jils);
+  file.LoadStdVector("Parameters", "U", Uils);
+  file.LoadStdVector("Parameters", "V", Vils);
+  file.LoadStdVector("Parameters", "At", At);
+  file.LoadStdVector("Parameters", "Uf", Uils);
+  file.LoadStdVector("Parameters", "Vf", Vils);
+  file.LoadNumber("Parameters", "TSteps", TSteps);
+  file.LoadNumber("Parameters", "dt", dt);
 }
 
 ComplexMatrixType SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Hamiltonian<ComplexType> &Ham0 ){
@@ -171,15 +183,12 @@ void Equilibrium(const std::string prefix){
   int L;
   int OBC;
   int N1, N2;
-  int dynamics, Tsteps;
-  RealType dt;
   std::vector<RealType> Jin, Uin, Vin;
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
     H5::H5File::isHdf5("conf.h5");
-    LoadParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, dynamics, Tsteps, dt);
-    std::cout << "Parameters for calculation loaded!" << std::endl;
+    LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin);
   }catch(H5::FileIException){
     L = 12;
     OBC = 1;
@@ -188,9 +197,6 @@ void Equilibrium(const std::string prefix){
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
     Uin = std::vector<RealType>(L, 1.0);
     Vin = std::vector<RealType>(L, 0.0);
-    dynamics = 0;
-    Tsteps = 0;
-    dt = 0.005;
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
   LogOut << "Build Lattice - " << std::endl;
@@ -206,32 +212,11 @@ void Equilibrium(const std::string prefix){
   // int N1 = (L+1)/2;
   Basis F1(L, N1, true);
   F1.Fermion();
-  std::vector<int> st1 = F1.getFStates();
-  std::vector<size_t> tg1 = F1.getFTags();
-  // for (size_t cnt = 0; cnt < st1.size(); cnt++) {
-  //   INFO_NONEWLINE( std::setw(3) << st1.at(cnt) << " - ");
-  //   F1.printFermionBasis(st1.at(cnt));
-  //   INFO("- " << tg1.at(st1.at(cnt)));
-  // }
-  // int N2 = (L-1)/2;
   Basis F2(L, N2, true);
   F2.Fermion();
-  std::vector<int> st2 = F2.getFStates();
-  std::vector<size_t> tg2 = F2.getFTags();
-  // for (size_t cnt = 0; cnt < st2.size(); cnt++) {
-  //   INFO_NONEWLINE( std::setw(3) << st2.at(cnt) << " - ");
-  //   F2.printFermionBasis(st2.at(cnt));
-  //   INFO("- " << tg2.at(st2.at(cnt)));
-  // }
   std::vector<Basis> Bases;
   Bases.push_back(F1);
   Bases.push_back(F2);
-  file->SaveNumber("Basis", "N1", N1);
-  file->SaveStdVector("Basis", "F1States", st1);
-  file->SaveStdVector("Basis", "F1Tags", tg1);
-  file->SaveNumber("Basis", "N2", N2);
-  file->SaveStdVector("Basis", "F2States", st2);
-  file->SaveStdVector("Basis", "F2Tags", tg2);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
   Hamiltonian<DT> Ham0( Bases );
@@ -262,8 +247,6 @@ void Equilibrium(const std::string prefix){
   LogOut << "DONE!" << std::endl;
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;
-// std::cout << Vecs.n_rows << " " << Vecs.n_cols << std::endl;
-// std::cout << Vecs.col(0).n_rows << " " << Vecs.col(0).n_cols << std::endl;
   DTV Vec = Vecs.col(0);
 // ComplexSparseMatrixType H0 = Ham0.getTotalHamiltonian();
 // std::cout << arma::cdot(Vec, H0 * Vec) << std::endl;
@@ -301,6 +284,46 @@ void Equilibrium(const std::string prefix){
   file->SaveMatrix("Obs", "CMUp", CMUp);
   file->SaveMatrix("Obs", "CMDn", CMDn);
   delete file;
+  LogOut.close();
+}
+
+void Dynamics(const std::string prefix){
+  std::ofstream LogOut;
+  LogOut.open(prefix + "dyn.fhm.1d", std::ios::app);
+  int L;
+  int OBC;
+  int N1, N2;
+  std::vector<RealType> Jeqm, Ueqm, Veqm;
+  std::vector<RealType> At, Ut, Vt;
+  int TSteps;
+  RealType dt;
+  try{
+    /* Load parameters from file */
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5("conf.h5");
+    LoadDynParameters( "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, At, Ut, Vt, TSteps, dt);
+  }catch(H5::FileIException){
+    L = 12;
+    OBC = 1;
+    N1 = 6;
+    N2 = 6;
+    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 1.0);
+    Veqm = std::vector<RealType>(L, 0.0);
+    Ut = Ueqm;
+    Vt = Veqm;
+    Vt.at(6) -= 3.0;
+    TSteps = 4000;
+    dt = 0.005;
+    At = std::vector<RealType>(TSteps, 0.0);
+  }
+  LogOut << "Load eqm wf - " << std::flush;
+  HDF5IO *EqmFile = new HDF5IO("FHMChainData.h5");
+  DTV Vec0;
+  EqmFile.LoadVector("GS", "Vec", Vec0);
+  delete EqmFile;
+  LogOut << "DONE!" << std::endl;
+  LogOut.close();
 }
 
 /* main program */
@@ -310,6 +333,13 @@ int main(int argc, char *argv[]){
   mkl_set_dynamic(0);
   mkl_set_num_threads(NumCores);
 #endif
-  Equilibrium("");
+  if ( argv[1] == 0 ){
+    Equilibrium("");
+  }else if ( argv[1] == 1 ){
+    Dynamics("");
+  }else if ( argv[1] == 2 ){
+    Equilibrium("");
+    Dynamics("");
+  }
   return 0;
 }

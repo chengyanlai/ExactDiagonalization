@@ -26,28 +26,21 @@ public:
   };
   inline int CheckHermitian(){return arma::approx_equal(H_total, H_total.t(), "absdiff", 1.0e-5);};// armadillo
   void BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts );
-  // inline void CheckTotalHamiltonian(){std::cout << H_total.isApprox( H_total.adjoint() ) << std::endl;};// Eigen3
-  // void BuildLocalHamiltonian( const std::vector< std::vector<Tnum> > &Vloc, const std::vector< std::vector<Tnum> > &Uloc, const std::vector<Basis> &bs );
-  // void BuildHoppingHamiltonian( const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt );
-  // void BuildHoppingHamiltonian( const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt );
-  // void BuildXXZHamiltonian(const Tnum Delta, const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt );
-  // void BuildTIsingHamiltonian(const Tnum hz, const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt );
-  /* vvvvvvv Boson Functions vvvvvvv */
-  // void BosonIntraLocalPart( const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc, const Basis &bs, std::vector<Triplet> &hloc );
-  // void BosonIntraLocalPart( const size_t species_id, const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc, const Basis &bs, std::vector<Triplet> &hloc );
-  // void BosonIntraHoppingPart( const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop );
-  // void BosonIntraHoppingPart( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop );
-  /* ^^^^^^^ Boson Functions ^^^^^^^ */
-  /* vvvvvvv Fermion Functions vvvvvvv */
+  /* vvvvvvv Bose Hubbard model vvvvvvv */
+  void BoseHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Vloc, const std::vector<Tnum>& Uloc );
+  void LocalTerms( const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
+  void NNHopping( const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
+  /* ^^^^^^^ Bose Hubbard model ^^^^^^^ */
+  /* vvvvvvv Fermi Hubbard model vvvvvvv */
   void FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector< std::vector<Tnum> >& Uloc );
   void LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   void HubbardInteraction( const std::vector<int> species_id, const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   void NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
+  /* ^^^^^^^  Fermi Hubbard model ^^^^^^^ */
   // void FermionIntraNN( const int speciesId, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
   // void FermionDensityDensity(
   //   const std::vector<std::pair<int,int> > betweenSpecies, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
   //   const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
-  /* ^^^^^^^ Fermion Functions ^^^^^^^ */
   /* vvvvvvv Spin Functions vvvvvvv */
   // void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop);
   // void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop );

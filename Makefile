@@ -25,7 +25,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/fhm.1d
+all: checkdirs build/fhm.1d build/bhm.1d
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
@@ -33,6 +33,9 @@ build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
 build/fhm.1d: build/apps/FHM1D.o $(OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
+
+build/bhm.1d: build/apps/BHM1D.o $(OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/trxas.f: build/apps/TRXAS.o $(OBJ)
