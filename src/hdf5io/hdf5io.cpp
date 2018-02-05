@@ -147,24 +147,16 @@ template void HDF5IO::LoadRawBuffer(const std::string& GroupName, const std::str
 template<>
 void HDF5IO::LoadRawBuffer(const std::string& GroupName, const std::string& SetName, size_t& dim, unsigned long*& x){
   H5::DataType OutputDataType = H5::PredType::NATIVE_ULONG;
-std::cout << "0\n";
   try{
     H5::Group FG = GetGroup( GroupName );
-std::cout << "01\n";
     H5::DataSet DataSet = FG.openDataSet(SetName.c_str());
-std::cout << "1\n";
     try{
       H5::DataSpace DataSpace = DataSet.getSpace();
-std::cout << "2\n";
       hsize_t Dims[1];
       int NDims = DataSpace.getSimpleExtentDims(Dims);
-std::cout << "3\n";
       dim = ( NDims == 0 )? 1 : Dims[0];
-std::cout << "4\n";
       x = (unsigned long*)malloc( dim * sizeof(unsigned long) );
-std::cout << "5\n";
       DataSet.read(x, OutputDataType);
-std::cout << "6\n";
     } catch( const H5::DataSpaceIException error ){
         error.printError();
     } catch( const H5::DataSetIException error){

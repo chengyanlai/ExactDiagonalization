@@ -106,7 +106,9 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const Comp
       tmpKmat.t();
       INFO( Kmat * Dmat * tmpKmat );
     }
-    ComplexMatrixType Otmp = Vm.submat( 0, 0, Vec.size(), Kused ) * Kmat;
+    Vm.reshape( Vec.n_rows, Kused );
+    ComplexMatrixType Otmp = Vm * Kmat;
+    // ComplexMatrixType Otmp = Vm.submat( 0, 0, Vec.size(), Kused ) * Kmat;
     Vec = ( Otmp * Dmat ) * ( Otmp.t() * Vec );
   }
 }

@@ -1,4 +1,5 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Lanczos/krylov.hpp"
 #include "src/numeric/lapack.h"
 
 #ifndef DEBUG
@@ -68,6 +69,7 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
 
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax ){
+  krylov(H_total, Vec, Prefactor, Kmax);
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y

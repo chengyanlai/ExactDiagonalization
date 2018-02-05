@@ -106,7 +106,7 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       Vout(nid) = Vin(oid);
     }
   }
-  return Vout;
+  return arma::normalise(Vout);
 }
 
 DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
@@ -214,7 +214,7 @@ DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0
 
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "fhm.1d.eqm", std::ios::app);
+  LogOut.open(prefix + "FHM.1d.eqm", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -319,7 +319,7 @@ void Equilibrium(const std::string prefix){
 
 void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const int SaveWFEvery = 1000000 ){
   std::ofstream LogOut;
-  LogOut.open(prefix + "pump.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "Pump.fhm.1d", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -348,7 +348,7 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   std::vector<ComplexType> J(Jeqm.begin(), Jeqm.end());
   std::vector< Node<ComplexType>* > EqmLattice = NN_1D_Chain(L, J, OBC);
   LogOut << "DONE!" << std::endl;
-  LogOut << "Build Eqm Basis - " << std::flush;
+  LogOut << "Build Eqm Basis (shared with pump) - " << std::flush;
   Basis F1(L, N1, true);
   F1.Fermion();
   Basis F2(L, N2, true);
@@ -366,7 +366,6 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   std::vector<ComplexType> Uloc(Ueqm.begin(), Ueqm.end());
   Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
-std::cout << Ham0.GetTotalHamiltonian() << std::endl;
   // Load Wavefunction
   LogOut << "Load Eqm Wavefunction - " << std::flush;
   HDF5IO *EqmFile = new HDF5IO("FHMChainData.h5");
@@ -377,7 +376,6 @@ std::cout << Ham0.GetTotalHamiltonian() << std::endl;
 
   /* Pumping */
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-  size_t PSteps = At.size();
   ComplexVectorType VecPump = VecInit;
   HDF5IO* file2 = new HDF5IO("Pump.h5");
   std::string gname = "Obs-0/";
@@ -388,7 +386,7 @@ std::cout << Ham0.GetTotalHamiltonian() << std::endl;
   file2->SaveVector(gname, "Ndn", Nfi.at(1));
   delete file2;
   LogOut << "Begin pumping......" << std::endl;
-  for (size_t cntP = 1; cntP <= PSteps; cntP++) {
+  for (size_t cntP = 1; cntP <= TSteps; cntP++) {
     if ( OBC ){
       J = std::vector<ComplexType>(L - 1, exp( ComplexType(0.0, 1.0) * At.at(cntP-1)) );
     } else{
@@ -401,9 +399,7 @@ std::cout << Ham0.GetTotalHamiltonian() << std::endl;
     // Interaction
     std::vector<ComplexType> Ut(Ueqm.begin(), Ueqm.end());
     Ham0.FermiHubbardModel(Bases, PLattice, Vt, Ut);
-std::cout << Ham0.GetTotalHamiltonian() << std::endl;
-std::cin.get();
-    if ( Ham0.CheckHermitian() ) LogOut << "non-Hermitian Hamiltonian at PStep = " << cntP << std::endl;
+    if ( !(Ham0.CheckHermitian()) ) LogOut << "non-Hermitian Hamiltonian at PStep = " << cntP << std::endl;
     // Evolve the state
     Ham0.expH(Prefactor, VecPump);
     if ( cntP % MeasureEvery == 0 ){
@@ -440,7 +436,7 @@ std::cin.get();
 
 void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int SaveWFEvery = 1000000 ){
   std::ofstream LogOut;
-  LogOut.open(prefix + "xas.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "XAS.fhm.1d", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -546,7 +542,51 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   // Create Core Hole on wf
   LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::endl;
   ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+  ComplexVectorType VecXAS = VecInit;
+  HDF5IO* file2 = new HDF5IO("XASWF.h5");
+  std::string gname = "WF-0";
+  file2->SaveVector(gname, "Vec", VecXAS);
+  delete file2;
   LogOut << " DONE!" << std::endl;
+
+  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+  HDF5IO* file1 = new HDF5IO("XAS.h5");
+  gname = "Obs-0/";
+  ComplexType Lecho = arma::cdot(VecInit, VecXAS);
+  std::vector<DTV> Nfi = Ni( CoreHoleBases, VecXAS, CoreHoleHam );
+  file1->SaveNumber(gname, "Lecho", Lecho);
+  file1->SaveVector(gname, "Nup", Nfi.at(0));
+  file1->SaveVector(gname, "Ndn", Nfi.at(1));
+  delete file1;
+  LogOut << "Begin dynamics to XAS......" << std::endl;
+  for (size_t cntT = 1; cntT <= TSteps; cntT++) {
+    // Evolve the state
+    CoreHoleHam.expH(Prefactor, VecXAS);
+    if ( cntT % MeasureEvery == 0 ){
+      file1 = new HDF5IO("XAS.h5");
+      std::string gname = "Obs-";
+      gname.append( std::to_string((unsigned long long)cntT ));
+      gname.append("/");
+      ComplexType Lecho = arma::cdot(VecInit, VecXAS);
+      Nfi = Ni( CoreHoleBases, VecXAS, CoreHoleHam );
+      file1->SaveNumber(gname, "Lecho", Lecho);
+      file1->SaveVector(gname, "Nup", Nfi.at(0));
+      file1->SaveVector(gname, "Ndn", Nfi.at(1));
+      delete file1;
+    }
+    if ( cntT % SaveWFEvery == 0 ){
+      file2 = new HDF5IO("XASWF.h5");
+      gname = "WF-";
+      gname.append( std::to_string((unsigned long long)cntT ));
+      gname.append("/");
+      file2->SaveVector(gname, "Vec", VecXAS);
+      delete file2;
+    }
+  }
+  file2 = new HDF5IO("XASWF.h5");
+  gname = "WF";
+  file2->SaveVector(gname, "Vec", VecXAS);
+  delete file2;
   LogOut.close();
 }
 
@@ -561,18 +601,18 @@ int main(int argc, char *argv[]){
     Equilibrium("");
   }else if ( std::atoi(argv[1]) == 1 ){
     PumpDynamics("");
-  // }else if ( std::atoi(argv[1]) == 2 ){
-    // XASDynamics("");
+  }else if ( std::atoi(argv[1]) == 2 ){
+    XASDynamics("");
   }else if ( std::atoi(argv[1]) == 10 ){
     Equilibrium("");
     PumpDynamics("");
-  }//else if ( std::atoi(argv[1]) == 20 ){
-  //   Equilibrium("");
-  //   XASDynamics("");
-  // }else if ( std::atoi(argv[1]) == 210 ){
-  //   Equilibrium("");
-  //   PumpDynamics("");
-  //   XASDynamics("");
-  // }
+  }else if ( std::atoi(argv[1]) == 20 ){
+    Equilibrium("");
+    XASDynamics("");
+  }else if ( std::atoi(argv[1]) == 210 ){
+    Equilibrium("");
+    PumpDynamics("");
+    XASDynamics("");
+  }
   return 0;
 }
