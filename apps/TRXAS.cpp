@@ -264,7 +264,7 @@ int main(int argc, char const *argv[]) {
     } else{
       Jp = std::vector<ComplexType>(L, exp( ComplexType(0.0, 1.0) * At.at(cntP-1)) );
     }
-    std::vector< Node<ComplexType>* > PLattice = NN_1D_Chain(L, J, OBC);
+    std::vector< Node<ComplexType>* > PLattice = NN_1D_Chain(L, Jp, OBC);
     ham.BuildHoppingHamiltonian(Bases, lattice);
     ham.BuildTotalHamiltonian();
     ham.expH(Prefactor, VecP);
