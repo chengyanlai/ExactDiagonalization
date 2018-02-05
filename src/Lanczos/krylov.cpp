@@ -62,25 +62,6 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const Comp
     /* NOTE: This is a special case that input vector is eigenvector */
     Vec = exp(Prefactor * Alphas.at(0)) * Vec;
   } else{
-    /* NOTE: The floowing codes use Eigen to solve the tri-diagonal matrix.
-             If we use this, we need the Eigen header in this file.
-    */
-    // RealMatrixType TriDiag = RealMatrixType::Zero(Kused, Kused);
-    // for (size_t cnt = 0; cnt < Kused; cnt++) {
-    //   TriDiag(cnt, cnt) = Alphas.at(cnt);
-    //   if (cnt > 0) {
-    //     TriDiag(cnt, cnt-1) = Betas.at(cnt - 1);
-    //     TriDiag(cnt-1, cnt) = Betas.at(cnt - 1);
-    //   }
-    // }
-    // Eigen::SelfAdjointEigenSolver<RealMatrixType> es;
-    // es.compute(TriDiag);
-    // RealVectorType Dvec = es.eigenvalues();
-    // ComplexMatrixType Dmat = ComplexMatrixType::Zero(Kused, Kused);
-    // for (size_t cnt = 0; cnt < Kused; cnt++) {
-    //   Dmat(cnt,cnt) = exp( Prefactor * Dvec(cnt) );
-    // }
-    // RealMatrixType Kmat = es.eigenvectors();
     /* NOTE: The floowing codes use MKL Lapack to solve the tri-diagonal matrix */
     RealType* d = &Alphas[0];
     RealType* e = &Betas[0];
