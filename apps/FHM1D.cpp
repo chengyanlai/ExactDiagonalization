@@ -157,8 +157,8 @@ DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Ba
   return CM;
 }
 
-std::vector<DTV> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
-  std::vector<DTV> out;
+std::vector<RealVectorType> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
+  std::vector<RealVectorType> out;
   DTV tmp1(Bases.at(0).getL(), arma::fill::zeros);//(Bases.at(0).getL(), 0.0e0);
   DTV tmp2(Bases.at(1).getL(), arma::fill::zeros);//(Bases.at(1).getL(), 0.0e0);
   std::vector<int> f1 = Bases.at(0).getFStates();
@@ -180,12 +180,12 @@ std::vector<DTV> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonia
     }
     f2id++;
   }
-  out.push_back(tmp1);
-  out.push_back(tmp2);
+  out.push_back( arma::real(tmp1) );
+  out.push_back( arma::real(tmp2) );
   return out;
 }
 
-DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0, const int species1, const int species2 ){
+RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0, const int species1, const int species2 ){
   DTM out(Bases.at(0).getL(), Bases.at(1).getL(), arma::fill::zeros );
   std::vector<int> f1 = Bases.at(0).getFStates();
   std::vector<int> f2 = Bases.at(1).getFStates();
@@ -209,7 +209,7 @@ DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0
     }
     f2id++;
   }
-  return out;
+  return arma::real(out);
 }
 
 void Equilibrium(const std::string prefix){
@@ -276,7 +276,7 @@ void Equilibrium(const std::string prefix){
   // std::cout << arma::cdot(Vec, H0 * Vec) << std::endl;
   file->SaveVector("GS", "EVec", Vec);
   file->SaveVector("GS", "EVal", Vals);
-  std::vector<DTV> Nfi = Ni( Bases, Vec, Ham0 );
+  std::vector<RealVectorType> Nfi = Ni( Bases, Vec, Ham0 );
   LogOut << " Up Spin - " << std::endl;
   LogOut << Nfi.at(0) << std::endl;
   DT NupT = arma::sum(Nfi.at(0));
@@ -286,19 +286,19 @@ void Equilibrium(const std::string prefix){
   DT NdnT = arma::sum(Nfi.at(1));
   LogOut << "Total N_down = " << NdnT << std::endl;
   LogOut << " N_i - " << std::endl;
-  DTV Niall = Nfi.at(0) + Nfi.at(1);
+  RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
   LogOut << Niall << std::endl;
-  DTM NupNdn = NiNj( Bases, Vec, Ham0, 0, 1 );
+  RealMatrixType NupNdn = NiNj( Bases, Vec, Ham0, 0, 1 );
   LogOut << " Correlation NupNdn" << std::endl;
   LogOut << NupNdn << std::endl;
-  DTM NupNup = NiNj( Bases, Vec, Ham0, 0, 0 );
+  RealMatrixType NupNup = NiNj( Bases, Vec, Ham0, 0, 0 );
   LogOut << " Correlation NupNup" << std::endl;
   LogOut << NupNup << std::endl;
-  DTM NdnNdn = NiNj( Bases, Vec, Ham0, 1, 1 );
+  RealMatrixType NdnNdn = NiNj( Bases, Vec, Ham0, 1, 1 );
   LogOut << " Correlation NdnNdn" << std::endl;
   LogOut << NdnNdn << std::endl;
   LogOut << " N_i^2 - " << std::endl;
-  DTM Ni2 = NupNup.diag() + NdnNdn.diag() + 2.0e0 * NupNdn.diag();
+  RealMatrixType Ni2 = NupNup.diag() + NdnNdn.diag() + 2.0e0 * NupNdn.diag();
   LogOut << Ni2 << std::endl;
   DTM CMUp = SingleParticleDensityMatrix( 0, Bases, Vec, Ham0 );
   LogOut << CMUp << std::endl;
@@ -380,7 +380,7 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   HDF5IO* file2 = new HDF5IO("Pump.h5");
   std::string gname = "Obs-0/";
   ComplexType Lecho = arma::cdot(VecInit, VecPump);
-  std::vector<DTV> Nfi = Ni( Bases, VecPump, Ham0 );
+  std::vector<RealVectorType> Nfi = Ni( Bases, VecPump, Ham0 );
   file2->SaveNumber(gname, "Lecho", Lecho);
   file2->SaveVector(gname, "Nup", Nfi.at(0));
   file2->SaveVector(gname, "Ndn", Nfi.at(1));
@@ -553,7 +553,7 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   HDF5IO* file1 = new HDF5IO("XAS.h5");
   gname = "Obs-0/";
   ComplexType Lecho = arma::cdot(VecInit, VecXAS);
-  std::vector<DTV> Nfi = Ni( CoreHoleBases, VecXAS, CoreHoleHam );
+  std::vector<RealVectorType> Nfi = Ni( CoreHoleBases, VecXAS, CoreHoleHam );
   file1->SaveNumber(gname, "Lecho", Lecho);
   file1->SaveVector(gname, "Nup", Nfi.at(0));
   file1->SaveVector(gname, "Ndn", Nfi.at(1));
@@ -608,6 +608,9 @@ int main(int argc, char *argv[]){
     PumpDynamics("");
   }else if ( std::atoi(argv[1]) == 20 ){
     Equilibrium("");
+    XASDynamics("");
+  }else if ( std::atoi(argv[1]) == 21 ){
+    PumpDynamics("");
     XASDynamics("");
   }else if ( std::atoi(argv[1]) == 210 ){
     Equilibrium("");

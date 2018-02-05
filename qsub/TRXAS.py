@@ -76,14 +76,14 @@ for U, V in UVls:
   dset = para.create_dataset("V", data=Vls)
   # Pump
   dset = para.create_dataset("At", data=At)
-  dset = para.create_dataset("TstepsA", data=At.shape[0])
+  dset = para.create_dataset("TStepsA", data=At.shape[0])
   dset = para.create_dataset("dtA", data=dt)
   # XAS
   Uls[CHloc] += U
   dset = para.create_dataset("Uf", data=Uls)
   Vls[CHloc] += V
   dset = para.create_dataset("Vf", data=Vls)
-  dset = para.create_dataset("TstepsX", data=Tsteps)
+  dset = para.create_dataset("TStepsX", data=Tsteps)
   dset = para.create_dataset("dtX", data=dt)
   dset = para.create_dataset("CoreHole", data=CHloc)
   dset = para.create_dataset("Type", data=1)
