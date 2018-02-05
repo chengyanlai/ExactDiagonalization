@@ -19,13 +19,13 @@ Uinit = 9
 # XAS Parameters
 CHloc = np.int(L / 2)
 UVls = [(0., -3.)]
-Tsteps = 4000
+Tsteps = 3400
 dt = 0.005
 
 # For pumping pulse
-A0 = 0#1
-Tau = 0#2
-W0 = 0#3
+A0 = 1
+Tau = 2
+W0 = 3
 def getAt(tlist, td, tau=12, W=3, A0=1):
   p = []
   for t in tlist:
@@ -40,7 +40,8 @@ else:
   At = np.array([])
 
 APPs = []
-APPs.append(os.path.join(SrcDir, "build", "trxas.f"))
+APPs.append(os.path.join(SrcDir, "build", "fhm.1d 10"))
+APPs.append("/bin/touch DONE")
 
 if OBC:
   Prefix = "-".join(["trxasO", "".join(["L", str(L)]), str(N1), str(N2)])
@@ -65,17 +66,27 @@ for U, V in UVls:
   dset = para.create_dataset("OBC", data=OBC)
   dset = para.create_dataset("N1", data=N1)
   dset = para.create_dataset("N2", data=N2)
-  dset = para.create_dataset("CHloc", data=CHloc)
+  if OBC: Jls = np.ones(L-1, dtype=np.float64)
+  else: Jls = np.ones(L, dtype=np.float64)
+  dset = para.create_dataset("J", data=Jls)
   Uls = np.ones(L, dtype=np.float64) * np.float64(Uinit)
-  dset = para.create_dataset("Uinit", data=Uls)
-  Uls[CHloc] += U
   dset = para.create_dataset("U", data=Uls)
   Vls = np.zeros(L, dtype=np.float64)
-  Vls[CHloc] += V
   dset = para.create_dataset("V", data=Vls)
+  # Pump
   dset = para.create_dataset("At", data=At)
-  dset = para.create_dataset("Tsteps", data=Tsteps)
-  dset = para.create_dataset("dt", data=dt)
+  dset = para.create_dataset("TstepsA", data=At.shape[0])
+  dset = para.create_dataset("dtA", data=dt)
+  # XAS
+  Uls[CHloc] += U
+  dset = para.create_dataset("Uf", data=Uls)
+  Vls[CHloc] += V
+  dset = para.create_dataset("Vf", data=Vls)
+  dset = para.create_dataset("TstepsX", data=Tsteps)
+  dset = para.create_dataset("dtX", data=dt)
+  dset = para.create_dataset("CoreHole", data=CHloc)
+  dset = para.create_dataset("Type", data=1)
+  dset = para.create_dataset("Species", data=0)
   f.close()
 
   Filename = os.path.join(workdir, 'job')

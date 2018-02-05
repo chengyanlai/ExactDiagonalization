@@ -55,7 +55,7 @@ public:
   RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
   inline SparseMatrixType GetTotalHamiltonian()const{return H_total;};
-  inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
+  inline size_t DetermineTotalIndex( const std::vector<size_t> ids )const{
     assert( ids.size() == HilbertSpaces.size() );
     size_t tidx = 0;
     size_t factor = 1;

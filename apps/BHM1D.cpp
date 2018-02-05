@@ -90,8 +90,7 @@ void Equilibrium(const std::string prefix){
   std::vector<DT> UWork(Uin.begin(), Uin.end());
   std::vector<DT> VWork(Vin.begin(), Vin.end());
   Ham0.BoseHubbardModel(Bases, lattice, VWork, UWork);
-  Ham0.CheckHermitian();
-  LogOut << Ham0.GetTotalHilbertSpace() << " DONE!" << std::endl;
+  LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
   LogOut << "Diagonalize Hamiltonian - " << std::flush;
   RealVectorType Vals;
   DTM Vecs;

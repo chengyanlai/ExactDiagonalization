@@ -36,6 +36,8 @@ void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int,
     // Eigen3
     cnt++;
   }
+  // Clear All elements
+  H_total = SparseMatrixType();// Need test
   // First true allows repeated matrix elements
   H_total = SparseMatrixType(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
 }
@@ -66,16 +68,6 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
 
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax ){
-  // RealVectorType KVals(Kmax);// armadillo
-  // ComplexMatrixType KVecs(Kmax, Vec.n_rows);// armadillo
-  // KVecs.row(0) = Vec;
-  // eigh( KVals, KVecs, Kmax, false );
-  // ComplexMatrixType Dmat(Kmax, Kmax);// armadillo
-  // for (size_t cnt = 0; cnt < Kmax; cnt++) {
-  //   Dmat(cnt,cnt) = exp( Prefactor * KVals(cnt) );
-  // }
-  // ComplexMatrixType KVecsT = KVecs.st();// copy of transpose without conj
-  // Vec = (KVecsT * Dmat) * (conj(KVecsT) * Vec);// armadillo
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y
