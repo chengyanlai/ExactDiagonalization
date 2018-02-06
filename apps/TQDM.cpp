@@ -299,7 +299,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   w1.clear();
   w2.clear();
-  std::cout << "C^dagger_0,dn" << std::endl;
+  LogOut << "C^dagger_0,dn" << std::endl;
   Cfdagger(0, 1, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaL);
   SiteTypesSpin.push_back(std::make_tuple(0, 1, 1));
@@ -307,7 +307,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   w1.clear();
   w2.clear();
-  std::cout << "C_2,up" << std::endl;
+  LogOut << "C_2,up" << std::endl;
   Cf(2, 0, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaR);
   SiteTypesSpin.push_back(std::make_tuple(2,-1, 0));
@@ -315,7 +315,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   w1.clear();
   w2.clear();
-  std::cout << "C_2,dn" << std::endl;
+  LogOut << "C_2,dn" << std::endl;
   Cf(2, 1, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaR);
   SiteTypesSpin.push_back(std::make_tuple(2,-1, 1));
