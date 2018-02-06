@@ -540,14 +540,14 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   }
   LogOut << VecInput.n_rows << " DONE!" << std::endl;
   // Create Core Hole on wf
-  LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::endl;
+  LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
   ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
   ComplexVectorType VecXAS = VecInit;
   HDF5IO* file2 = new HDF5IO("XASWF.h5");
   std::string gname = "WF-0";
   file2->SaveVector(gname, "Vec", VecXAS);
   delete file2;
-  LogOut << " DONE!" << std::endl;
+  LogOut << ", DONE!" << std::endl;
 
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   HDF5IO* file1 = new HDF5IO("XAS.h5");
@@ -594,7 +594,6 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
 #if defined(MKL)
-  mkl_set_dynamic(0);
   mkl_set_num_threads(NumCores);
 #endif
   if ( std::atoi(argv[1]) == 0 ){

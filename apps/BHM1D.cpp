@@ -122,7 +122,6 @@ void Equilibrium(const std::string prefix){
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
 #if defined(MKL)
-  mkl_set_dynamic(0);
   mkl_set_num_threads(NumCores);
 #endif
   Equilibrium("");

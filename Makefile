@@ -5,10 +5,10 @@ SRC_DIR   := $(addprefix src/,$(MODULES))
 SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
 OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
 
-PE_MODULES   := Lindblad-PE
+PE_MODULES   := Lindblad/ParticleExchange
 PE_SRC_DIR   := $(addprefix src/,$(MODULES) $(PE_MODULES))
-PE_SRC       := $(foreach sdir,$(PE_SRC_DIR),$(wildcard $(sdir)/*.cpp))
-PE_OBJ       := $(patsubst src/%.cpp,build/%.o,$(PE_SRC))
+PE_SRC       := $(foreach sdir,$(PE_SRC_DIR), $(wildcard $(sdir)/*.cpp))
+PE_OBJ       := $(patsubst src/%.cpp, build/%.o,$(PE_SRC))
 
 BUILD_DIR := $(addprefix build/,$(MODULES) $(PE_MODULES) apps)
 
@@ -25,7 +25,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/fhm.1d build/bhm.1d
+all: checkdirs build/fhm.1d build/bhm.1d build/tqdm
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
@@ -38,17 +38,8 @@ build/fhm.1d: build/apps/FHM1D.o $(OBJ)
 build/bhm.1d: build/apps/BHM1D.o $(OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/trxas.f: build/apps/TRXAS.o $(OBJ)
-# build/xas.f: build/apps/XAS2.o $(OBJ)
-
-build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/plex: build/apps/FermionBosonMix.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/rixs: build/apps/RIXS.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/tqdm: build/apps/TQDM.o $(OBJ) $(PE_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/apps/FermionBosonMixMPI.o: apps/FermionBosonMix.cpp
 	$(MPICC) $(INCLUDES) -c $< -o $@
