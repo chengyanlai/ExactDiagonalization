@@ -10,7 +10,7 @@ void Hamiltonian<Tnum>::LocalPotential( const size_t species_id, const std::vect
   int state_id = 0;
   for ( int b : bs.FStates ){
     Tnum val = (Tnum)0.0;
-    for (size_t loc = 0; loc < bs.getL(); loc++) {
+    for (size_t loc = 0; loc < bs.GetL(); loc++) {
       if ( btest(b, loc) ){
         val += Vloc.at(loc);
       }
@@ -42,14 +42,14 @@ void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, c
   /*NOTE: Calculate interaction between any two input bases.
           Assume two input bases has the same L. */
   assert( bs.size() == 2 );
-  assert( bs.at(0).getL() == bs.at(1).getL() );
+  assert( bs.at(0).GetL() == bs.at(1).GetL() );
   std::vector< std::vector<size_t> > IndexU1;
   std::vector< std::vector<size_t> > IndexU2;
   size_t point1, point2;
   /*NOTE: Build the IndexU1 and IndexU2.
           IndexU has all index of species-1 which has occupied particle at site-i
   */
-  for (size_t i = 0; i < bs.at(0).getL(); i++) {
+  for (size_t i = 0; i < bs.at(0).GetL(); i++) {
     std::vector<size_t> work;
     point1 = 0;// point1 will be the same for all i
     for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(species_id.at(0)); cnt_up++) {
@@ -61,12 +61,12 @@ void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, c
     IndexU1.push_back(work);
     work.clear();
   }
-  if ( bs.at(0).getN() == bs.at(1).getN() ) {
+  if ( bs.at(0).GetN() == bs.at(1).GetN() ) {
     point2 = point1;
     IndexU2 = IndexU1;
   }
   else{
-    for (size_t i = 0; i < bs.at(1).getL(); i++) {
+    for (size_t i = 0; i < bs.at(1).GetL(); i++) {
       std::vector<size_t> work;
       point2 = 0;// point2 will be the same for all i
       for (size_t cnt_dn = 0; cnt_dn < HilbertSpaces.at(species_id.at(1)); cnt_dn++) {
@@ -80,7 +80,7 @@ void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, c
     }
   }
   // Calculate the interactions
-  for (size_t i = 0; i < bs.at(0).getL(); i++) {
+  for (size_t i = 0; i < bs.at(0).GetL(); i++) {
     for (size_t up = 0; up < point1; up++) {
       for (size_t dn = 0; dn < point2; dn++) {
         std::vector<size_t> ids(2,0);
@@ -100,8 +100,8 @@ void Hamiltonian<Tnum>::NNHopping( const size_t species_id, const std::vector< N
   for ( int b : bs.FStates ){
     for ( Node<Tnum>* l : lt ) {
       int site_i = l->data;
-      std::vector< Node<Tnum>* > nn = l->getNeighbors();
-      std::vector< Tnum > nnJ = l->getJval();
+      std::vector< Node<Tnum>* > nn = l->GetNeighbors();
+      std::vector< Tnum > nnJ = l->GetJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
         int site_j = nn.at(cnt)->data;// hopping from site-j to site-i
         /* see if hopping exist */
@@ -172,11 +172,11 @@ void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const s
   MatElemts.clear();
   for ( auto &b : bs ){
     /* For intra-species local terms: Potential */
-    assert( b.getL() == Vloc.at(cnt).size() );
-    assert( b.getL() == Uloc.size() );
+    assert( b.GetL() == Vloc.at(cnt).size() );
+    assert( b.GetL() == Uloc.size() );
     LocalPotential( cnt, Vloc.at(cnt), b, MatElemts );
     /* For intra-species N-N hopping */
-    assert( b.getL() == lattice.size() );
+    assert( b.GetL() == lattice.size() );
     NNHopping( cnt, lattice, b, MatElemts );
     cnt++;
   }

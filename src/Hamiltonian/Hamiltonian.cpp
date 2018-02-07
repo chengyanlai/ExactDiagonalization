@@ -14,7 +14,7 @@ Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis>& bs )
   */
   HilbertSpaces.clear();
   for ( auto &b : bs ){
-    HilbertSpaces.push_back(b.getHilbertSpace());
+    HilbertSpaces.push_back(b.GetHilbertSpace());
   }
   size_t TotalDim = GetTotalHilbertSpace();
   if (DEBUG) std::cout << "Total Hilbert Space = " << TotalDim << std::endl;

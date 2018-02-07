@@ -46,11 +46,11 @@ RealType TraceRhos(const std::vector<ComplexMatrixType> &Rhos){
 }
 
 ComplexMatrixType SingleParticleDensityMatrix( const int spin, const std::vector<std::vector<Basis> >& Bases, const std::vector<ComplexMatrixType>& Rhos, const std::vector<Hamiltonian<ComplexType> >& ham ){
-  size_t L = Bases.at(0).at(spin).getL();
+  size_t L = Bases.at(0).at(spin).GetL();
   ComplexMatrixType CM(L, L, arma::fill::zeros);
   for ( size_t cntB = 0; cntB < ham.size(); cntB++){
-    std::vector<int> bs = Bases.at(cntB).at(spin).getFStates();
-    std::vector<size_t> tg = Bases.at(cntB).at(spin).getFTags();
+    std::vector<int> bs = Bases.at(cntB).at(spin).GetFStates();
+    std::vector<size_t> tg = Bases.at(cntB).at(spin).GetFTags();
     ComplexMatrixType Rho = Rhos.at(cntB);
     for ( const int &b : bs ){
       size_t bid = tg.at(b);// Find their indices
@@ -77,8 +77,8 @@ ComplexMatrixType SingleParticleDensityMatrix( const int spin, const std::vector
             }
             size_t pid = tg.at(p);// Find their indices
             size_t count;
-            if ( spin == 0 ) count = Bases.at(cntB).at(1).getHilbertSpace();
-            else if ( spin == 1 ) count = Bases.at(cntB).at(0).getHilbertSpace();
+            if ( spin == 0 ) count = Bases.at(cntB).at(1).GetHilbertSpace();
+            else if ( spin == 1 ) count = Bases.at(cntB).at(0).GetHilbertSpace();
             std::vector<size_t> rids(2, bid);
             std::vector<size_t> cids(2, pid);
             for (size_t loop_id = 0; loop_id < count; loop_id++) {
@@ -101,20 +101,81 @@ ComplexMatrixType SingleParticleDensityMatrix( const int spin, const std::vector
   return CM;
 }
 
-ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos ){
-  ComplexMatrixType tmp(Bases.at(0).at(spin).getL(), Bases.at(0).at(spin).getL(), arma::fill::zeros);
+ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<Hamiltonian<ComplexType> >& ham ){
+  ComplexMatrixType tmp(Bases.at(0).at(spin).GetL(), Bases.at(0).at(spin).GetL(), arma::fill::zeros);
   for (size_t cnt = 0; cnt < Bases.size(); cnt++) {
-    std::vector<int> bs = Bases.at(cnt).at(spin).getFStates();
-    size_t coff = 0;
+    std::vector<int> bs = Bases.at(cnt).at(spin).GetFStates();
+    size_t id1 = 0;
     for ( auto &nf : bs ){
-      for (size_t cnt1 = 0; cnt1 < Bases.at(cnt).at(spin).getL(); cnt1++) {
-        for (size_t cnt2 = 0; cnt2 < Bases.at(cnt).at(spin).getL(); cnt2++) {
+      for (size_t cnt1 = 0; cnt1 < Bases.at(cnt).at(spin).GetL(); cnt1++) {
+        for (size_t cnt2 = 0; cnt2 < Bases.at(cnt).at(spin).GetL(); cnt2++) {
           if ( btest(nf, cnt1) && btest(nf, cnt2) ){
-            tmp(cnt1, cnt2) += Rhos.at(cnt)(coff, coff);
+            size_t count;
+            if ( spin == 0 ) count = Bases.at(cnt).at(1).GetHilbertSpace();
+            else if ( spin == 1 ) count = Bases.at(cnt).at(0).GetHilbertSpace();
+            std::vector<size_t> ids(2, id1);
+            for (size_t id2 = 0; id2 < count; id2++) {
+              if ( spin == 0 ){
+                ids.at(1) = id2;
+              }else if ( spin == 1 ){
+                ids.at(0) = id2;
+              }
+              size_t coff = ham.at(cnt).DetermineTotalIndex( ids );
+              tmp(cnt1, cnt2) += Rhos.at(cnt)(coff, coff);
+            }
           }
         }
       }
-      coff++;
+      id1++;
+    }
+  }
+  return tmp;
+}
+
+ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<Hamiltonian<ComplexType> >& ham ){
+  int L = Bases.at(0).at(0).GetL();
+  ComplexType tmp = ComplexType(0.0e0, 0.0e0);
+  for (size_t cnt = 0; cnt < Bases.size(); cnt++) {
+    std::vector<int> bs1 = Bases.at(cnt).at(0).GetFStates();
+    std::vector<size_t> tg1 = Bases.at(cnt).at(0).GetFTags();
+    std::vector<int> bs2 = Bases.at(cnt).at(1).GetFStates();
+    std::vector<size_t> tg2 = Bases.at(cnt).at(1).GetFTags();
+    for ( auto &nf1 : bs1 ){
+      size_t rid1 = tg1.at(nf1);
+      int nnf1 = nf1;
+      ComplexType tsign1 = ComplexType(1.0e0, 0.0e0);
+      if ( btest(nf1, Site1) && !btest(nf1, Site2) ){
+        nnf1 = ibset(nnf1, Site2);
+        nnf1 = ibclr(nnf1, Site1);
+        if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = ComplexType(-1.0, 0.0);// artificial!!
+      }else if ( !btest(nf1, Site1) && btest(nf1, Site2) ){
+        nnf1 = ibset(nnf1, Site1);
+        nnf1 = ibclr(nnf1, Site2);
+        if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = ComplexType(-1.0, 0.0);// artificial!!
+      }else{
+        continue;// skip this nf1
+      }
+      size_t cid1 = tg1.at(nnf1);
+      for ( auto &nf2 : bs2 ){
+        size_t rid2 = tg2.at(nf2);
+        int nnf2 = nf2;
+        ComplexType tsign2 = ComplexType(1.0e0, 0.0e0);
+        if ( btest(nf2, Site1) && !btest(nf2, Site2) ){
+          nnf2 = ibset(nnf2, Site2);
+          nnf2 = ibclr(nnf2, Site1);
+          if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = ComplexType(-1.0, 0.0);// artificial!!
+        }else if ( !btest(nf2, Site1) && btest(nf2, Site2) ){
+          nnf2 = ibset(nnf2, Site1);
+          nnf2 = ibclr(nnf2, Site2);
+          if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = ComplexType(-1.0, 0.0);// artificial!!
+        }else{
+          continue;// skip this nf2
+        }
+        size_t cid2 = tg2.at(nnf2);
+        size_t rid = ham.at(cnt).DetermineTotalIndex( vec(rid1, rid2) );
+        size_t cid = ham.at(cnt).DetermineTotalIndex( vec(cid1, cid2) );
+        tmp += tsign1 * tsign2 * Rhos.at(cnt)(rid, cid);
+      }
     }
   }
   return tmp;
@@ -123,7 +184,7 @@ ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &
 std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> >& Bases, const std::vector<ComplexMatrixType>& OriginalRhos, const std::vector<Hamiltonian<ComplexType> >& Hams, const RealType& dt, const std::vector<RealType>& Gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const int& Save = 0, const std::string prefix = "" ){
   std::vector<RealType> tls;
   std::vector<ComplexType> Na, Nb, Nc, n12, n13, n23, NaUp;
-  std::vector<ComplexType> j12, j23, j13;
+  std::vector<ComplexType> j12, j23, j13, jj12, jj13, jj23;
   std::vector<ComplexMatrixType> Rhos = OriginalRhos;
   tls.clear();
   NaUp.clear();
@@ -136,10 +197,16 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
   j12.clear();
   j23.clear();
   j13.clear();
+  jj12.clear();
+  jj23.clear();
+  jj13.clear();
   ComplexMatrixType CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
   ComplexMatrixType CM1 = SingleParticleDensityMatrix( 1, Bases, Rhos, Hams);
-  ComplexMatrixType Nij0 = NiNj( 0, Bases, Rhos );
-  ComplexMatrixType Nij1 = NiNj( 1, Bases, Rhos );
+  ComplexMatrixType Nij0 = NiNj( 0, Bases, Rhos, Hams);
+  ComplexMatrixType Nij1 = NiNj( 1, Bases, Rhos, Hams);
+  ComplexType JS01 = JupJdn( 0, 1, Bases, Rhos, Hams );
+  ComplexType JS12 = JupJdn( 1, 2, Bases, Rhos, Hams );
+  ComplexType JS02 = JupJdn( 0, 2, Bases, Rhos, Hams );
   if ( Save ){
     tls.push_back(0.0e0);
     NaUp.push_back(CM0(0,0));
@@ -152,18 +219,21 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
     j12.push_back( CM0(0,1) + CM1(0,1) );
     j23.push_back( CM0(1,2) + CM1(1,2) );
     j13.push_back( CM0(0,2) + CM1(0,2) );
+    jj12.push_back( JS01 );
+    jj23.push_back( JS12 );
+    jj13.push_back( JS02 );
   }
   bool Converged = false;
   int cntT = 1;
-  while ( !Converged && cntT < 200000 ){
+  while ( !Converged && cntT < 100000000 ){
     FRK4( dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Bases, Hams, Rhos );
-    if ( cntT % 20 == 0 ){
+    if ( cntT % 100 == 0 ){
       CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
       CM1 = SingleParticleDensityMatrix( 1, Bases, Rhos, Hams);
       if ( (std::abs(Na.back() - (CM0(0,0) + CM1(0,0))) < 1.0e-8) && (std::abs(Nb.back() - (CM0(1,1) + CM1(1,1))) < 1.0e-8) ) Converged = true;
       if ( Save ){
-        Nij0 = NiNj( 0, Bases, Rhos );
-        Nij1 = NiNj( 1, Bases, Rhos );
+        Nij0 = NiNj( 0, Bases, Rhos, Hams);
+        Nij1 = NiNj( 1, Bases, Rhos, Hams);
         tls.push_back(cntT * dt);
         NaUp.push_back(CM0(0,0));
         Na.push_back( CM0(0,0) + CM1(0,0) );
@@ -175,6 +245,12 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
         j12.push_back( CM0(0,1) + CM1(0,1) );
         j23.push_back( CM0(1,2) + CM1(1,2) );
         j13.push_back( CM0(0,2) + CM1(0,2) );
+        JS01 = JupJdn( 0, 1, Bases, Rhos, Hams );
+        JS12 = JupJdn( 1, 2, Bases, Rhos, Hams );
+        JS02 = JupJdn( 0, 2, Bases, Rhos, Hams );
+        jj12.push_back( JS01 );
+        jj23.push_back( JS12 );
+        jj13.push_back( JS02 );
       }
     }
     cntT++;
@@ -193,6 +269,9 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
     file->SaveStdVector("Obs", "j12", j12);
     file->SaveStdVector("Obs", "j23", j23);
     file->SaveStdVector("Obs", "j13", j13);
+    file->SaveStdVector("Obs", "jj12", jj12);
+    file->SaveStdVector("Obs", "jj23", jj23);
+    file->SaveStdVector("Obs", "jj13", jj13);
     delete file;
   }
   return Rhos;
@@ -216,7 +295,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
     Vin = std::vector<RealType>(L, 0.0);
     dt = 0.005;
   }
-  LogOut << "Build 3-site Triangle Lattice " << std::flush;
+  LogOut << "Build 3-site Triangle Lattice - " << std::flush;
   std::vector< Node<ComplexType>* > LOOP;
   Node<ComplexType> *A = new Node<ComplexType>(0, NULL, t12, "A");
   LOOP.push_back(A);
@@ -265,13 +344,13 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   }
   LogOut << "DONE!" << std::endl;
 
-  LogOut << "Build Initial Density Matrix - " << std::endl;
+  LogOut << "Build Initial Density Matrix - " << std::flush;
   std::vector<ComplexMatrixType> OriginalRhos;
   int cnt = 0;
   ComplexMatrixType Rho;
   for ( auto &bs : Bases ){
-    size_t hb = bs.at(0).getHilbertSpace() * bs.at(1).getHilbertSpace();
-    LogOut << "\t" << cnt << " " << bs.at(0).getHilbertSpace() << " " << bs.at(1).getHilbertSpace() << std::endl;
+    size_t hb = bs.at(0).GetHilbertSpace() * bs.at(1).GetHilbertSpace();
+    // LogOut << "\t" << cnt << " " << bs.at(0).GetHilbertSpace() << " " << bs.at(1).GetHilbertSpace() << std::endl;
     if ( cnt == 0 ){
       Rho = ComplexMatrixType(hb, hb, arma::fill::eye);
     }else{
@@ -282,7 +361,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   }
   LogOut << "DONE!" << std::endl;
 
-  LogOut << "Establish the index for Lindblad equation." << std::endl;
+  LogOut << "Establish the index for Lindblad equation - " << std::endl;
   std::vector<RealType> Gammas;
   std::vector<std::tuple<int,int,int> > SiteTypesSpin;
   std::vector<std::vector<std::pair<int,int> > > BasisIds;
@@ -291,7 +370,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   std::vector<std::vector<std::pair<size_t, size_t> > > w2;
   w1.clear();
   w2.clear();
-  LogOut << "C^dagger_0,up" << std::endl;
+  LogOut << "\tC^dagger_0,up" << std::endl;
   Cfdagger(0, 0, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaL);
   SiteTypesSpin.push_back(std::make_tuple(0, 1, 0));
@@ -299,7 +378,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   w1.clear();
   w2.clear();
-  LogOut << "C^dagger_0,dn" << std::endl;
+  LogOut << "\tC^dagger_0,dn" << std::endl;
   Cfdagger(0, 1, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaL);
   SiteTypesSpin.push_back(std::make_tuple(0, 1, 1));
@@ -307,7 +386,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   w1.clear();
   w2.clear();
-  LogOut << "C_2,up" << std::endl;
+  LogOut << "\tC_2,up" << std::endl;
   Cf(2, 0, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaR);
   SiteTypesSpin.push_back(std::make_tuple(2,-1, 0));
@@ -315,7 +394,7 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   w1.clear();
   w2.clear();
-  LogOut << "C_2,dn" << std::endl;
+  LogOut << "\tC_2,dn" << std::endl;
   Cf(2, 1, Bases, Hams, PairIndex1, PairIndex2, w1, w2);
   Gammas.push_back(GammaR);
   SiteTypesSpin.push_back(std::make_tuple(2,-1, 1));
@@ -323,11 +402,12 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   CollapseIds.push_back(w2);
   LogOut << "DONE!" << std::endl;
 
-  LogOut << "Dynamics begins..." << std::endl;
   int Save = 1;
-  LogOut << "Begin dynamics, trace = " << TraceRhos(OriginalRhos) << std::endl;
+  LogOut << "Dynamics with dt = " << dt << ", Gamma = " << Gammas.at(0) << std::endl;
+  LogOut << "\tBegin dynamics, trace = " << TraceRhos(OriginalRhos) << std::endl;
   std::vector<ComplexMatrixType>  FinalRhos = SteadyState( Bases, OriginalRhos, Hams, dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Save, prefix );
-  LogOut << "After dynamics, trace = " << TraceRhos(FinalRhos) << std::endl;
+  LogOut << "\tAfter dynamics, trace = " << TraceRhos(FinalRhos) << std::endl;
+  LogOut.close();
 }
 
 /* main program */

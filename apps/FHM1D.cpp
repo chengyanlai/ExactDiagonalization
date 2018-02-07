@@ -54,14 +54,14 @@ void LoadXASParameters( const std::string filename, std::vector<RealType> &Ufls,
 }
 
 ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, const int Species, const int Type, const std::vector<Basis>& OldBases, const std::vector<Basis>& NewBases, const Hamiltonian<ComplexType>& OldHam, const Hamiltonian<ComplexType>& NewHam  ){
-  size_t NewHilbertSpace = NewBases.at(0).getHilbertSpace() * NewBases.at(1).getHilbertSpace();
+  size_t NewHilbertSpace = NewBases.at(0).GetHilbertSpace() * NewBases.at(1).GetHilbertSpace();
   ComplexVectorType Vout(NewHilbertSpace, arma::fill::zeros);
-  std::vector<int> OldFup = OldBases.at(0).getFStates();
-  std::vector<int> OldFdn = OldBases.at(1).getFStates();
-  std::vector<size_t> OldFupTag = OldBases.at(0).getFTags();
-  std::vector<size_t> OldFdnTag = OldBases.at(1).getFTags();
-  std::vector<size_t> NewFupTag = NewBases.at(0).getFTags();
-  std::vector<size_t> NewFdnTag = NewBases.at(1).getFTags();
+  std::vector<int> OldFup = OldBases.at(0).GetFStates();
+  std::vector<int> OldFdn = OldBases.at(1).GetFStates();
+  std::vector<size_t> OldFupTag = OldBases.at(0).GetFTags();
+  std::vector<size_t> OldFdnTag = OldBases.at(1).GetFTags();
+  std::vector<size_t> NewFupTag = NewBases.at(0).GetFTags();
+  std::vector<size_t> NewFdnTag = NewBases.at(1).GetFTags();
   size_t NewFupIdx, NewFdnIdx, OldFupIdx, OldFdnIdx;
   // int Update = false;
   for ( auto OldFupState : OldFup ){
@@ -110,10 +110,10 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
 }
 
 DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
-  size_t L = Bases.at(species).getL();
+  size_t L = Bases.at(species).GetL();
   DTM CM(L, L, arma::fill::zeros);
-  std::vector< int > bs = Bases.at(species).getFStates();
-  std::vector<size_t> tg = Bases.at(species).getFTags();
+  std::vector< int > bs = Bases.at(species).GetFStates();
+  std::vector<size_t> tg = Bases.at(species).GetFTags();
   for ( const int &b : bs ){
     size_t bid = tg.at(b);// Find their indices
     for ( size_t i=0; i < L; i++){
@@ -134,8 +134,8 @@ DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Ba
           p = ibclr(p, j);
           size_t pid = tg.at(p);// Find their indices
           size_t count;
-          if ( species == 0 ) count = Bases.at(1).getHilbertSpace();
-          else if ( species == 1 ) count = Bases.at(0).getHilbertSpace();
+          if ( species == 0 ) count = Bases.at(1).GetHilbertSpace();
+          else if ( species == 1 ) count = Bases.at(0).GetHilbertSpace();
           std::vector<size_t> rids(2, bid);
           std::vector<size_t> cids(2, pid);
           for (size_t loop_id = 0; loop_id < count; loop_id++) {
@@ -159,10 +159,10 @@ DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Ba
 
 std::vector<RealVectorType> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
   std::vector<RealVectorType> out;
-  DTV tmp1(Bases.at(0).getL(), arma::fill::zeros);//(Bases.at(0).getL(), 0.0e0);
-  DTV tmp2(Bases.at(1).getL(), arma::fill::zeros);//(Bases.at(1).getL(), 0.0e0);
-  std::vector<int> f1 = Bases.at(0).getFStates();
-  std::vector<int> f2 = Bases.at(1).getFStates();
+  DTV tmp1(Bases.at(0).GetL(), arma::fill::zeros);//(Bases.at(0).GetL(), 0.0e0);
+  DTV tmp2(Bases.at(1).GetL(), arma::fill::zeros);//(Bases.at(1).GetL(), 0.0e0);
+  std::vector<int> f1 = Bases.at(0).GetFStates();
+  std::vector<int> f2 = Bases.at(1).GetFStates();
   size_t f1id = 0, f2id = 0;
   for ( int &nf2 : f2 ){
     std::vector<size_t> ids(2,f2id);
@@ -170,10 +170,10 @@ std::vector<RealVectorType> Ni( const std::vector<Basis> &Bases, const DTV &Vec,
     for ( int &nf1 : f1 ){
       ids.at(0) = f1id;
       size_t id = Ham0.DetermineTotalIndex(ids);
-      for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
+      for (size_t cnt = 0; cnt < Bases.at(0).GetL(); cnt++) {
         if ( btest(nf1, cnt) ) tmp1(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
       }
-      for (size_t cnt = 0; cnt < Bases.at(1).getL(); cnt++) {
+      for (size_t cnt = 0; cnt < Bases.at(1).GetL(); cnt++) {
         if ( btest(nf2, cnt) ) tmp2(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
       }
       f1id++;
@@ -186,9 +186,9 @@ std::vector<RealVectorType> Ni( const std::vector<Basis> &Bases, const DTV &Vec,
 }
 
 RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0, const int species1, const int species2 ){
-  DTM out(Bases.at(0).getL(), Bases.at(1).getL(), arma::fill::zeros );
-  std::vector<int> f1 = Bases.at(0).getFStates();
-  std::vector<int> f2 = Bases.at(1).getFStates();
+  DTM out(Bases.at(0).GetL(), Bases.at(1).GetL(), arma::fill::zeros );
+  std::vector<int> f1 = Bases.at(0).GetFStates();
+  std::vector<int> f2 = Bases.at(1).GetFStates();
   size_t f1id = 0, f2id = 0;
   for ( int &nf2 : f2 ){
     std::vector<size_t> ids(2,f2id);
@@ -198,8 +198,8 @@ RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonia
       size_t id = Ham0.DetermineTotalIndex(ids);
       int Ns1 = (species1 == 1)? nf1 : nf2;
       int Ns2 = (species2 == 1)? nf1 : nf2;
-      for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
-        for (size_t cnt2 = 0; cnt2 < Bases.at(1).getL(); cnt2++) {
+      for (size_t cnt1 = 0; cnt1 < Bases.at(0).GetL(); cnt1++) {
+        for (size_t cnt2 = 0; cnt2 < Bases.at(1).GetL(); cnt2++) {
           if ( btest(Ns1, cnt1) && btest(Ns2, cnt2) ) {
             out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
           }
@@ -432,6 +432,7 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   file3->SaveNumber(gname, "Energy", Energy);
   delete file3;
   LogOut << "Finished pumping!!" << std::endl;
+  LogOut.close();
 }
 
 void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int SaveWFEvery = 1000000 ){
@@ -587,13 +588,14 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   gname = "WF";
   file2->SaveVector(gname, "Vec", VecXAS);
   delete file2;
+  LogOut << "Finished XAS!!" << std::endl;
   LogOut.close();
 }
 
 /* main program */
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
-#if defined(MKL)
+#ifdef MKL
   mkl_set_num_threads(NumCores);
 #endif
   if ( std::atoi(argv[1]) == 0 ){

@@ -23,12 +23,12 @@
 #define DTM RealMatrixType
 
 DTV Ni( const std::vector<Basis> &Bases, const DTV &Vec ){
-  DTV tmp(Bases.at(0).getL(), arma::fill::zeros);
-  std::vector< std::vector<int> > b = Bases.at(0).getBStates();
+  DTV tmp(Bases.at(0).GetL(), arma::fill::zeros);
+  std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() == Vec.size() );
   int coff = 0;
   for ( auto &nbi : b ){
-    for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
+    for (size_t cnt = 0; cnt < Bases.at(0).GetL(); cnt++) {
       tmp.at(cnt) += (RealType)nbi.at(cnt) * std::pow(std::abs(Vec(coff)), 2);
     }
     coff++;
@@ -37,13 +37,13 @@ DTV Ni( const std::vector<Basis> &Bases, const DTV &Vec ){
 }
 
 DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec ){
-  DTM tmp(Bases.at(0).getL(), Bases.at(0).getL(), arma::fill::zeros);
-  std::vector< std::vector<int> > b = Bases.at(0).getBStates();
+  DTM tmp(Bases.at(0).GetL(), Bases.at(0).GetL(), arma::fill::zeros);
+  std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() == Vec.size() );
   int coff = 0;
   for ( auto &nbi : b ){
-    for (size_t cnt1 = 0; cnt1 < Bases.at(0).getL(); cnt1++) {
-      for (size_t cnt2 = 0; cnt2 < Bases.at(0).getL(); cnt2++) {
+    for (size_t cnt1 = 0; cnt1 < Bases.at(0).GetL(); cnt1++) {
+      for (size_t cnt2 = 0; cnt2 < Bases.at(0).GetL(); cnt2++) {
         tmp(cnt1, cnt2) += (RealType)nbi.at(cnt1) * (RealType)nbi.at(cnt2) * std::pow(std::abs(Vec(coff)), 2);
       }
     }
@@ -54,10 +54,10 @@ DTM NiNj( const std::vector<Basis> &Bases, const DTV &Vec ){
 
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "bhm.1d.eqm", std::ios::app);
-  int L = 10;
+  LogOut.open(prefix + "BHM.1d.eqm", std::ios::app);
+  int L = 4;
   int OBC = 1;
-  int N = 10;
+  int N = 4;
   int dynamics = 0;
   int Tsteps = 3000;
   RealType dt=0.005;
@@ -82,6 +82,7 @@ void Equilibrium(const std::string prefix){
   LogOut << "Build Basis - " << std::flush;
   Basis B1(L, N);
   B1.Boson();
+  // B1.PrintAllBosonBasis();
   std::vector<Basis> Bases;
   Bases.push_back(B1);
   LogOut << "DONE!" << std::endl;
@@ -116,12 +117,13 @@ void Equilibrium(const std::string prefix){
   file->SaveNumber("Obs", "NbT", NbT);
   file->SaveMatrix("Obs", "Nij", Nij);
   delete file;
+  LogOut.close();
 }
 
 /* main program */
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
-#if defined(MKL)
+#ifdef MKL
   mkl_set_num_threads(NumCores);
 #endif
   Equilibrium("");

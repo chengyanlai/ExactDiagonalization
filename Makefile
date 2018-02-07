@@ -25,7 +25,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/fhm.1d build/bhm.1d build/tqdm
+all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/holstein.1d
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
@@ -39,6 +39,9 @@ build/bhm.1d: build/apps/BHM1D.o $(OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/tqdm: build/apps/TQDM.o $(OBJ) $(PE_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
+
+build/holstein.1d: build/apps/Holstein.o $(OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/apps/FermionBosonMixMPI.o: apps/FermionBosonMix.cpp

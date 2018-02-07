@@ -36,10 +36,9 @@ if SearchJ:
 else:
   # remember to set FIXJ to 0 in main program
   cntGStart = 0
-  t13List = np.array([0.6, 0.8, 1.0, 1.2, 1.4])
-  # Uin = [0.0, 1.0, 0.1, 5.0, 10.0]
-  Uin = [0.0, 0.1, 1.0, 5.0]
-  GammaList = np.logspace(-3., 3., num=200)
+  t13List = [1.0,]#np.array([0.6, 0.8, 1.0, 1.2, 1.4])
+  Uin = [0.0, ]#0.1, 1.0, 5.0]
+  GammaList = np.logspace(-2.0, 3.0, num=300)
 
 
 # NOTE: Dynamics parameters
@@ -54,6 +53,10 @@ for U in Uin:
     cntG = cntGStart
     for GammaL in GammaList:
       GammaR = GammaL
+      if GammaL > 800.: dt = 0.0001
+      elif GammaL > 600.: dt = 0.0002
+      elif GammaL > 400.: dt = 0.0005
+      elif GammaL > 200.: dt = 0.001
       JobName =  "".join(["G", str(cntG),])
       workdir = os.path.join(DataDir, JobName)
 

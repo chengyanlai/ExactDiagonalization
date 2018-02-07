@@ -58,14 +58,14 @@ void peaks( const double EG, const ComplexVectorType AS, const RealVectorType &E
 ComplexVectorType OperateCdagger( const std::vector<Basis> OldBases, const ComplexVectorType Vin,
   const std::vector<Basis> NewBases, const int CHloc, const int species,
   Hamiltonian<ComplexType> OldHam, Hamiltonian<ComplexType> NewHam  ){
-  size_t NewHilbertSpace = NewBases.at(0).getHilbertSpace() * NewBases.at(1).getHilbertSpace();
+  size_t NewHilbertSpace = NewBases.at(0).GetHilbertSpace() * NewBases.at(1).GetHilbertSpace();
   ComplexVectorType Vout = ComplexVectorType::Zero(NewHilbertSpace);
-  std::vector<int> OldFup = OldBases.at(0).getFStates();
-  std::vector<int> OldFdn = OldBases.at(1).getFStates();
-  std::vector<size_t> OldFupTag = OldBases.at(0).getFTags();
-  std::vector<size_t> OldFdnTag = OldBases.at(1).getFTags();
-  std::vector<size_t> NewFupTag = NewBases.at(0).getFTags();
-  std::vector<size_t> NewFdnTag = NewBases.at(1).getFTags();
+  std::vector<int> OldFup = OldBases.at(0).GetFStates();
+  std::vector<int> OldFdn = OldBases.at(1).GetFStates();
+  std::vector<size_t> OldFupTag = OldBases.at(0).GetFTags();
+  std::vector<size_t> OldFdnTag = OldBases.at(1).GetFTags();
+  std::vector<size_t> NewFupTag = NewBases.at(0).GetFTags();
+  std::vector<size_t> NewFdnTag = NewBases.at(1).GetFTags();
   size_t NewFupIdx, NewFdnIdx, OldFupIdx, OldFdnIdx;
   // int Update = false;
   for ( auto OldFupState : OldFup ){
@@ -108,14 +108,14 @@ ComplexVectorType OperateCdagger( const std::vector<Basis> OldBases, const Compl
 ComplexVectorType OperateC( const std::vector<Basis> OldBases, const ComplexVectorType Vin,
   const std::vector<Basis> NewBases, const int CHloc, const int species,
   Hamiltonian<ComplexType> OldHam, Hamiltonian<ComplexType> NewHam  ){
-  size_t NewHilbertSpace = NewBases.at(0).getHilbertSpace() * NewBases.at(1).getHilbertSpace();
+  size_t NewHilbertSpace = NewBases.at(0).GetHilbertSpace() * NewBases.at(1).GetHilbertSpace();
   ComplexVectorType Vout = ComplexVectorType::Zero(NewHilbertSpace);
-  std::vector<int> OldFup = OldBases.at(0).getFStates();
-  std::vector<int> OldFdn = OldBases.at(1).getFStates();
-  std::vector<size_t> OldFupTag = OldBases.at(0).getFTags();
-  std::vector<size_t> OldFdnTag = OldBases.at(1).getFTags();
-  std::vector<size_t> NewFupTag = NewBases.at(0).getFTags();
-  std::vector<size_t> NewFdnTag = NewBases.at(1).getFTags();
+  std::vector<int> OldFup = OldBases.at(0).GetFStates();
+  std::vector<int> OldFdn = OldBases.at(1).GetFStates();
+  std::vector<size_t> OldFupTag = OldBases.at(0).GetFTags();
+  std::vector<size_t> OldFdnTag = OldBases.at(1).GetFTags();
+  std::vector<size_t> NewFupTag = NewBases.at(0).GetFTags();
+  std::vector<size_t> NewFdnTag = NewBases.at(1).GetFTags();
   size_t NewFupIdx, NewFdnIdx, OldFupIdx, OldFdnIdx;
   // int Update = false;
   for ( auto OldFupState : OldFup ){
@@ -157,10 +157,10 @@ ComplexVectorType OperateC( const std::vector<Basis> OldBases, const ComplexVect
 
 std::vector< RealVectorType > Ni( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, Hamiltonian<ComplexType> &ham ){
   std::vector< RealVectorType > out;
-  RealVectorType tmp1 = RealVectorType::Zero(Bases.at(0).getL());//(Bases.at(0).getL(), 0.0e0);
-  RealVectorType tmp2 = RealVectorType::Zero(Bases.at(1).getL());//(Bases.at(1).getL(), 0.0e0);
-  std::vector< int > f1 = Bases.at(0).getFStates();
-  std::vector< int > f2 = Bases.at(1).getFStates();
+  RealVectorType tmp1 = RealVectorType::Zero(Bases.at(0).GetL());//(Bases.at(0).GetL(), 0.0e0);
+  RealVectorType tmp2 = RealVectorType::Zero(Bases.at(1).GetL());//(Bases.at(1).GetL(), 0.0e0);
+  std::vector< int > f1 = Bases.at(0).GetFStates();
+  std::vector< int > f2 = Bases.at(1).GetFStates();
   size_t f1id = 0, f2id = 0;
   for ( int &nf2 : f2 ){
     std::vector<size_t> ids(2,f2id);
@@ -168,10 +168,10 @@ std::vector< RealVectorType > Ni( const std::vector<Basis> &Bases, const Complex
     for ( int &nf1 : f1 ){
       ids.at(0) = f1id;
       size_t id = ham.DetermineTotalIndex(ids);
-      for (size_t cnt = 0; cnt < Bases.at(0).getL(); cnt++) {
+      for (size_t cnt = 0; cnt < Bases.at(0).GetL(); cnt++) {
         if ( btest(nf1, cnt) ) tmp1(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
       }
-      for (size_t cnt = 0; cnt < Bases.at(1).getL(); cnt++) {
+      for (size_t cnt = 0; cnt < Bases.at(1).GetL(); cnt++) {
         if ( btest(nf2, cnt) ) tmp2(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
       }
       f1id++;
@@ -218,12 +218,12 @@ int main(int argc, char const *argv[]) {
   INFO("Build Basis - ");
   Basis F1(L, N1, true);
   F1.Fermion();
-  std::vector<int> st1 = F1.getFStates();
-  std::vector<size_t> tg1 = F1.getFTags();
+  std::vector<int> st1 = F1.GetFStates();
+  std::vector<size_t> tg1 = F1.GetFTags();
   Basis F2(L, N2, true);
   F2.Fermion();
-  std::vector<int> st2 = F2.getFStates();
-  std::vector<size_t> tg2 = F2.getFTags();
+  std::vector<int> st2 = F2.GetFStates();
+  std::vector<size_t> tg2 = F2.GetFTags();
   file->saveNumber("Basis", "N1", N1);
   file->saveStdVector("Basis", "F1States", st1);
   file->saveStdVector("Basis", "F1Tags", tg1);

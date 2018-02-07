@@ -15,8 +15,8 @@ public:
   void LinkTo(Node<Tnum>* p, Tnum J);
   // inline int TotalNodes()const{return this->NumNodes;};
   inline int NumNeighbors()const{return this->NumLinks;};
-  inline std::vector< Tnum > getJval()const{return this->Jval;};
-  inline std::vector< Node<Tnum>* > getNeighbors()const{return this->Neighbor;};
+  inline std::vector< Tnum > GetJval()const{return this->Jval;};
+  inline std::vector< Node<Tnum>* > GetNeighbors()const{return this->Neighbor;};
   inline bool VerifySite(std::ofstream& file)const{
     file << "Site - " << this->data << "(" << this->label << ") has " << this->NumLinks << " neighbors.\n";
     for (size_t cnt = 0; cnt < Neighbor.size(); cnt++) {

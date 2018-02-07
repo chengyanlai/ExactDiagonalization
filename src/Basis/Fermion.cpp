@@ -1,6 +1,5 @@
 #include <cmath>//pow
 #include "src/EDType.hpp"
-#include "src/bitwise.h"
 #include "src/Basis/Basis.hpp"
 
 void Basis::Fermion(){
@@ -49,11 +48,5 @@ void Basis::Fermion( const int MinF ){
     FStates.push_back(cnt1);
     FTags.push_back(cnt1);
     NTotal.push_back(nbit);
-  }
-}
-
-void Basis::printFermionBasis( const int state )const{
-  for (size_t cnt = 0; cnt < L; cnt++) {
-    INFO_NONEWLINE( btest(state, cnt) << ", " );
   }
 }

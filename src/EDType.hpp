@@ -1,6 +1,8 @@
 #ifndef __EDTYPE_H__
 #define __EDTYPE_H__
 #include <iostream>
+#include <fstream>
+#include <iomanip>
 #include <stdexcept>
 #include <complex>
 #include <cmath>
@@ -146,5 +148,21 @@ std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
   A.push_back(a8) ;
   return A ;
 }
+
+// template <typename T>
+// void PrintVector(const std::vector<T> Vin, const int digit=9, const std::string separation="\t"){
+//   for ( size_t i = 0; i < Vin.size(); i++){
+//     std::cout << "\t" << std::scientific << std::setprecision(digit) << Vin.at(i) << separation << std::flush;
+//   }
+//   std::cout << std::endl;
+// }
+
+// template <typename T>
+// void PrintVector(std::ofstream& file, const std::vector<T> Vin, const int digit=9, const std::string separation="\n"){
+//   for ( size_t i = 0; i < Vin.size(); i++){
+//     file << "\t" << std::setw(2) << i << " " << std::scientific << std::setprecision(digit) << Vin.at(i) << separation << std::flush;
+//   }
+//   file << "\n";
+// }
 
 #endif//__EDTYPE_H__

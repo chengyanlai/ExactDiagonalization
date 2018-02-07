@@ -1,9 +1,11 @@
 #ifndef __BASIS_HPP__
 #define __BASIS_HPP__
+#include <iostream>
 #include <vector>
 #include <cassert>
 #include <algorithm>//sort, distance
 #include "src/EDType.hpp"
+#include "src/bitwise.h"
 
 
 template<class RandomIt, class T>
@@ -24,43 +26,71 @@ public:
   Basis(const bool _isFermion = false);
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
-  void Boson();
-  void Boson( const int MaxLocalB);
-  void BosonTB( const size_t TBloc, const bool HARD_CUT = false );
-  void Fermion();
-  void Fermion( const int MinF );
-  void SpinOneHalf();
-  void TIsing();
   void Save( const std::string filename, const std::string gname );
   void Load( const std::string filename, const std::string gname );
-  inline bool getType()const{return isFermion;};
-  inline size_t getL()const{return L;};
-  inline size_t getN()const{return N;};
-  inline size_t getHilbertSpace()const{
+  inline bool GetType()const{return isFermion;};
+  inline size_t GetL()const{return L;};
+  inline size_t GetN()const{return N;};
+  inline size_t GetHilbertSpace()const{
     if (isFermion) {
       return FStates.size();
     } else {
       return BStates.size();
     }
   };
-  inline std::vector<int> getFStates()const{return FStates;};//for Fermion and SpinOneHalf
-  inline std::vector<size_t> getFTags()const{return FTags;};//for Fermion and SpinOneHalf
-  inline int getSzTotal(const size_t idx)const{return SzTotal.at(idx);};//for Ising spin
-  void printFermionBasis( const int state )const;
-  void printSpinOneHalfBasis( const int state )const;
-  inline std::vector< std::vector<int> > getBStates()const{return BStates;};//for Boson
-  inline std::vector<RealType> getBTags()const{return BTags;};//for Boson
-  void printBosonBasis( const std::vector<int> state )const;//for Boson
-  inline size_t getIndexFromTag( const RealType tg )const{
+  /* Fermion functions */
+  void Fermion();
+  void Fermion( const int MinF );
+  void SpinOneHalf();
+  void TIsing();
+  inline std::vector<int> GetFStates()const{return FStates;};//for Fermion and SpinOneHalf
+  inline std::vector<size_t> GetFTags()const{return FTags;};//for Fermion and SpinOneHalf
+  inline int GetSzTotal(const size_t idx)const{return SzTotal.at(idx);};//for Ising spin
+  void PrintFermionBasis( const int state )const{
+    for (size_t cnt = 0; cnt < L; cnt++) {
+      std::cout << btest(state, cnt) << ", " << std::flush;
+    }
+    std::cout << std::endl;
+  };
+  void PrintSpinOneHalfBasis( const int state )const;
+
+  /* Boson functions */
+  void Boson();
+  void Phonon();
+  inline std::vector< std::vector<int> > GetBStates()const{
+    return BStates;
+  };
+
+  inline std::vector<RealType> GetBTags()const{
+    return BTags;
+  };
+
+  inline void PrintBosonBasis( const std::vector<int> state )const{
+    typename std::vector<int>::const_iterator it = state.begin();
+    for (;it != state.end(); ++it ){
+      std::cout << *it << ", " << std::flush;
+    }
+    std::cout << std::endl;
+  };
+
+  inline void PrintAllBosonBasis()const{
+    typename std::vector< std::vector<int> >::const_iterator it = BStates.begin();
+    for ( ;it != BStates.end(); ++it ){
+      PrintBosonBasis(*it);
+    };
+  };
+
+  inline size_t GetIndexFromTag( const RealType tg )const{
     assert( !(isFermion) );
     auto it = binary_locate(BTags.begin(), BTags.end(), tg);
     size_t idx = std::distance(BTags.begin(), it);
     if ( std::abs(BTags.at(idx) - tg) < 1.0e-12 ){
       return idx;
     } else{
-      return getHilbertSpace();
+      return GetHilbertSpace();
     }
-  };//for Boson
+  };
+
 private:
   size_t L;
   size_t N;

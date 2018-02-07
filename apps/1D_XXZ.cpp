@@ -87,8 +87,8 @@ int main(int argc, char const *argv[]) {
   // int N1 = (L+1)/2;
   Basis S12(L, N, true);
   S12.SpinOneHalf();
-  std::vector<int> st1 = S12.getFStates();
-  std::vector<size_t> tg1 = S12.getFTags();
+  std::vector<int> st1 = S12.GetFStates();
+  std::vector<size_t> tg1 = S12.GetFTags();
   file->saveNumber("Basis", "Sup", N);
   file->saveStdVector("Basis", "SStates", st1);
   file->saveStdVector("Basis", "STags", tg1);

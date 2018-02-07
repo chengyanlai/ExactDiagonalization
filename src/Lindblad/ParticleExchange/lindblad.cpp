@@ -103,8 +103,8 @@ ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size
   */
   // std::cout << "AC" << std::endl;
   ComplexMatrixType tmp1 = rho;
-  // std::cout << tmp1.rows() << " " << tmp1.cols() << " " << Bs.at(0).getHilbertSpace() << " " <<  Bs.at(1).getHilbertSpace() << std::endl;
-  std::vector<int> f = Bs.at(Spin).getFStates();
+  // std::cout << tmp1.rows() << " " << tmp1.cols() << " " << Bs.at(0).GetHilbertSpace() << " " <<  Bs.at(1).GetHilbertSpace() << std::endl;
+  std::vector<int> f = Bs.at(Spin).GetFStates();
   int Spin2;
   if ( Spin ) Spin2 = 0;
   else Spin2 = 1;
@@ -112,7 +112,7 @@ ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size
   for ( auto &fstate : f ){
     if ( (!(btest(fstate, Site)) && type == -1) || (btest(fstate, Site) && type == 1) ){
       // Without particle and destroy OR with particle and create.
-      for ( size_t p=0; p < Bs.at(Spin2).getHilbertSpace(); p++){
+      for ( size_t p=0; p < Bs.at(Spin2).GetHilbertSpace(); p++){
         size_t idx;
         if ( Spin ){
           std::vector<size_t> ids = vec<size_t>(p, coff);
@@ -153,23 +153,23 @@ void Cf(const size_t Site, const int Spin, const std::vector<std::vector<Basis> 
       Nup_Afr = Nup_Bfr + 1;
       Ndn_Afr = Ndn_Bfr;
       /* NOTE: Hot fix */
-      if ( Nup_Afr > Bs.at(cnt).at(Spin).getL() ) continue;
+      if ( Nup_Afr > Bs.at(cnt).at(Spin).GetL() ) continue;
     }else if ( Spin == 1 ){
       Nup_Afr = Nup_Bfr;
       Ndn_Afr = Ndn_Bfr + 1;
       /* NOTE: Hot fix */
-      if ( Ndn_Afr > Bs.at(cnt).at(Spin).getL() ) continue;
+      if ( Ndn_Afr > Bs.at(cnt).at(Spin).GetL() ) continue;
     }
     // std::cout << Nup_Bfr << " " << Ndn_Bfr << " -> " << Nup_Afr << " " << Ndn_Afr << std::endl;
     int BsIndex = PairIndex1.at(std::make_pair(Nup_Afr, Ndn_Afr));
     BasisIdx.push_back(std::make_pair(cnt, BsIndex));
     std::vector<std::pair<size_t, size_t> > tmp_idx;
     size_t oid1 = 0;
-    for ( auto &ef: Bs.at(cnt).at(spin1).getFStates() ) {
+    for ( auto &ef: Bs.at(cnt).at(spin1).GetFStates() ) {
       if ( !(btest(ef, Site)) ){
         int nef = ibset(ef, Site);
-        size_t id1 = Bs.at(BsIndex).at(spin1).getFTags().at(nef);
-        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).getHilbertSpace(); id2++ ){
+        size_t id1 = Bs.at(BsIndex).at(spin1).GetFTags().at(nef);
+        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).GetHilbertSpace(); id2++ ){
           std::vector<size_t> oids, ids;
           if ( Spin == 0 ){
             oids.push_back(oid1);
@@ -225,11 +225,11 @@ void Cfdagger( const size_t Site, const int Spin, const std::vector<std::vector<
     BasisIdx.push_back(std::make_pair(cnt, BsIndex));
     std::vector<std::pair<size_t, size_t> > tmp_idx;
     size_t oid1 = 0;
-    for ( auto &ef: Bs.at(cnt).at(spin1).getFStates() ) {
+    for ( auto &ef: Bs.at(cnt).at(spin1).GetFStates() ) {
       if ( btest(ef, Site) ){
         int nef = ibclr(ef, Site);
-        size_t id1 = Bs.at(BsIndex).at(spin1).getFTags().at(nef);
-        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).getHilbertSpace(); id2++ ){
+        size_t id1 = Bs.at(BsIndex).at(spin1).GetFTags().at(nef);
+        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).GetHilbertSpace(); id2++ ){
           std::vector<size_t> oids, ids;
           if ( Spin == 0 ){
             oids.push_back(oid1);

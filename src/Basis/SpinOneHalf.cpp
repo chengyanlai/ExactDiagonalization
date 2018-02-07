@@ -30,7 +30,7 @@ void Basis::SpinOneHalf()
   FTags = windex;
 }
 
-void Basis::printSpinOneHalfBasis( const int state )const{
+void Basis::PrintSpinOneHalfBasis( const int state )const{
   for (size_t cnt = 0; cnt < L; cnt++) {
     INFO_NONEWLINE( btest(state, cnt) << ", " );
   }
