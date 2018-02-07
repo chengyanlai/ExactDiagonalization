@@ -38,21 +38,27 @@ public:
       return BStates.size();
     }
   };
+
   /* Fermion functions */
   void Fermion();
-  void Fermion( const int MinF );
-  void SpinOneHalf();
-  void TIsing();
+  void Fermion( const int IncludeAllU1 );// This has no U(1) symmetry.
   inline std::vector<int> GetFStates()const{return FStates;};//for Fermion and SpinOneHalf
   inline std::vector<size_t> GetFTags()const{return FTags;};//for Fermion and SpinOneHalf
-  inline int GetSzTotal(const size_t idx)const{return SzTotal.at(idx);};//for Ising spin
-  void PrintFermionBasis( const int state )const{
+  inline int GetNfTotal(const size_t idx)const{return NTotal.at(idx);};// for fermion with U(1)
+  inline int GetSzTotal(const size_t idx)const{return NTotal.at(idx);};// for Ising spin
+  inline void PrintFermionBasis( const int state )const{
     for (size_t cnt = 0; cnt < L; cnt++) {
       std::cout << btest(state, cnt) << ", " << std::flush;
     }
     std::cout << std::endl;
   };
-  void PrintSpinOneHalfBasis( const int state )const;
+
+  /* Spin - 1/2, share the Fermion functions */
+  void SpinOneHalf();
+  void TIsing();
+  inline void PrintSpinOneHalfBasis( const int state )const{
+    PrintFermionBasis( state );
+  };
 
   /* Boson functions */
   void Boson();
@@ -101,7 +107,6 @@ private:
   std::vector<int> FStates;//for Fermion, and SpinOneHalf.
   std::vector<size_t> FTags;//for Fermion, and SpinOneHalf.
   std::vector<int> NTotal;//for Fermion without U(1).
-  std::vector<int> SzTotal;//for Transverse Ising
 };
 
 RealType BosonBasisTag( const std::vector<int> vec );

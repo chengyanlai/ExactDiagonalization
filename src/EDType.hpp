@@ -8,9 +8,6 @@
 #include <cmath>
 #include <vector>
 
-#define INFO(MSG)             std::cout << MSG << std::endl
-#define INFO_NONEWLINE(MSG)   std::cout << MSG << std::flush
-
 #define _S(x) #x
 #define S_(x) _S(x)
 #define S__LINE__ S_(__LINE__)

@@ -38,7 +38,7 @@ void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int,
     cnt++;
   }
   // Clear All elements
-  H_total = SparseMatrixType();// Need test
+  H_total.clear();// = SparseMatrixType();
   // First true allows repeated matrix elements
   H_total = SparseMatrixType(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
 }
@@ -77,21 +77,13 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorT
  * @param y the output vector
  * @param alpha the scaling value
  */
-template<>
-void Hamiltonian<RealType>::mvprod(RealType* x, RealType* y, RealType alpha)const {
+template<typename Tnum>
+void Hamiltonian<Tnum>::mvprod(Tnum* x, Tnum* y, RealType alpha)const {
   size_t dim = GetTotalHilbertSpace();
-  RealVectorType Vin(x, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
-  RealVectorType Vout(y, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
+  VectorType Vin(x, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
+  VectorType Vout(y, dim, true, false);//, copy_aux_mem = true, strict = false)// armadillo
   Vout = H_total * Vin + alpha * Vout;
-  memcpy(y, Vout.memptr(), dim * sizeof(RealType) );// armadillo
-}
-template<>
-void Hamiltonian<ComplexType>::mvprod(ComplexType* x, ComplexType* y, RealType alpha)const {
-  size_t dim = GetTotalHilbertSpace();
-  ComplexVectorType Vin(x, dim, false, false);//, copy_aux_mem = true, strict = false)// armadillo
-  ComplexVectorType Vout(y, dim, false, false);//, copy_aux_mem = true, strict = false)// armadillo
-  Vout = H_total * Vin + alpha * Vout;
-  memcpy(y, Vout.memptr(), dim * sizeof(ComplexType) );// armadillo
+  memcpy(y, Vout.memptr(), dim * sizeof(Tnum) );// armadillo
 }
 
 template class Hamiltonian<RealType>;

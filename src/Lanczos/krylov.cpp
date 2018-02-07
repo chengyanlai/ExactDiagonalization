@@ -32,7 +32,7 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const Comp
     beta = arma::norm(work);
     Alphas.push_back(alpha);
     if( DEBUG > 4 ){
-      INFO("@ " << cntK << " alpha is " << alpha << " beta is " << beta);
+      std::cout <<"@ " << cntK << " alpha is " << alpha << " beta is " << beta << std::endl;
     }
     if( beta > threshNorm ){
       // work.normalize();
@@ -78,14 +78,14 @@ void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const Comp
       Dmat(cnt,cnt) = exp( Prefactor * d[cnt] );
     }
     if(info != 0) {
-      INFO("Lapack INFO = " << info);
+      std::cout <<"Lapack INFO = " << info << std::endl;
       RUNTIME_ERROR("Error in Lapack function 'dstev'");
     }
     /* NOTE: After Solving tri-diagonal matrix, we need Kmat and Dmat to proceed further. */
     if ( DEBUG > 4 ) {
       RealMatrixType tmpKmat = Kmat;
       tmpKmat.t();
-      INFO( Kmat * Dmat * tmpKmat );
+      std::cout << Kmat * Dmat * tmpKmat << std::endl;
     }
     Vm.reshape( Vec.n_rows, Kused );
     ComplexMatrixType Otmp = Vm * Kmat;
