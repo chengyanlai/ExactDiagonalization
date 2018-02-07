@@ -76,120 +76,9 @@ void Basis::Boson(){
     assert( N == NWork );
   }
   // sort BTags
-  std::vector<size_t> NewIdx = SortBTags( BTags );
-  // put work in order.
-  for ( auto i : NewIdx){
-    BStates.push_back( work.at(i) );
-  }
+  BStates = SortBTags( work, BTags );
   assert( BStates.size() == BTags.size() );
 }
-
-// void Basis::Boson( const int MaxLocalB ){
-//   HaveU1 = false;
-//   /* Build bosonic basis from zero to maximum boson number allowed locally.
-//     Total boson number is not larger than N */
-//   assert( !(isFermion) );
-//   assert( L * MaxLocalB >= N );
-//   std::vector< std::vector<int> > work;
-//   int k, Nres;
-//   /* NOTE: Include all U(1) sector which has particle number smaller than N */
-//   std::vector<int> Ivec(L,0);
-//   work.push_back( Ivec );
-//   BTags.push_back( BosonBasisTag(Ivec) );
-//   for (ptrdiff_t cntN = N; cntN > 0; cntN--) {
-//     Ivec.assign(L, 0);
-//     Ivec.at(0) = cntN;
-//     if( cntN <= MaxLocalB ){
-//       work.push_back( Ivec );
-//       BTags.push_back( BosonBasisTag(Ivec) );
-//     }
-//     while ( Ivec[L - 1] < cntN ) {
-//       for (ptrdiff_t cnt = L - 2; cnt > -1; cnt--) {
-//         if ( Ivec[cnt] != 0 ){
-//           k = cnt;
-//           break;//break for-loop
-//         }
-//       }
-//       Ivec[k] = Ivec[k] - 1;
-//       Nres = std::accumulate(Ivec.begin(), Ivec.begin() + k + 1, 0);
-//       Ivec.at(k+1) = (int)(cntN - Nres);
-//       if ( k < L - 2 ){
-//         for (ptrdiff_t cnt = k + 2; cnt < L; cnt++) {
-//           Ivec.at(cnt) = 0;
-//         }
-//       }
-//       bool isBasis = true;
-//       for ( auto n : Ivec){
-//         if ( n > MaxLocalB ){
-//           isBasis = false;
-//           break;
-//         }
-//       }
-//       if ( isBasis ) {
-//         work.push_back( Ivec );
-//         BTags.push_back( BosonBasisTag(Ivec) );
-//         Nres = std::accumulate(Ivec.begin(), Ivec.end(), 0);
-//         assert( cntN == Nres );
-//       }
-//     }
-//   }
-//   // sort BTags
-//   std::vector<size_t> NewIdx = SortBTags( BTags );
-//   // put work in order.
-//   for ( auto i : NewIdx ){
-//     BStates.push_back( work.at(i) );
-//   }
-//   assert( BStates.size() == BTags.size() );
-// }
-
-// void Basis::BosonTB( const size_t TBloc, const bool HARD_CUT ){
-//   assert( !(isFermion) );
-//   /* NOTE: Terminator Beam can not be located in first site or larger than system size */
-//   assert( TBloc > 0 );
-//   assert( TBloc < L );
-//   std::vector< std::vector<int> > work;
-//   int k, Nres;
-//   /* NOTE: Include all U(1) sector which has particle number smaller than N */
-//   std::vector<int> Ivec(L,0);
-//   work.push_back( Ivec );
-//   BTags.push_back( BosonBasisTag(Ivec) );
-//   for (ptrdiff_t cntN = N; cntN > 0; cntN--) {
-//     Ivec.assign(L, 0);
-//     Ivec.at(0) = cntN;
-//     work.push_back( Ivec );
-//     BTags.push_back( BosonBasisTag(Ivec) );
-//     while ( Ivec[L - 1] < cntN ) {
-//       for (ptrdiff_t cnt = L - 2; cnt > -1; cnt--) {
-//         if ( Ivec[cnt] != 0 ){
-//           k = cnt;
-//           break;//break for-loop
-//         }
-//       }
-//       Ivec[k] = Ivec[k] - 1;
-//       Nres = std::accumulate(Ivec.begin(), Ivec.begin() + k + 1, 0);
-//       Ivec.at(k+1) = (int)(cntN - Nres);
-//       if ( k < L - 2 ){
-//         for (ptrdiff_t cnt = k + 2; cnt < L; cnt++) {
-//           Ivec.at(cnt) = 0;
-//         }
-//       }
-//       /* NOTE: Rule out the state which is not existed in terminator beam setup */
-//       if ( !(HARD_CUT) || (Ivec.at(TBloc) < 2 && HARD_CUT) ) {
-//         work.push_back( Ivec );
-//         BTags.push_back( BosonBasisTag(Ivec) );
-//         Nres = std::accumulate(Ivec.begin(), Ivec.end(), 0);
-//         assert( cntN == Nres );
-//       }
-//     }
-//   }
-//   // sort BTags
-//   std::vector<size_t> NewIdx = SortBTags( BTags );
-//   // put work in order.
-//   for ( auto i : NewIdx ){
-//     BStates.push_back( work.at(i) );
-//   }
-//   assert( BStates.size() == BTags.size() );
-// }
 
 /* This has to be unique number to tag boson basis state. */
 RealType BosonBasisTag( const std::vector<int> vec ){
@@ -203,7 +92,10 @@ RealType BosonBasisTag( const std::vector<int> vec ){
 }
 
 template <typename T>
-std::vector<size_t> SortBTags( std::vector<T> &v ) {
+std::vector<std::vector<int> > SortBTags( const std::vector<std::vector<int> >& st, std::vector<T> &v ) {
+  assert( st.size() == v.size() );
+  std::vector<std::vector<int> > NewSt;
+  NewSt.clear();
   // initialize original index locations
   std::vector<size_t> idx(v.size());
   std::iota( idx.begin(), idx.end(), 0 );
@@ -219,6 +111,9 @@ std::vector<size_t> SortBTags( std::vector<T> &v ) {
   }
   v = new_v;
   assert( v.size() == idx.size() );
-  return idx;
+  for ( auto i : idx){
+    NewSt.push_back( st.at(i) );
+  }
+  return NewSt;
 }
-template std::vector<size_t> SortBTags( std::vector<RealType> &v );
+template std::vector<std::vector<int> > SortBTags( const std::vector<std::vector<int> >& st, std::vector<RealType> &v );

@@ -27,7 +27,7 @@ void Equilibrium(const std::string prefix){
   LogOut.open(prefix + "Holstein.1d.eqm", std::ios::app);
   int L = 16;
   const int OBC = 0;
-  int N = 10;
+  int N = 18;
   int dynamics = 0;
   int Tsteps = 3000;
   RealType dt=0.005;

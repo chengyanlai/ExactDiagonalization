@@ -1,0 +1,51 @@
+Build Lattice - 
+Site - 0(A) has 2 neighbors.
+	 Linked to 1 with hopping coefficient 1
+	 Linked to 15 with hopping coefficient 1
+Site - 1(A) has 2 neighbors.
+	 Linked to 0 with hopping coefficient 1
+	 Linked to 2 with hopping coefficient 1
+Site - 2(A) has 2 neighbors.
+	 Linked to 1 with hopping coefficient 1
+	 Linked to 3 with hopping coefficient 1
+Site - 3(A) has 2 neighbors.
+	 Linked to 2 with hopping coefficient 1
+	 Linked to 4 with hopping coefficient 1
+Site - 4(A) has 2 neighbors.
+	 Linked to 3 with hopping coefficient 1
+	 Linked to 5 with hopping coefficient 1
+Site - 5(A) has 2 neighbors.
+	 Linked to 4 with hopping coefficient 1
+	 Linked to 6 with hopping coefficient 1
+Site - 6(A) has 2 neighbors.
+	 Linked to 5 with hopping coefficient 1
+	 Linked to 7 with hopping coefficient 1
+Site - 7(A) has 2 neighbors.
+	 Linked to 6 with hopping coefficient 1
+	 Linked to 8 with hopping coefficient 1
+Site - 8(A) has 2 neighbors.
+	 Linked to 7 with hopping coefficient 1
+	 Linked to 9 with hopping coefficient 1
+Site - 9(A) has 2 neighbors.
+	 Linked to 8 with hopping coefficient 1
+	 Linked to 10 with hopping coefficient 1
+Site - 10(A) has 2 neighbors.
+	 Linked to 9 with hopping coefficient 1
+	 Linked to 11 with hopping coefficient 1
+Site - 11(A) has 2 neighbors.
+	 Linked to 10 with hopping coefficient 1
+	 Linked to 12 with hopping coefficient 1
+Site - 12(A) has 2 neighbors.
+	 Linked to 11 with hopping coefficient 1
+	 Linked to 13 with hopping coefficient 1
+Site - 13(A) has 2 neighbors.
+	 Linked to 12 with hopping coefficient 1
+	 Linked to 14 with hopping coefficient 1
+Site - 14(A) has 2 neighbors.
+	 Linked to 13 with hopping coefficient 1
+	 Linked to 15 with hopping coefficient 1
+Site - 15(A) has 2 neighbors.
+	 Linked to 14 with hopping coefficient 1
+	 Linked to 0 with hopping coefficient 1
+DONE!
+Build Basis - 
