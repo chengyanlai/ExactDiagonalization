@@ -27,7 +27,7 @@ void Equilibrium(const std::string prefix){
   LogOut.open(prefix + "Holstein.1d.eqm", std::ios::app);
   int L = 16;
   const int OBC = 0;
-  int N = 9;
+  int N = 5;
   RealType Momentum = 0.0;
   int dynamics = 0;
   int Tsteps = 3000;
@@ -57,6 +57,7 @@ void Equilibrium(const std::string prefix){
   std::vector<Basis> Bases;
   Bases.push_back(B1);
   LogOut << " DONE!" << std::endl;
+  LogOut << B1 << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
   Hamiltonian<DT> Ham0( Bases );
   std::vector<ComplexType> Wloc(Win.begin(), Win.end());

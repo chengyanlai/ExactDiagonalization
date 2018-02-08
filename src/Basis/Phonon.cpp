@@ -3,6 +3,15 @@
 #include "src/EDType.hpp"
 #include "src/Basis/Basis.hpp"
 
+/* DEBUG use */
+static void PrintBosonBasis( const std::vector<int> state ){
+  typename std::vector<int>::const_iterator it = state.begin();
+  for (;it != state.end(); ++it ){
+    std::cout << *it << ", " << std::flush;
+  }
+  std::cout << std::endl;
+};
+
 RealType Basis::CreatePhonon( std::vector<int>& state, const int site )const{
   state.at(site) += 1;
   return BosonBasisTag(state);
@@ -132,6 +141,6 @@ void Basis::Phonon(){
   for ( int cnt = 0; cnt < N; cnt++ ){
     NewStates = ApplyOffdiagonal( NewStates );
   }
-  DummyCheckState();
+  // DummyCheckState();
   assert( BStates.size() == BTags.size() );
 }

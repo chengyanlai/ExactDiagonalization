@@ -62,17 +62,6 @@ public:
     return NTotal.at(idx);
   };// for Transverse Ising spin
 
-  inline void PrintFermionBasis( const int state )const{
-    for (size_t cnt = 0; cnt < L; cnt++) {
-      std::cout << btest(state, cnt) << ", " << std::flush;
-    }
-    std::cout << std::endl;
-  };
-
-  inline void PrintSpinOneHalfBasis( const int state )const{
-    PrintFermionBasis( state );
-  };
-
   /* Boson functions */
   void Boson();
   void Phonon();
@@ -82,21 +71,6 @@ public:
 
   inline std::vector<RealType> GetBTags()const{
     return BTags;
-  };
-
-  inline void PrintBosonBasis( const std::vector<int> state )const{
-    typename std::vector<int>::const_iterator it = state.begin();
-    for (;it != state.end(); ++it ){
-      std::cout << *it << ", " << std::flush;
-    }
-    std::cout << std::endl;
-  };
-
-  inline void PrintAllBosonBasis()const{
-    typename std::vector< std::vector<int> >::const_iterator it = BStates.begin();
-    for ( ;it != BStates.end(); ++it ){
-      PrintBosonBasis(*it);
-    };
   };
 
   inline size_t GetIndexFromTag( const RealType tg )const{
@@ -116,6 +90,7 @@ public:
   RealType FermionJumpRight( std::vector<int>& state, const int NumJumps = 1 )const;
   RealType FermionJumpLeft( std::vector<int>& state, const int NumJumps = 1 )const;
 
+  friend std::ostream& operator<<(std::ostream& os, const Basis& st);
 private:
   size_t L;
   size_t N;
@@ -130,6 +105,7 @@ private:
   /* Holstein Phonon */
   std::vector<std::vector<int> > ApplyOffdiagonal( const std::vector<std::vector<int> >& InputStates );
   void DummyCheckState();
+
 };
 
 RealType BosonBasisTag( const std::vector<int> vec );

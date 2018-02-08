@@ -63,3 +63,27 @@ void Basis::Load( const std::string filename, const std::string gname ){
     assert( BStates.size() == BTags.size() );
   }
 }
+
+std::ostream& operator<< (std::ostream& os, const Basis& st){
+  if ( st.isFermion ){
+    std::vector<int> work = st.FStates;
+    typename std::vector<int>::const_iterator state = work.begin();
+    for (; state != work.end(); ++state ){
+      for (size_t cnt = 0; cnt < st.GetL(); cnt++) {
+        os << btest(*state, cnt) << ", " << std::flush;
+      }
+      os << std::endl;
+    }
+  }else{
+    std::vector< std::vector<int> > work = st.BStates;
+    typename std::vector< std::vector<int> >::const_iterator state = work.begin();
+    for (;state != work.end(); ++state ){
+      typename std::vector<int>::const_iterator it = state->begin();
+      for ( ;it != state->end(); ++it ){
+        os << *it << ", " << std::flush;
+      }
+      os << std::endl;
+    }
+  }
+  return os;
+}
