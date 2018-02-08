@@ -41,7 +41,7 @@ build/bhm.1d: build/apps/BHM1D.o $(OBJ)
 build/tqdm: build/apps/TQDM.o $(OBJ) $(PE_OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/holstein.1d: build/apps/Holstein.o $(OBJ)
+build/holstein.1d: build/apps/Holstein1D.o $(OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/apps/FermionBosonMixMPI.o: apps/FermionBosonMix.cpp

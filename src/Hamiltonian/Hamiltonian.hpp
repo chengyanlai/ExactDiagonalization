@@ -62,14 +62,20 @@ public:
   // void FermionDensityDensity(
   //   const std::vector<std::pair<int,int> > betweenSpecies, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
   //   const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
+
   /* vvvvvvv Spin Functions vvvvvvv */
   // void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop);
   // void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop );
-  /* ^^^^^^^ Spin Functions ^^^^^^^ */
+
   /* vvvvvvv Hybrid systems vvvvvvv */
   // void BuildHybridHamiltonian( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, const int maxLocalB = 0);
   // void Hybridization( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
-  /* ^^^^^^^ Hybrid systems ^^^^^^^ */
+
+  /* ^^^^^^^ Holstein model ^^^^^^^ */
+  void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc );
+  void LocalPhonon( const std::vector<Tnum>& Wloc, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
+  void FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
+  void FermionNNHopping( const RealType& k, const std::vector< Node<Tnum>* > &lt, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
 
   /* vvvvvvv Linear Algebra: Solvers vvvvvvv */
   void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true);

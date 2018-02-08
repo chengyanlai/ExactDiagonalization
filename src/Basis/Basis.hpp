@@ -103,12 +103,18 @@ public:
     assert( !(isFermion) );
     auto it = binary_locate(BTags.begin(), BTags.end(), tg);
     size_t idx = std::distance(BTags.begin(), it);
-    if ( std::abs(BTags.at(idx) - tg) < 1.0e-12 ){
+    // if ( std::abs(BTags.at(idx) - tg) < 1.0e-12 ){
       return idx;
-    } else{
-      return GetHilbertSpace() - 1;// To be a valid index
-    }
+    // } else{
+    //   return GetHilbertSpace() - 1;// To be a valid index
+    // }
   };
+
+  /* Holstein Phonon */
+  RealType CreatePhonon( std::vector<int>& state, const int site=0 )const;
+  RealType DestroyPhonon( std::vector<int>& state, const int site=0 )const;
+  RealType FermionJumpRight( std::vector<int>& state, const int NumJumps = 1 )const;
+  RealType FermionJumpLeft( std::vector<int>& state, const int NumJumps = 1 )const;
 
 private:
   size_t L;
@@ -122,9 +128,7 @@ private:
   std::vector<int> NTotal;//for Fermion without U(1).
 
   /* Holstein Phonon */
-  std::vector<std::vector<int> > ApplyOffdiagonal( const std::vector<std::vector<int> > InputStates );
-  bool CheckExist1( const std::vector<int>& State );
-  bool CheckExist2( const std::vector<int>& State, const std::vector<std::vector<int> > States );
+  std::vector<std::vector<int> > ApplyOffdiagonal( const std::vector<std::vector<int> >& InputStates );
   void DummyCheckState();
 };
 

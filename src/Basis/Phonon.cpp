@@ -1,9 +1,51 @@
 #include <stddef.h>
 #include <cmath>
-#include <numeric>//accumulate, iota
-#include <tuple>
 #include "src/EDType.hpp"
 #include "src/Basis/Basis.hpp"
+
+RealType Basis::CreatePhonon( std::vector<int>& state, const int site )const{
+  state.at(site) += 1;
+  return BosonBasisTag(state);
+}
+
+RealType Basis::DestroyPhonon( std::vector<int>& state, const int site )const{
+  if ( state.at(site) ){
+    state.at(site) = state.at(site) - 1;
+    return BosonBasisTag(state);
+  }else{
+    return -1;
+  }
+}
+
+RealType Basis::FermionJumpRight( std::vector<int>& state, const int NumJumps )const{
+  int L = state.size();
+  std::vector<int> ns;
+  ns.clear();
+  ns.insert(ns.begin(), state.begin()+NumJumps, state.end() );
+  ns.insert(ns.end(), state.begin(), state.begin()+NumJumps );
+  // ns.push_back( state.at(0) );// if NumJumps = 1
+// std::cout << "R - " << NumJumps << "\n";
+// PrintBosonBasis(state);
+// PrintBosonBasis(ns);
+  state = ns;
+  assert( state.size() == L );
+  return BosonBasisTag(state);
+}
+
+RealType Basis::FermionJumpLeft( std::vector<int>& state, const int NumJumps )const{
+  int L = state.size();
+  std::vector<int> ns;
+  ns.clear();
+  // ns.push_back( state.back() );// if NumJumps = 1
+  ns.insert(ns.begin(), state.end()-NumJumps, state.end() );
+  ns.insert(ns.end(), state.begin(), state.end()-NumJumps);
+// std::cout << "L - " << NumJumps << "\n";
+// PrintBosonBasis(state);
+// PrintBosonBasis(ns);
+  state = ns;
+  assert( state.size() == L );
+  return BosonBasisTag(state);
+}
 
 void Basis::DummyCheckState(){
   for (size_t i1 = 0; i1 < BStates.size(); i1++){
@@ -20,38 +62,7 @@ void Basis::DummyCheckState(){
   }
 }
 
-bool Basis::CheckExist2( const std::vector<int>& State, const std::vector<std::vector<int> > States ){
-  typename std::vector<std::vector<int> >::const_reverse_iterator it = States.rbegin();
-  for(; it != States.rend(); ++it){
-    if ( State == *it ) return true;
-  }
-  return false;
-}
-
-bool Basis::CheckExist1( const std::vector<int>& State ){
-  RealType tg = BosonBasisTag(State);
-  size_t Idx = this->GetIndexFromTag( tg );
-  return State == BStates.at(Idx);
-//   if ( State == BStates.at(Idx) ){
-// // std::cout << "new\n";
-// // PrintBosonBasis(State);
-// // std::cout << "cp to\n";
-// // PrintBosonBasis(BStates.at(Idx));
-// // std::cout << (State == BStates.at(Idx)) << std::endl;
-// // std::cin.get();
-//     return true;
-//   }else{
-// std::cout << "new\n";
-// PrintBosonBasis(State);
-// std::cout << "cp to\n";
-// PrintBosonBasis(BStates.at(Idx));
-// std::cout << (State == BStates.at(Idx)) << std::endl;
-// // std::cin.get();
-//     return false;
-//   }
-}
-
-std::vector<std::vector<int> > Basis::ApplyOffdiagonal( const std::vector<std::vector<int> > InputStates ){
+std::vector<std::vector<int> > Basis::ApplyOffdiagonal( const std::vector<std::vector<int> >& InputStates ){
   // States has phonon configurations with fermion at site-0
   // Btags need to be sorted.
   std::vector<std::vector<int> > NewStates;
@@ -59,22 +70,50 @@ std::vector<std::vector<int> > Basis::ApplyOffdiagonal( const std::vector<std::v
   typename std::vector<std::vector<int> >::const_iterator it = InputStates.begin();
   for (; it != InputStates.end(); ++it ){
     // Create Phonon
-    std::vector<int> State1 = *it;
-    State1.at(0) += 1;
-    assert( State1.size() == L );
-    if ( !CheckExist1( State1 ) && !CheckExist2( State1, NewStates ) ) NewStates.push_back(State1);
+    std::vector<int> State = *it;
+    RealType tg = CreatePhonon(State);
+    assert( State.size() == L );
+    size_t Idx = this->GetIndexFromTag(tg);
+    if ( !(State == BStates.at(Idx)) ){
+      NewStates.push_back(State);
+      if ( tg > BTags.at(Idx) ){
+        BTags.insert( BTags.begin() + Idx + 1, tg );
+        BStates.insert( BStates.begin() + Idx + 1, State );
+      }else{
+        BTags.insert( BTags.begin() + Idx, tg );
+        BStates.insert( BStates.begin() + Idx, State );
+      }
+    }
     // Fermion jump right
-    std::vector<int> State2;
-    State2.insert(State2.begin(), it->begin()+1, it->end());
-    State2.push_back( it->at(0) );
-    assert( State2.size() == L );
-    if ( !CheckExist1( State2 ) && !CheckExist2( State2, NewStates ) ) NewStates.push_back(State2);
+    State = *it;
+    tg = FermionJumpRight( State );
+    assert( State.size() == L );
+    Idx = this->GetIndexFromTag(tg);
+    if ( !(State == BStates.at(Idx)) ){
+      NewStates.push_back(State);
+      if ( tg > BTags.at(Idx) ){
+        BTags.insert( BTags.begin() + Idx + 1, tg );
+        BStates.insert( BStates.begin() + Idx + 1, State );
+      }else{
+        BTags.insert( BTags.begin() + Idx, tg );
+        BStates.insert( BStates.begin() + Idx, State );
+      }
+    }
     // Fermiom jump left
-    std::vector<int> State3;
-    State3.push_back( it->back() );
-    State3.insert(State3.end(), it->begin(), it->end()-1);
-    assert( State3.size() == L );
-    if ( !CheckExist1( State3 ) && !CheckExist2( State3, NewStates ) ) NewStates.push_back(State3);
+    State = *it;
+    tg = FermionJumpLeft( State );
+    assert( State.size() == L );
+    Idx = this->GetIndexFromTag(tg);
+    if ( !(State == BStates.at(Idx)) ){
+      NewStates.push_back(State);
+      if ( tg > BTags.at(Idx) ){
+        BTags.insert( BTags.begin() + Idx + 1, tg );
+        BStates.insert( BStates.begin() + Idx + 1, State );
+      }else{
+        BTags.insert( BTags.begin() + Idx, tg );
+        BStates.insert( BStates.begin() + Idx, State );
+      }
+    }
   }
   return NewStates;
 }
@@ -83,26 +122,15 @@ void Basis::Phonon(){
   /* Limited function space with one fermion at site-0 */
   HaveU1 = false;
   assert( !(isFermion) );
+  BStates.clear();
   BTags.clear();
-
-  // std::vector< std::tuple<int, std::vector<int> > > lfs;// limited functional space
-  // lfs.push_back( std::make_tuple(0, std::vector<int>(L,0)) );
   std::vector<int> State(L, 0);
   std::vector<std::vector<int> > NewStates;
   NewStates.push_back( State );
-  // add this vacuum state
-  BStates.push_back( State );
-  BTags.push_back( BosonBasisTag(State) );
+  BStates.push_back( State );// add this vacuum state
+  BTags.push_back( BosonBasisTag(State) );// 0
   for ( int cnt = 0; cnt < N; cnt++ ){
     NewStates = ApplyOffdiagonal( NewStates );
-    if ( NewStates.size() ){
-      typename std::vector<std::vector<int> >::const_iterator it = NewStates.begin();
-      for (; it != NewStates.end(); ++it ){
-        BStates.push_back( *it );
-        BTags.push_back( BosonBasisTag(*it) );
-      }
-      BStates = SortBTags( BStates, BTags );
-    }
   }
   DummyCheckState();
   assert( BStates.size() == BTags.size() );

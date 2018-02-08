@@ -91,7 +91,7 @@ RealType BosonBasisTag( const std::vector<int> vec ){
   return tag;
 }
 
-template <typename T>
+template <typename T>// Small to big
 std::vector<std::vector<int> > SortBTags( const std::vector<std::vector<int> >& st, std::vector<T> &v ) {
   assert( st.size() == v.size() );
   std::vector<std::vector<int> > NewSt;
