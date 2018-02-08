@@ -3,10 +3,13 @@
 #include <map>
 #include <tuple>
 #include "src/bitwise.h"
-#include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Hamiltonian/FHM/FermiHubbard.hpp"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+void FHM<Tnum>::LocalPotential( const size_t spin1, const std::vector<Tnum> &Vloc, const Basis &bs){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
+  int spin2 = (spin1 == 0)?  1 : 0;
   int state_id = 0;
   for ( int b : bs.FStates ){
     Tnum val = (Tnum)0.0;
@@ -17,28 +20,27 @@ void Hamiltonian<Tnum>::LocalPotential( const size_t species_id, const std::vect
     }
     if ( std::abs(val) > 1.0e-12 ){
       std::vector<size_t> ids(2, state_id);
-      if (species_id == 0) {
-        for (size_t id2 = 0; id2 < HilbertSpaces.at(1); id2++) {
-          ids.at(1) = id2;
-          size_t idx = DetermineTotalIndex( ids );
-          MatElemts.push_back(std::make_tuple(idx, idx, val));
-        }
-      } else if (species_id == 1){
-        for (size_t id2 = 0; id2 < HilbertSpaces.at(0); id2++) {
-          ids.at(0) = id2;
-          size_t idx = DetermineTotalIndex( ids );
-          MatElemts.push_back(std::make_tuple(idx, idx, val));
-        }
-      } else{
-        RUNTIME_ERROR("Not support more than 2 species fermion yet!");
+      for (size_t id2 = 0; id2 < this->HilbertSpaces.at(spin2); id2++) {
+        ids.at(spin2) = id2;
+        size_t idx = this->DetermineTotalIndex( ids );
+        MatElemts.push_back(std::make_tuple(idx, idx, val));
       }
     }
     state_id++;
   }
+  if (spin1 == 0) {
+    H_Vup = this->BuildSparseHamiltonian( MatElemts );
+  } else if (spin1 == 1){
+    H_Vdn = this->BuildSparseHamiltonian( MatElemts );
+  } else{
+    RUNTIME_ERROR("Not support more than 2 species fermion yet!");
+  }
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+void FHM<Tnum>::HubbardInteraction( const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
   /*NOTE: Calculate interaction between any two input bases.
           Assume two input bases has the same L. */
   assert( bs.size() == 2 );
@@ -52,7 +54,7 @@ void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, c
   for (size_t i = 0; i < bs.at(0).GetL(); i++) {
     std::vector<size_t> work;
     point1 = 0;// point1 will be the same for all i
-    for (size_t cnt_up = 0; cnt_up < HilbertSpaces.at(species_id.at(0)); cnt_up++) {
+    for (size_t cnt_up = 0; cnt_up < this->HilbertSpaces.at(0); cnt_up++) {
       if ( btest(bs.at(0).FStates.at(cnt_up), i) ) {
         point1++;
         work.push_back(cnt_up);
@@ -69,7 +71,7 @@ void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, c
     for (size_t i = 0; i < bs.at(1).GetL(); i++) {
       std::vector<size_t> work;
       point2 = 0;// point2 will be the same for all i
-      for (size_t cnt_dn = 0; cnt_dn < HilbertSpaces.at(species_id.at(1)); cnt_dn++) {
+      for (size_t cnt_dn = 0; cnt_dn < this->HilbertSpaces.at(1); cnt_dn++) {
         if ( btest(bs.at(1).FStates.at(cnt_dn), i) ) {
           point2++;
           work.push_back(cnt_dn);
@@ -86,16 +88,20 @@ void Hamiltonian<Tnum>::HubbardInteraction( const std::vector<int> species_id, c
         std::vector<size_t> ids(2,0);
         ids.at(0) = IndexU1.at(i).at(up);
         ids.at(1) = IndexU2.at(i).at(dn);
-        size_t id = DetermineTotalIndex( ids );
+        size_t id = this->DetermineTotalIndex( ids );
         MatElemts.push_back( std::make_tuple(id, id, Uloc.at(i)) );
         // std::cout << "2 " << id << " " << id << " " << Uloc << std::endl;
       }
     }
   }
+  H_U = this->BuildSparseHamiltonian( MatElemts );
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+void FHM<Tnum>::NNHopping( const size_t spin1, const std::vector< Node<Tnum>* > &lt, const Basis &bs){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
+  int spin2 = (spin1 == 0)?  1 : 0;
   size_t bid = 0, pid = 0;//l and p's index
   for ( int b : bs.FStates ){
     for ( Node<Tnum>* l : lt ) {
@@ -135,24 +141,13 @@ void Hamiltonian<Tnum>::NNHopping( const size_t species_id, const std::vector< N
           bid = bs.FTags.at(b);// Find their indices
           pid = bs.FTags.at(p);// Find their indices
           // INFO(lid << " " << pid);
-          size_t count;
-          if ( species_id == 0 ) {
-            count = HilbertSpaces.at(1);
-          } else {
-            count = HilbertSpaces.at(0);
-          }
           std::vector<size_t> rids(2, bid);
           std::vector<size_t> cids(2, pid);
-          for (size_t loop_id = 0; loop_id < count; loop_id++) {
-            if ( species_id == 0 ) {
-              rids.at(1) = loop_id;
-              cids.at(1) = loop_id;
-            } else {
-              rids.at(0) = loop_id;
-              cids.at(0) = loop_id;
-            }
-            size_t rid = DetermineTotalIndex( rids );
-            size_t cid = DetermineTotalIndex( cids );
+          for (size_t loop_id = 0; loop_id < this->HilbertSpaces.at(spin2); loop_id++) {
+            rids.at(spin2) = loop_id;
+            cids.at(spin2) = loop_id;
+            size_t rid = this->DetermineTotalIndex( rids );
+            size_t cid = this->DetermineTotalIndex( cids );
             Tnum value = (Tnum)(-1.0e0) * tsign * nnJ.at(cnt);
             MatElemts.push_back( std::make_tuple(rid, cid, value) );
           }
@@ -160,33 +155,33 @@ void Hamiltonian<Tnum>::NNHopping( const size_t species_id, const std::vector< N
       }
     }
   }
+  if (spin1 == 0) {
+    H_Jup = this->BuildSparseHamiltonian( MatElemts );
+  } else if (spin1 == 1){
+    H_Jdn = this->BuildSparseHamiltonian( MatElemts );
+  }
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc ){
+void FHM<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc ){
   // Both species live in the same lattice and the same happing amplitudes
   assert( bs.size() == 2 );//NOTE: Only support two or one species right now.
   assert( Vloc.size() == bs.size() );
   int cnt = 0;
-  std::vector<std::tuple<int, int, Tnum> > MatElemts;
-  MatElemts.clear();
   for ( auto &b : bs ){
     /* For intra-species local terms: Potential */
     assert( b.GetL() == Vloc.at(cnt).size() );
     assert( b.GetL() == Uloc.size() );
-    LocalPotential( cnt, Vloc.at(cnt), b, MatElemts );
+    LocalPotential( cnt, Vloc.at(cnt), b );
     /* For intra-species N-N hopping */
     assert( b.GetL() == lattice.size() );
-    NNHopping( cnt, lattice, b, MatElemts );
+    NNHopping( cnt, lattice, b );
     cnt++;
   }
   /* For inter-species local terms: Hubbard U */
-  std::vector<int> sid;
-  sid.push_back(0);
-  sid.push_back(1);
-  HubbardInteraction(sid, Uloc, bs, MatElemts );
+  HubbardInteraction(Uloc, bs);
   /* Build H_total */
-  BuildTotalHamiltonian( MatElemts );
+  this->H_total = H_Jup + H_Jdn + H_Vup + H_Vdn + H_U;
 }
 
 // template<typename Tnum>// Extended Hubbard
@@ -226,5 +221,5 @@ void Hamiltonian<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const s
 //   }
 // }
 
-template class Hamiltonian<RealType>;
-template class Hamiltonian<ComplexType>;
+template class FHM<RealType>;
+template class FHM<ComplexType>;

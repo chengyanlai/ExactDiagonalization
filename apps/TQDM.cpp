@@ -10,7 +10,7 @@
 #include "src/Node/Node.hpp"
 #include "src/Basis/Basis.hpp"
 #include "src/ArmadilloMatrix.hpp"
-#include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Hamiltonian/FHM/FermiHubbard.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 #include "src/Lindblad/ParticleExchange/lindblad.hpp"
 
@@ -45,7 +45,7 @@ RealType TraceRhos(const std::vector<ComplexMatrixType> &Rhos){
   return tr.real();
 }
 
-ComplexMatrixType SingleParticleDensityMatrix( const int spin, const std::vector<std::vector<Basis> >& Bases, const std::vector<ComplexMatrixType>& Rhos, const std::vector<Hamiltonian<ComplexType> >& ham ){
+ComplexMatrixType SingleParticleDensityMatrix( const int spin, const std::vector<std::vector<Basis> >& Bases, const std::vector<ComplexMatrixType>& Rhos, const std::vector<FHM<ComplexType> >& ham ){
   size_t L = Bases.at(0).at(spin).GetL();
   ComplexMatrixType CM(L, L, arma::fill::zeros);
   for ( size_t cntB = 0; cntB < ham.size(); cntB++){
@@ -101,7 +101,7 @@ ComplexMatrixType SingleParticleDensityMatrix( const int spin, const std::vector
   return CM;
 }
 
-ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<Hamiltonian<ComplexType> >& ham ){
+ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<FHM<ComplexType> >& ham ){
   ComplexMatrixType tmp(Bases.at(0).at(spin).GetL(), Bases.at(0).at(spin).GetL(), arma::fill::zeros);
   for (size_t cnt = 0; cnt < Bases.size(); cnt++) {
     std::vector<int> bs = Bases.at(cnt).at(spin).GetFStates();
@@ -132,7 +132,7 @@ ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &
   return tmp;
 }
 
-ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<Hamiltonian<ComplexType> >& ham ){
+ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<FHM<ComplexType> >& ham ){
   int L = Bases.at(0).at(0).GetL();
   ComplexType tmp = ComplexType(0.0e0, 0.0e0);
   for (size_t cnt = 0; cnt < Bases.size(); cnt++) {
@@ -181,7 +181,7 @@ ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vec
   return tmp;
 }
 
-std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> >& Bases, const std::vector<ComplexMatrixType>& OriginalRhos, const std::vector<Hamiltonian<ComplexType> >& Hams, const RealType& dt, const std::vector<RealType>& Gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const int& Save = 0, const std::string prefix = "" ){
+std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> >& Bases, const std::vector<ComplexMatrixType>& OriginalRhos, const std::vector<FHM<ComplexType> >& Hams, const RealType& dt, const std::vector<RealType>& Gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const int& Save = 0, const std::string prefix = "" ){
   std::vector<RealType> tls;
   std::vector<ComplexType> Na, Nb, Nc, n12, n13, n23, NaUp;
   std::vector<ComplexType> j12, j23, j13, jj12, jj13, jj23;
@@ -333,12 +333,12 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   LogOut << "DONE!" << std::endl;
 
   LogOut << "Build Hamiltonian in each Basis pair - " << std::flush;
-  std::vector<Hamiltonian<ComplexType> > Hams;
+  std::vector<FHM<ComplexType> > Hams;
   std::vector<ComplexType> vtmp(Vin.begin(), Vin.end());
   std::vector<std::vector<ComplexType> > Vloc = vec(vtmp, vtmp);
   std::vector<ComplexType> Uloc(Uin.begin(), Uin.end());
   for ( auto &bs : Bases ){
-    Hamiltonian<ComplexType> ham( bs );
+    FHM<ComplexType> ham( bs );
     ham.FermiHubbardModel(bs, LOOP, Vloc, Uloc);
     Hams.push_back(ham);
   }

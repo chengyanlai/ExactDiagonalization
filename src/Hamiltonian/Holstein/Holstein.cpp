@@ -1,10 +1,12 @@
 #include <cassert>
 #include <cmath>//exp
 #include <tuple>
-#include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Hamiltonian/Holstein/Holstein.hpp"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::LocalPhonon( const std::vector<Tnum>& Wloc, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+void Holstein<Tnum>::PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs ){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
   int state_id = 0;
   for ( std::vector<int> b : bs.BStates ){
     int loc = 0;
@@ -16,10 +18,12 @@ void Hamiltonian<Tnum>::LocalPhonon( const std::vector<Tnum>& Wloc, const Basis&
     MatElemts.push_back( std::make_tuple(state_id, state_id, val) );
     state_id++;
   }
+  H_Phonon = this->BuildSparseHamiltonian( MatElemts );
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+void Holstein<Tnum>::FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
   std::vector< std::vector<int> > States = bs.BStates;
   size_t rid = 0;
   typename std::vector< std::vector<int> >::const_iterator it = States.begin();
@@ -38,10 +42,12 @@ void Hamiltonian<Tnum>::FermionPhononCoupling( const std::vector<Tnum>& Gloc, co
     }
     rid++;
   }
+  H_Couple = this->BuildSparseHamiltonian( MatElemts );
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::FermionNNHopping( const RealType& k, const std::vector< Node<Tnum>* > &lt, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts ){
+void Holstein<Tnum>::FermionNNHopping( const RealType& k, const std::vector< Node<Tnum>* > &lt, const Basis& bs){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
   int L = bs.GetL();
   int state_id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
@@ -76,20 +82,19 @@ void Hamiltonian<Tnum>::FermionNNHopping( const RealType& k, const std::vector< 
     }
     state_id1++;
   }
+  H_Kinetic = this->BuildSparseHamiltonian( MatElemts );
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc ){
+void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc ){
   // Both species live in the same lattice and the same happing amplitudes
   assert( Wloc.size() == bs.at(0).GetL() );
   assert( Gloc.size() == bs.at(0).GetL() );
-  std::vector<std::tuple<int, int, Tnum> > MatElemts;
-  MatElemts.clear();
+  PhononLocal( Wloc, bs.at(0) );
+  FermionPhononCoupling( Gloc, bs.at(0) );
+  FermionNNHopping( k, lattice, bs.at(0) );
   /* Build H_total */
-  LocalPhonon( Wloc, bs.at(0), MatElemts );
-  FermionPhononCoupling( Gloc, bs.at(0), MatElemts );
-  FermionNNHopping( k, lattice, bs.at(0), MatElemts );
-  BuildTotalHamiltonian( MatElemts );
+  this->H_total = H_Phonon + H_Kinetic + H_Couple;
 }
 
-template class Hamiltonian<ComplexType>;
+template class Holstein<ComplexType>;

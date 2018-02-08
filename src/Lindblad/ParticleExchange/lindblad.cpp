@@ -16,7 +16,7 @@ x[i] is the Mat(\Rhos)
 # x[i+1] = x[i] + ( k1 + 2.0 * ( k2 + k3 ) + k4 ) / 6.0
 */
 
-void FRK4( const RealType& dt, const std::vector<RealType>& gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const std::vector<std::vector<Basis> >& bas, const std::vector<Hamiltonian<ComplexType> >& hams, std::vector<ComplexMatrixType>& Rhos ) {
+void FRK4( const RealType& dt, const std::vector<RealType>& gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const std::vector<std::vector<Basis> >& bas, const std::vector<FHM<ComplexType> >& hams, std::vector<ComplexMatrixType>& Rhos ) {
   /* NOTE: This is only for quench */
   std::vector<ComplexMatrixType> k1 = Rhos;
   FNewton( dt, gammas, SiteTypesSpin, BasisIds, CollapseIds, bas, hams, k1);
@@ -46,7 +46,7 @@ void FRK4( const RealType& dt, const std::vector<RealType>& gammas, const std::v
   }
 }
 
-void FNewton( const RealType& dt, const std::vector<RealType>& gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const std::vector<std::vector<Basis> >& bas, const std::vector<Hamiltonian<ComplexType> >& hams, std::vector<ComplexMatrixType>& Rhos ){
+void FNewton( const RealType& dt, const std::vector<RealType>& gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const std::vector<std::vector<Basis> >& bas, const std::vector<FHM<ComplexType> >& hams, std::vector<ComplexMatrixType>& Rhos ){
   assert( hams.size() == Rhos.size() );
   assert( gammas.size()  == SiteTypesSpin.size() );
   assert( SiteTypesSpin.size()  == BasisIds.size() );
@@ -95,7 +95,7 @@ ComplexMatrixType LindbladTerm( const size_t dim, const std::vector<std::pair<si
   return work;
 }
 
-ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size_t Spin, const std::vector<Basis> Bs, Hamiltonian<ComplexType> ham, const ComplexMatrixType &rho){
+ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size_t Spin, const std::vector<Basis> Bs, FHM<ComplexType> ham, const ComplexMatrixType &rho){
   /* NOTE: This returns the desity matrix multiply the particle number on Site
   respectively to each basis.
   type -  1 : c^\dagger c
@@ -133,7 +133,7 @@ ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size
 /* This is Lindblad operator set to C which belongs to type -1
     d \rho ~ c \rho c^dagger
 */
-void Cf(const size_t Site, const int Spin, const std::vector<std::vector<Basis> > &Bs, std::vector<Hamiltonian<ComplexType> > &hams, const std::map<std::pair<int,int>, int > PairIndex1, const std::map<int, std::pair<int,int> > PairIndex2, std::vector<std::pair<int,int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
+void Cf(const size_t Site, const int Spin, const std::vector<std::vector<Basis> > &Bs, std::vector<FHM<ComplexType> > &hams, const std::map<std::pair<int,int>, int > PairIndex1, const std::map<int, std::pair<int,int> > PairIndex2, std::vector<std::pair<int,int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
   BasisIdx.clear();
   CollapseIdx.clear();
   int spin1, spin2;
@@ -194,7 +194,7 @@ void Cf(const size_t Site, const int Spin, const std::vector<std::vector<Basis> 
 /* This is Lindblad operator set to C^\dagger which belongs to type 1
     d \rho ~ c^dagger \rho c
 */
-void Cfdagger( const size_t Site, const int Spin, const std::vector<std::vector<Basis> > &Bs, std::vector<Hamiltonian<ComplexType> > &hams, const std::map<std::pair<int,int>, int > PairIndex1, const std::map<int, std::pair<int,int> > PairIndex2, std::vector<std::pair<int, int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
+void Cfdagger( const size_t Site, const int Spin, const std::vector<std::vector<Basis> > &Bs, std::vector<FHM<ComplexType> > &hams, const std::map<std::pair<int,int>, int > PairIndex1, const std::map<int, std::pair<int,int> > PairIndex2, std::vector<std::pair<int, int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
   BasisIdx.clear();
   CollapseIdx.clear();
   int spin1, spin2;

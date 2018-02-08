@@ -2,47 +2,6 @@
 #include "src/Lanczos/krylov.hpp"
 #include "src/numeric/lapack.h"
 
-#ifndef DEBUG
-#define DEBUG 0
-#endif
-
-template<typename Tnum>
-Hamiltonian<Tnum>::Hamiltonian( const std::vector<Basis>& bs )
-{
-  /* Get each hilbert space and calculate total Hilbert space.
-     This has nothing to do with Fermion / Boson modeling.
-  */
-  HilbertSpaces.clear();
-  for ( auto &b : bs ){
-    HilbertSpaces.push_back(b.GetHilbertSpace());
-  }
-  size_t TotalDim = GetTotalHilbertSpace();
-  if (DEBUG) std::cout << "Total Hilbert Space = " << TotalDim << std::endl;
-}
-
-template<typename Tnum>
-void Hamiltonian<Tnum>::BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
-  ULongMatrixType Locations(2, MatElemts.size());
-  VectorType Values( MatElemts.size() );
-  typename std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
-  size_t cnt = 0;
-  for (; it != MatElemts.end(); ++it ){
-    int row, col;
-    Tnum val;
-    std::tie(row, col, val) = *it;
-    // armadillo
-    Locations(0,cnt) = row;
-    Locations(1,cnt) = col;
-    Values(cnt) = val;
-    // Eigen3
-    cnt++;
-  }
-  // Clear All elements
-  H_total.clear();// = SparseMatrixType();
-  // First true allows repeated matrix elements
-  H_total = SparseMatrixType(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
-}
-
 template<typename Tnum>
 void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial){
   size_t dim = GetTotalHilbertSpace();

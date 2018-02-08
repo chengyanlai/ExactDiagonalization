@@ -8,7 +8,7 @@
 #include "src/Node/Node.hpp"
 #include "src/Lattice/preset.hpp"
 #include "src/Basis/Basis.hpp"
-#include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Hamiltonian/BHM/BoseHubbard.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
 #ifdef MKL
@@ -87,7 +87,7 @@ void Equilibrium(const std::string prefix){
   Bases.push_back(B1);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
-  Hamiltonian<DT> Ham0( Bases );
+  BHM<DT> Ham0( Bases );
   std::vector<DT> UWork(Uin.begin(), Uin.end());
   std::vector<DT> VWork(Vin.begin(), Vin.end());
   Ham0.BoseHubbardModel(Bases, lattice, VWork, UWork);
@@ -95,8 +95,11 @@ void Equilibrium(const std::string prefix){
   LogOut << "Diagonalize Hamiltonian - " << std::flush;
   RealVectorType Vals;
   DTM Vecs;
-  Ham0.eigh(Vals, Vecs, 2);
-  // Ham0.diag(Vals, Vecs);// Full spectrum
+  if ( Ham0.GetTotalHilbertSpace() > 1000 ){
+    Ham0.eigh(Vals, Vecs, 2);
+  }else{
+    Ham0.diag(Vals, Vecs);// Full spectrum
+  }
   LogOut << "DONE!" << std::endl;
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;

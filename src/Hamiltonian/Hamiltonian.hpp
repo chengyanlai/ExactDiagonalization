@@ -14,8 +14,18 @@ public:
   typedef arma::Col<Tnum> VectorType;
   typedef arma::Mat<Tnum> MatrixType;
   typedef arma::SpMat<Tnum> SparseMatrixType;
+
+  /* Constructors */
   Hamiltonian(){};
-  Hamiltonian( const std::vector<Basis> &bs );
+
+  Hamiltonian( const std::vector<Basis> &bs ){
+    HilbertSpaces.clear();
+    for ( auto &b : bs ){
+      HilbertSpaces.push_back(b.GetHilbertSpace());
+    }
+    size_t TotalDim = GetTotalHilbertSpace();
+  };
+
   virtual ~Hamiltonian(){};
 
   inline size_t GetTotalHilbertSpace()const{
@@ -45,47 +55,39 @@ public:
     return tidx;
   };
 
-  void BuildTotalHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts );
+  inline SparseMatrixType BuildSparseHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
+    ULongMatrixType Locations(2, MatElemts.size());
+    VectorType Values( MatElemts.size() );
+    typename std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
+    size_t cnt = 0;
+    for (; it != MatElemts.end(); ++it ){
+      int row, col;
+      Tnum val;
+      std::tie(row, col, val) = *it;
+      // armadillo
+      Locations(0,cnt) = row;
+      Locations(1,cnt) = col;
+      Values(cnt) = val;
+      // Eigen3
+      cnt++;
+    }
+    // First true allows repeated matrix elements
+    SparseMatrixType out(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
+    return out;
+  };
 
-  /* vvvvvvv Bose Hubbard model vvvvvvv */
-  void BoseHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Vloc, const std::vector<Tnum>& Uloc );
-  void LocalTerms( const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-  void NNHopping( const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-
-  /* vvvvvvv Fermi Hubbard model vvvvvvv */
-  void FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc );
-  void LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-  void HubbardInteraction( const std::vector<int> species_id, const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-  void NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-
-  // void FermionIntraNN( const int speciesId, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals, const Basis &bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-  // void FermionDensityDensity(
-  //   const std::vector<std::pair<int,int> > betweenSpecies, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
-  //   const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
-
-  /* vvvvvvv Spin Functions vvvvvvv */
-  // void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop);
-  // void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt, const Basis &bs, std::vector<Triplet> &hhop );
-
-  /* vvvvvvv Hybrid systems vvvvvvv */
-  // void BuildHybridHamiltonian( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, const int maxLocalB = 0);
-  // void Hybridization( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
-
-  /* ^^^^^^^ Holstein model ^^^^^^^ */
-  void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc );
-  void LocalPhonon( const std::vector<Tnum>& Wloc, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-  void FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-  void FermionNNHopping( const RealType& k, const std::vector< Node<Tnum>* > &lt, const Basis& bs, std::vector<std::tuple<int, int, Tnum> > &MatElemts );
-
-  /* vvvvvvv Linear Algebra: Solvers vvvvvvv */
+  /* vvvvvvv Linear Algebra vvvvvvv */
   void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true);
   void diag( RealVectorType &Vals, MatrixType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
-  RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
-  void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
-private:
-  std::vector<size_t> HilbertSpaces;
+  // RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
+
+protected:
   SparseMatrixType H_total;
+  std::vector<size_t> HilbertSpaces;
+
+private:
+  void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
   void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0);
 };
 #endif//__HAMILTONIAN_HPP__

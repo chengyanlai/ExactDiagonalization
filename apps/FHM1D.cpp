@@ -9,7 +9,7 @@
 #include "src/Node/Node.hpp"
 #include "src/Lattice/preset.hpp"
 #include "src/Basis/Basis.hpp"
-#include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Hamiltonian/FHM/FermiHubbard.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
 #ifdef MKL
@@ -254,7 +254,7 @@ void Equilibrium(const std::string prefix){
   Bases.push_back(F2);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
-  Hamiltonian<DT> Ham0( Bases );
+  FHM<DT> Ham0( Bases );
   // Potential
   std::vector<DT> Vtmp(Vin.begin(), Vin.end());
   std::vector< std::vector<DT> > Vloc = vec(Vtmp, Vtmp);
@@ -266,8 +266,11 @@ void Equilibrium(const std::string prefix){
   LogOut << "Diagonalize Hamiltonian - " << std::flush;
   RealVectorType Vals;
   DTM Vecs;
-  Ham0.eigh(Vals, Vecs, 2);
-  // Ham0.diag(Vals, Vecs);// Full spectrum
+  if ( Ham0.GetTotalHilbertSpace() > 1000 ){
+    Ham0.eigh(Vals, Vecs, 2);
+  }else{
+    Ham0.diag(Vals, Vecs);// Full spectrum
+  }
   LogOut << "DONE!" << std::endl;
   LogOut << "\tGS energy = " << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << Vals[1] << std::endl;
@@ -358,7 +361,7 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   Bases.push_back(F2);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Eqm Hamiltonian - " << std::flush;
-  Hamiltonian<ComplexType> Ham0( Bases );
+  FHM<ComplexType> Ham0( Bases );
   // Potential
   std::vector<ComplexType> Vtmp(Veqm.begin(), Veqm.end());
   std::vector< std::vector<ComplexType> > Vloc = vec(Vtmp, Vtmp);
@@ -481,7 +484,7 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   std::vector< Node<ComplexType>* > Lattice = NN_1D_Chain(L, J, OBC);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Eqm Hamiltonian - " << std::flush;
-  Hamiltonian<ComplexType> EqmHam( EqmBases );
+  FHM<ComplexType> EqmHam( EqmBases );
   // Potential
   std::vector<ComplexType> Vw(Veqm.begin(), Veqm.end());
   std::vector< std::vector<ComplexType> > EqmVloc = vec(Vw, Vw);
@@ -510,7 +513,7 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   CoreHoleBases.push_back(F2CH);
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Core Hole Hamiltonian - " << std::flush;
-  Hamiltonian<ComplexType> CoreHoleHam( CoreHoleBases );
+  FHM<ComplexType> CoreHoleHam( CoreHoleBases );
   // Potential
   std::vector<ComplexType> CoreHoleVw(Vch.begin(), Vch.end());
   std::vector< std::vector<ComplexType> > CoreHoleVloc = vec(CoreHoleVw, CoreHoleVw);

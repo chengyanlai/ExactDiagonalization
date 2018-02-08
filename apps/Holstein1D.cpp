@@ -8,7 +8,7 @@
 #include "src/Node/Node.hpp"
 #include "src/Lattice/preset.hpp"
 #include "src/Basis/Basis.hpp"
-#include "src/Hamiltonian/Hamiltonian.hpp"
+#include "src/Hamiltonian/Holstein/Holstein.hpp"
 #include "src/hdf5io/hdf5io.hpp"
 
 #ifdef MKL
@@ -27,7 +27,7 @@ void Equilibrium(const std::string prefix){
   LogOut.open(prefix + "Holstein.1d.eqm", std::ios::app);
   int L = 16;
   const int OBC = 0;
-  int N = 5;
+  int N = 18;
   RealType Momentum = 0.0;
   int dynamics = 0;
   int Tsteps = 3000;
@@ -59,7 +59,7 @@ void Equilibrium(const std::string prefix){
   LogOut << " DONE!" << std::endl;
   LogOut << B1 << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
-  Hamiltonian<DT> Ham0( Bases );
+  Holstein<DT> Ham0( Bases );
   std::vector<ComplexType> Wloc(Win.begin(), Win.end());
   std::vector<ComplexType> Gloc(Gin.begin(), Gin.end());
   Ham0.HolsteinModel( Bases, Momentum, lattice,  Wloc,  Gloc );

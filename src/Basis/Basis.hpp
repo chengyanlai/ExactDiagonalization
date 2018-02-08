@@ -20,23 +20,39 @@ inline RandomIt binary_locate(RandomIt first, RandomIt last, const T& val) {
 
 class Basis
 {
-template<typename Tnum>
-  friend class Hamiltonian;
+  template<typename Tnum> friend class Hamiltonian;
+  template<typename Tnum> friend class FHM;
+  template<typename Tnum> friend class BHM;
+  template<typename Tnum> friend class Holstein;
 public:
   Basis(const bool _isFermion = false);
   Basis(const size_t _L, const size_t _N, const bool _isFermion = false);
   virtual ~Basis();
   void Save( const std::string filename, const std::string gname );
   void Load( const std::string filename, const std::string gname );
-  inline bool GetType()const{return isFermion;};
-  inline size_t GetL()const{return L;};
-  inline size_t GetN()const{return N;};
+
+  inline bool GetType()const{
+    return isFermion;
+  };
+
+  inline size_t GetL()const{
+    return L;
+  };
+
+  inline size_t GetN()const{
+    return N;
+  };
+
   inline size_t GetHilbertSpace()const{
     if (isFermion) {
       return FStates.size();
     } else {
       return BStates.size();
     }
+  };
+
+  inline size_t size()const{
+    return GetHilbertSpace();
   };
 
   /* Fermion functions */
