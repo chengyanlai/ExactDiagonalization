@@ -18,10 +18,14 @@ public:
   void FermionNNHopping( const RealType& k, const std::vector< Node<Tnum>* > &lt, const Basis& bs );
 
   void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc );
-  void FermionNNHoppingInfinite( const RealType& k, const RealType& J, const Basis& bs);
+  void FermionNNHoppingInfinite( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);
 
   void FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs );
   void PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs );
+
+  inline arma::SpMat<Tnum> GetHKinetic()const{
+    return H_Kinetic;
+  };
 };
 
 #endif	/* end of include guard: __HOLSTEIN_HPP__ */

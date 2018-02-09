@@ -98,7 +98,7 @@ void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::FermionNNHoppingInfinite( const RealType& k, const RealType& J, const Basis& bs){
+void Holstein<Tnum>::FermionNNHoppingInfinite( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   int id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
@@ -109,13 +109,13 @@ void Holstein<Tnum>::FermionNNHoppingInfinite( const RealType& k, const RealType
     tg2 = bs.FermionJumpLeft(state, 1);
     id2 = bs.GetIndexFromTag(tg2);
     if ( state == bs.BStates.at(id2) ){
-      MatElemts.push_back( std::make_tuple(id1, id2, -1.0e0 * J * exp( ComplexType(0.0, 1.0) * k * PI ) ) );
+      MatElemts.push_back( std::make_tuple(id1, id2, -1.0e0 * J * exp( ComplexType(0.0, 1.0) * (k + Phi) * PI ) ) );
     }
     state = b;
     tg2 = bs.FermionJumpRight(state, 1);
     id2 = bs.GetIndexFromTag(tg2);
     if ( state == bs.BStates.at(id2) ){
-      MatElemts.push_back( std::make_tuple(id1, id2, -1.0e0 * J * exp( ComplexType(0.0,-1.0) * k * PI ) ) );
+      MatElemts.push_back( std::make_tuple(id1, id2, -1.0e0 * J * exp( ComplexType(0.0,-1.0) * (k + Phi) * PI ) ) );
     }
     id1++;
   }

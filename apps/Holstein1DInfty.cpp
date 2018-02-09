@@ -15,13 +15,6 @@
   #include "mkl.h"
 #endif
 
-#define DT ComplexType
-#define DTV ComplexVectorType
-#define DTM ComplexMatrixType
-// #define DT RealType
-// #define DTV RealVectorType
-// #define DTM RealMatrixType
-
 void LoadEqmParameters( const std::string filename, int& L, int& N, std::vector<RealType>& Momentum, std::vector<RealType>&G, std::vector<RealType>& W){
   HDF5IO h5f(filename);
   h5f.LoadNumber("Parameters", "L", L);
@@ -31,9 +24,20 @@ void LoadEqmParameters( const std::string filename, int& L, int& N, std::vector<
   h5f.LoadStdVector("Parameters", "W", W);
 }
 
+void LoadiQDynParameters( const std::string filename, int& L, int& N, std::vector<RealType>& Momentum, std::vector<RealType>&G, std::vector<RealType>& W, int& TSteps, RealType& dt){
+  HDF5IO h5f(filename);
+  h5f.LoadNumber("Parameters", "L", L);
+  h5f.LoadNumber("Parameters", "N", N);
+  h5f.LoadStdVector("Parameters", "Momentum", Momentum);
+  h5f.LoadStdVector("Parameters", "G", G);
+  h5f.LoadStdVector("Parameters", "W", W);
+  h5f.LoadNumber("Parameters", "TSteps", TSteps);
+  h5f.LoadNumber("Parameters", "dt", dt);
+}
+
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "Holstein.1d.eqm", std::ios::app);
+  LogOut.open(prefix + "Holstein.1d.eqm.log", std::ios::app);
   const int OBC = 0;
   int N = 16;
   int L = 2 * N;
@@ -78,11 +82,11 @@ void Equilibrium(const std::string prefix){
     LogOut << B1.GetHilbertSpace() << std::flush;
     B1.Save(prefix + BasisFile, "LFS" );
   }
-  LogOut << " DONE!" << std::endl;
   std::vector<Basis> Bases;
   Bases.push_back(B1);
+  LogOut << " DONE!" << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
-  Holstein<DT> Ham0( Bases );
+  Holstein<ComplexType> Ham0( Bases );
   std::vector<ComplexType> Wloc(Win.begin(), Win.end());
   std::vector<ComplexType> Gloc(Gin.begin(), Gin.end());
 
@@ -97,15 +101,18 @@ void Equilibrium(const std::string prefix){
     ComplexMatrixType Vecs;
     if ( Ham0.GetTotalHilbertSpace() > 1200 ){
       Ham0.eigh(Vals, Vecs, 10);
+      ComplexVectorType Vec = Vecs.col(0);
       HDF5IO* file = new HDF5IO(prefix + "Holstein.h5");
       std::string gname = "M";
       gname.append( std::to_string((unsigned long long)i) );
       file->SaveNumber(gname, "Momentum", Momentum.at(i));
       file->SaveMatrix(gname, "EVEcs", Vecs);
       file->SaveVector(gname, "EVals", Vals);
+      file->SaveVector(gname, "GS", Vec);
       delete file;
     }else{
       Ham0.diag(Vals, Vecs);// Full spectrum
+      ComplexVectorType Vec = Vecs.col(0);
       std::ofstream SOut;
       SOut.open(prefix + "Holstein.1d.eqm.spectrum.L" + std::to_string((unsigned long)L) + "N" + std::to_string( (unsigned long)N), std::ios::app);
       SOut << std::setprecision(5) << Momentum.at(i) << "\t";
@@ -119,6 +126,103 @@ void Equilibrium(const std::string prefix){
     LogOut << "\tGS energy = " << std::setprecision(12) << Vals[0] << std::endl;
     LogOut << "\tFES energy = " << std::setprecision(12) << Vals[1] << std::endl;
   }
+  LogOut << "Finished" << std::endl;
+  LogOut.close();
+}
+
+void iQDynamics(const std::string prefix, const int MeasureEvery = 20, const int SaveWFEvery = 1000000 ){
+  /* interaction quench */
+  std::ofstream LogOut;
+  LogOut.open(prefix + "Holstein.1d.iQdyn.log", std::ios::app);
+  const int OBC = 0;
+  int N = 16;
+  int L = 2 * N;
+  RealType Momentum = 1.0;
+  std::vector<RealType> WDyn(L, 2.0);// Used in PRB 94 014304 (2016)
+  std::vector<RealType> GDyn(L, sqrt(2.0));// Used in PRB 94 014304 (2016)
+  std::vector<RealType> Jin(L, 1.0);// t0 = 1
+  int TSteps = 10000;
+  RealType dt = 0.005;
+
+  try{
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "conf.h5");
+    std::vector<RealType> Min;
+    LoadiQDynParameters( prefix + "conf.h5", L, N, Min, GDyn, WDyn, TSteps, dt);
+    Momentum = Min.at(0);
+  }catch(H5::FileIException){
+    LogOut << " Use default parameters" << std::endl;;
+  }
+
+  LogOut << "Build Basis - " << std::flush;
+  Basis B1(L, N);
+  std::string BasisFile = "LFS-L";
+  BasisFile.append( std::to_string( (unsigned long)L) );
+  BasisFile.append( "N" );
+  BasisFile.append( std::to_string( (unsigned long)N) );
+  BasisFile.append( ".h5" );
+  try{
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + BasisFile);
+    B1.Load(prefix + BasisFile, "LFS");
+    LogOut << B1.GetHilbertSpace() << " loaded from " << BasisFile << std::flush;
+  }catch(H5::FileIException){
+    B1.Phonon();
+    LogOut << B1.GetHilbertSpace() << std::flush;
+    B1.Save(prefix + BasisFile, "LFS" );
+  }
+  std::vector<Basis> Bases;
+  Bases.push_back(B1);
+  LogOut << " DONE!" << std::endl;
+  LogOut << "Build Hamiltonian - " << std::flush;
+  Holstein<ComplexType> HamDyn( Bases );
+  std::vector<ComplexType> Wloc(WDyn.begin(), WDyn.end());
+  std::vector<ComplexType> Gloc(GDyn.begin(), GDyn.end());
+  HamDyn.HolsteinModel( Bases, Momentum, Jin.at(0),  Wloc,  Gloc );
+  LogOut << "Hermitian = " << HamDyn.CheckHermitian() << ", Hilbert space = " << HamDyn.GetTotalHilbertSpace() << ", DONE!" << std::endl;
+  LogOut << "Initialize the k = " << Momentum << " state - " << std::flush;
+  ComplexVectorType VecT(HamDyn.GetTotalHilbertSpace(), arma::fill::zeros);
+  VecT.at(0) = 1.0e0;// k = Momentum state
+  LogOut << " DONE!" << std::endl;
+
+  ComplexSparseMatrixType Hk = HamDyn.GetHKinetic();
+
+  LogOut << "Begin dynamics ...... " << std::endl;
+  ComplexType Prefactor(0.0, 1.0 * dt);
+  ComplexType Ek = arma::cdot(VecT, Hk * VecT);
+  HDF5IO* file1 = new HDF5IO(prefix + "Holstein-iQ.h5");
+  std::string gname = "obs-0";
+  file1->SaveNumber(gname, "Ek", Ek);
+  delete file1;
+  HDF5IO* file2 = new HDF5IO("Holstein-iQWF.h5");
+  gname = "WF-0";
+  file2->SaveVector(gname, "Vec", VecT);
+  delete file2;
+  for ( size_t Ts = 1; Ts <= TSteps; Ts++ ){
+    HamDyn.expH(Prefactor, VecT);
+    if ( Ts % MeasureEvery == 0 ){
+      Ek = arma::cdot(VecT, Hk * VecT);
+      file1 = new HDF5IO(prefix + "Holstein-iQ.h5");
+      std::string gname = "obs-";
+      gname.append( std::to_string((unsigned long long)Ts ));
+      gname.append("/");
+      file1->SaveNumber(gname, "Ek", Ek);
+      delete file1;
+    }
+    if ( Ts % SaveWFEvery == 0 ){
+      file2 = new HDF5IO("Holstein-iQWF.h5");
+      gname = "WF-";
+      gname.append( std::to_string((unsigned long long)Ts ));
+      gname.append("/");
+      file2->SaveVector(gname, "Vec", VecT);
+      delete file2;
+    }
+  }
+  file2 = new HDF5IO("Holstein-iQWF.h5");
+  gname = "WF";
+  file2->SaveVector(gname, "Vec", VecT);
+  delete file2;
+  LogOut << "Finished dynamics!" << std::endl;
   LogOut.close();
 }
 
@@ -128,6 +232,10 @@ int main(int argc, char *argv[]){
 #if defined(MKL)
   mkl_set_num_threads(NumCores);
 #endif
-  Equilibrium("");
+  if ( std::atoi(argv[1]) == 0 ){
+    Equilibrium("");
+  }else if ( std::atoi(argv[1]) == 1 ){
+    iQDynamics("");
+  }
   return 0;
 }
