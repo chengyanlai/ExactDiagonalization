@@ -22,27 +22,37 @@
 // #define DTV RealVectorType
 // #define DTM RealMatrixType
 
+void LoadEqmParameters( const std::string filename, int& L, int& N, std::vector<RealType>& Momentum, std::vector<RealType>&G, std::vector<RealType>& W){
+  HDF5IO h5f(filename);
+  h5f.LoadNumber("Parameters", "L", L);
+  h5f.LoadNumber("Parameters", "N", N);
+  h5f.LoadStdVector("Parameters", "Momentum", Momentum);
+  h5f.LoadStdVector("Parameters", "G", G);
+  h5f.LoadStdVector("Parameters", "W", W);
+}
+
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.1d.eqm", std::ios::app);
   const int OBC = 0;
-  int N = 20;
+  int N = 16;
   int L = 2 * N;
-  int dynamics = 0;
-  int Tsteps = 3000;
-  RealType dt = 0.005;
+  std::vector<RealType> Momentum, Win, Gin;
+  std::vector<RealType> Jin(L, 1.0);// t0 = 1
 
-  std::vector<RealType> Momentum;
-  Momentum.push_back(0.0);
-  // for ( int i = 0; i < 100; i ++ ) Momentum.push_back( 0.01 * RealType(i) );
-
-  std::vector<RealType> Jin, Win, Gin;
-  Jin = std::vector<RealType>(L, 1.0);// t0 = 1
-  // Win = std::vector<RealType>(L,10.00);// omega_0 = 10
-  // Gin = std::vector<RealType>(L,20.00);// g = 20; \lambda = g^2 / (2 t0 \omega) = 20
-  Win = std::vector<RealType>(L, 1.0);// testing
-  Gin = std::vector<RealType>(L, 1.0);// testing - 1
-  // Gin = std::vector<RealType>(L, sqrt(2.0));// testing - 1
+  try{
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "conf.h5");
+    LoadEqmParameters( prefix + "conf.h5", L, N, Momentum, Gin, Win);
+  }catch(H5::FileIException){
+    Momentum.push_back(0.0);
+    // for ( int i = 0; i < 100; i ++ ) Momentum.push_back( 0.01 * RealType(i) );
+    // Win = std::vector<RealType>(L,10.00);// omega_0 = 10
+    // Gin = std::vector<RealType>(L,20.00);// g = 20; \lambda = g^2 / (2 t0 \omega) = 20
+    Win = std::vector<RealType>(L, 1.0);// testing
+    Gin = std::vector<RealType>(L, 1.0);// testing - 1
+    // Gin = std::vector<RealType>(L, sqrt(2.0));// testing - 1
+  }
 
   // LogOut << "Build Lattice - " << std::endl;
   // std::vector<DT> JWork(Jin.begin(), Jin.end());
@@ -53,17 +63,24 @@ void Equilibrium(const std::string prefix){
   // LogOut << "DONE!" << std::endl;
   LogOut << "Build Basis - " << std::flush;
   Basis B1(L, N);
-  B1.Phonon();
-  LogOut << B1.GetHilbertSpace() << std::flush;
-  std::string filename = "LFS-L";
-  filename.append( std::to_string( (unsigned long)L) );
-  filename.append( "N" );
-  filename.append( std::to_string( (unsigned long)N) );
-  filename.append( ".h5" );
-  B1.Save(prefix + filename, "LFS" );
+  std::string BasisFile = "LFS-L";
+  BasisFile.append( std::to_string( (unsigned long)L) );
+  BasisFile.append( "N" );
+  BasisFile.append( std::to_string( (unsigned long)N) );
+  BasisFile.append( ".h5" );
+  try{
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + BasisFile);
+    B1.Load(prefix + BasisFile, "LFS");
+    LogOut << B1.GetHilbertSpace() << " loaded from " << BasisFile << std::flush;
+  }catch(H5::FileIException){
+    B1.Phonon();
+    LogOut << B1.GetHilbertSpace() << std::flush;
+    B1.Save(prefix + BasisFile, "LFS" );
+  }
+  LogOut << " DONE!" << std::endl;
   std::vector<Basis> Bases;
   Bases.push_back(B1);
-  LogOut << " DONE!" << std::endl;
   LogOut << "Build Hamiltonian - " << std::flush;
   Holstein<DT> Ham0( Bases );
   std::vector<ComplexType> Wloc(Win.begin(), Win.end());
@@ -79,7 +96,14 @@ void Equilibrium(const std::string prefix){
     RealVectorType Vals;
     ComplexMatrixType Vecs;
     if ( Ham0.GetTotalHilbertSpace() > 1200 ){
-      Ham0.eigh(Vals, Vecs, 2);
+      Ham0.eigh(Vals, Vecs, 10);
+      HDF5IO* file = new HDF5IO(prefix + "Holstein.h5");
+      std::string gname = "M";
+      gname.append( std::to_string((unsigned long long)i) );
+      file->SaveNumber(gname, "Momentum", Momentum.at(i));
+      file->SaveMatrix(gname, "EVEcs", Vecs);
+      file->SaveVector(gname, "EVals", Vals);
+      delete file;
     }else{
       Ham0.diag(Vals, Vecs);// Full spectrum
       std::ofstream SOut;
@@ -95,9 +119,6 @@ void Equilibrium(const std::string prefix){
     LogOut << "\tGS energy = " << std::setprecision(12) << Vals[0] << std::endl;
     LogOut << "\tFES energy = " << std::setprecision(12) << Vals[1] << std::endl;
   }
-
-  // HDF5IO* file = new HDF5IO(prefix + "Holstein.h5");
-  // delete file;
   LogOut.close();
 }
 

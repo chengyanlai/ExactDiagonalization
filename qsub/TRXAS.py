@@ -7,9 +7,6 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
-# Get all platform settings
-from Clusters import *
-
 L = 14
 OBC = 1# 1:True
 N1 = 7
