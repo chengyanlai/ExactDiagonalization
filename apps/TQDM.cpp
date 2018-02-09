@@ -134,6 +134,7 @@ ComplexMatrixType NiNj( const int spin, const std::vector<std::vector<Basis> > &
 
 ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vector<Basis> > &Bases, const std::vector<ComplexMatrixType> &Rhos, const std::vector<FHM<ComplexType> >& ham ){
   int L = Bases.at(0).at(0).GetL();
+  RealType factor1, factor2;
   ComplexType tmp = ComplexType(0.0e0, 0.0e0);
   for (size_t cnt = 0; cnt < Bases.size(); cnt++) {
     std::vector<int> bs1 = Bases.at(cnt).at(0).GetFStates();
@@ -144,11 +145,13 @@ ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vec
       size_t rid1 = tg1.at(nf1);
       int nnf1 = nf1;
       ComplexType tsign1 = ComplexType(1.0e0, 0.0e0);
-      if ( btest(nf1, Site1) && !btest(nf1, Site2) ){
+      if ( btest(nf1, Site1) && !btest(nf1, Site2) ){//c^\dagger_2 c_1
+        factor1 = 1.0;
         nnf1 = ibset(nnf1, Site2);
         nnf1 = ibclr(nnf1, Site1);
         if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = ComplexType(-1.0, 0.0);// artificial!!
       }else if ( !btest(nf1, Site1) && btest(nf1, Site2) ){
+        factor1 = -1.0;
         nnf1 = ibset(nnf1, Site1);
         nnf1 = ibclr(nnf1, Site2);
         if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = ComplexType(-1.0, 0.0);// artificial!!
@@ -161,10 +164,12 @@ ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vec
         int nnf2 = nf2;
         ComplexType tsign2 = ComplexType(1.0e0, 0.0e0);
         if ( btest(nf2, Site1) && !btest(nf2, Site2) ){
+          factor2 = 1.0;
           nnf2 = ibset(nnf2, Site2);
           nnf2 = ibclr(nnf2, Site1);
           if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = ComplexType(-1.0, 0.0);// artificial!!
         }else if ( !btest(nf2, Site1) && btest(nf2, Site2) ){
+          factor2 = -1.0;
           nnf2 = ibset(nnf2, Site1);
           nnf2 = ibclr(nnf2, Site2);
           if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = ComplexType(-1.0, 0.0);// artificial!!
@@ -174,7 +179,7 @@ ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vec
         size_t cid2 = tg2.at(nnf2);
         size_t rid = ham.at(cnt).DetermineTotalIndex( vec(rid1, rid2) );
         size_t cid = ham.at(cnt).DetermineTotalIndex( vec(cid1, cid2) );
-        tmp += tsign1 * tsign2 * Rhos.at(cnt)(rid, cid);
+        tmp += tsign1 * tsign2 * factor1 * factor2 * Rhos.at(cnt)(rid, cid);
       }
     }
   }
