@@ -146,13 +146,13 @@ std::vector<Tnum> vec(const Tnum& a0, const Tnum& a1, const Tnum& a2,
   return A ;
 }
 
-// template <typename T>
-// void PrintVector(const std::vector<T> Vin, const int digit=9, const std::string separation="\t"){
-//   for ( size_t i = 0; i < Vin.size(); i++){
-//     std::cout << "\t" << std::scientific << std::setprecision(digit) << Vin.at(i) << separation << std::flush;
-//   }
-//   std::cout << std::endl;
-// }
+template <typename T>
+void PrintVector(const std::vector<T> Vin, const int width=3, const std::string separation="\t"){
+  for ( size_t i = 0; i < Vin.size(); i++){
+    std::cout << std::setw(width) << Vin.at(i) << separation << std::flush;
+  }
+  std::cout << std::endl;
+}
 
 // template <typename T>
 // void PrintVector(std::ofstream& file, const std::vector<T> Vin, const int digit=9, const std::string separation="\n"){

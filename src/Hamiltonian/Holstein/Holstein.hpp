@@ -15,9 +15,13 @@ public:
   virtual ~Holstein (void){};
 
   void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const std::vector< Node<Tnum>* >& lattice, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc );
-  void PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs );
-  void FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs );
   void FermionNNHopping( const RealType& k, const std::vector< Node<Tnum>* > &lt, const Basis& bs );
+
+  void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc );
+  void FermionNNHoppingInfinite( const RealType& k, const RealType& J, const Basis& bs);
+
+  void FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs );
+  void PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs );
 };
 
 #endif	/* end of include guard: __HOLSTEIN_HPP__ */

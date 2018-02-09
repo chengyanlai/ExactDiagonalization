@@ -140,7 +140,7 @@ void Basis::Phonon(){
   BTags.push_back( BosonBasisTag(State) );// 0
   for ( int cnt = 0; cnt < N; cnt++ ){
     NewStates = ApplyOffdiagonal( NewStates );
-std::cout << cnt << " " << BTags.size() << std::endl;;
+    std::cout << "N_h = " << cnt << " finished, and number of basis = " << BTags.size() << std::endl;
   }
   // DummyCheckState();
   assert( BStates.size() == BTags.size() );
