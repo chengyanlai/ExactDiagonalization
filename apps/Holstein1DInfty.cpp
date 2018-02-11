@@ -80,7 +80,7 @@ void Equilibrium(const std::string prefix){
   }catch(H5::FileIException){
     B1.Phonon();
     LogOut << B1.GetHilbertSpace() << std::flush;
-    B1.Save(prefix + BasisFile, "LFS" );
+    if ( N < 20 ) B1.Save(prefix + BasisFile, "LFS" );
   }
   std::vector<Basis> Bases;
   Bases.push_back(B1);
