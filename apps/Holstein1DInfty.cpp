@@ -24,22 +24,14 @@ void LoadEqmParameters( const std::string filename, int& L, int& N, std::vector<
   h5f.LoadStdVector("Parameters", "W", W);
 }
 
-void LoadiQDynParameters( const std::string filename, int& L, int& N, std::vector<RealType>& Momentum, std::vector<RealType>&G, std::vector<RealType>& W, int& TSteps, RealType& dt){
-  HDF5IO h5f(filename);
-  h5f.LoadNumber("Parameters", "L", L);
-  h5f.LoadNumber("Parameters", "N", N);
-  h5f.LoadStdVector("Parameters", "Momentum", Momentum);
-  h5f.LoadStdVector("Parameters", "G", G);
-  h5f.LoadStdVector("Parameters", "W", W);
-  h5f.LoadNumber("Parameters", "TSteps", TSteps);
-  h5f.LoadNumber("Parameters", "dt", dt);
-}
-
-void Equilibrium(const std::string prefix){
+void Equilibrium(const std::string prefix, const bool SaveBasis = false ){
+  /* Holstein model in equilibrium
+      This function solve the spectrum of Holstein model and reproduce the result from PRB 60, 1633 (1999).
+  */
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.1d.eqm.log", std::ios::app);
   const int OBC = 0;
-  int N = 16;
+  int N = 9;
   int L = 2 * N;
   std::vector<RealType> Momentum, Win, Gin;
   std::vector<RealType> Jin(L, 1.0);// t0 = 1
@@ -80,7 +72,7 @@ void Equilibrium(const std::string prefix){
   }catch(H5::FileIException){
     B1.Phonon();
     LogOut << B1.GetHilbertSpace() << std::flush;
-    if ( N < 20 ) B1.Save(prefix + BasisFile, "LFS" );
+    if ( SaveBasis ) B1.Save(prefix + BasisFile, "LFS" );
   }
   std::vector<Basis> Bases;
   Bases.push_back(B1);
@@ -130,8 +122,23 @@ void Equilibrium(const std::string prefix){
   LogOut.close();
 }
 
-void iQDynamics(const std::string prefix, const int MeasureEvery = 20, const int SaveWFEvery = 1000000 ){
-  /* interaction quench */
+void LoadiQDynParameters( const std::string filename, int& L, int& N, std::vector<RealType>& Momentum, std::vector<RealType>&G, std::vector<RealType>& W, int& TSteps, RealType& dt){
+  HDF5IO h5f(filename);
+  h5f.LoadNumber("Parameters", "L", L);
+  h5f.LoadNumber("Parameters", "N", N);
+  h5f.LoadStdVector("Parameters", "Momentum", Momentum);
+  h5f.LoadStdVector("Parameters", "G", G);
+  h5f.LoadStdVector("Parameters", "W", W);
+  h5f.LoadNumber("Parameters", "TSteps", TSteps);
+  h5f.LoadNumber("Parameters", "dt", dt);
+}
+
+void iQDynamics(const std::string prefix, const int MeasureEvery = 20, const int SaveWFEvery = 1000000, const bool SaveBasis = false ){
+  /* Interaction quench
+      The initial state is k = \pi without phonons.
+      At t = 0, the \lambda is turn on and we monitor the dynamics.
+      This function reporduce the result in PRB 94 014304 (2016).
+  */
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.1d.iQdyn.log", std::ios::app);
   const int OBC = 0;
@@ -169,7 +176,7 @@ void iQDynamics(const std::string prefix, const int MeasureEvery = 20, const int
   }catch(H5::FileIException){
     B1.Phonon();
     LogOut << B1.GetHilbertSpace() << std::flush;
-    B1.Save(prefix + BasisFile, "LFS" );
+    if ( SaveBasis ) B1.Save(prefix + BasisFile, "LFS" );
   }
   std::vector<Basis> Bases;
   Bases.push_back(B1);
