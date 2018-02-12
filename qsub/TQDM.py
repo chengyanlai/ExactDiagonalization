@@ -36,9 +36,9 @@ if SearchJ:
 else:
   # remember to set FIXJ to 0 in main program
   cntGStart = 0
-  t13List = [1.0,]#np.array([0.6, 0.8, 1.0, 1.2, 1.4])
-  Uin = [0.0, ]#0.1, 1.0, 5.0]
-  GammaList = np.logspace(-2.0, 3.0, num=300)
+  t13List = np.array([0.6, 0.8, 1.0, 1.2, 1.4])
+  Uin = [0.0, 0.1, 1.0, 5.0]
+  GammaList = np.logspace(-2.0, 2.5, num=251)
 
 
 # NOTE: Dynamics parameters
