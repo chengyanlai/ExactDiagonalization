@@ -142,17 +142,17 @@ ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vec
     std::vector<size_t> tg2 = Bases.at(cnt).at(1).GetFTags();
     for ( auto &nf1 : bs1 ){
       int nnf1 = nf1;
-      ComplexType tsign1 = ComplexType(1.0e0, 0.0e0);
+      RealType tsign1 = 1.0;
       if ( btest(nf1, Site1) && !btest(nf1, Site2) ){//c^\dagger_2 c_1
         factor1 = 1.0;
         nnf1 = ibset( nf1, Site2);
         nnf1 = ibclr(nnf1, Site1);
-        if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = ComplexType(-1.0, 0.0);// artificial!!
+        if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = -1.0;// artificial!!
       }else if ( !btest(nf1, Site1) && btest(nf1, Site2) ){// -c^\dagger_1 c_2
         factor1 = -1.0;
         nnf1 = ibset( nf1, Site1);
         nnf1 = ibclr(nnf1, Site2);
-        if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = ComplexType(-1.0, 0.0);// artificial!!
+        if ( std::abs(Site1-Site2) > 1 && btest(nf1, 1) ) tsign1 = -1.0;// artificial!!
       }else{
         continue;// skip this nf1
       }
@@ -160,17 +160,17 @@ ComplexType JupJdn( const int Site1, const int Site2, const std::vector<std::vec
       size_t cid1 = tg1.at(nnf1);
       for ( auto &nf2 : bs2 ){
         int nnf2 = nf2;
-        ComplexType tsign2 = ComplexType(1.0e0, 0.0e0);
+        RealType tsign2 = 1.0;
         if ( btest(nf2, Site1) && !btest(nf2, Site2) ){
           factor2 = 1.0;
           nnf2 = ibset( nf2, Site2);
           nnf2 = ibclr(nnf2, Site1);
-          if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = ComplexType(-1.0, 0.0);// artificial!!
+          if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = -1.0;// artificial!!
         }else if ( !btest(nf2, Site1) && btest(nf2, Site2) ){
           factor2 = -1.0;
           nnf2 = ibset( nf2, Site1);
           nnf2 = ibclr(nnf2, Site2);
-          if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = ComplexType(-1.0, 0.0);// artificial!!
+          if ( std::abs(Site1-Site2) > 1 && btest(nf2, 1) ) tsign2 = -1.0;// artificial!!
         }else{
           continue;// skip this nf2
         }
