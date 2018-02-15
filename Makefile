@@ -40,7 +40,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/2qds build/holstein.1dInfty
+all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/qds build/holstein.1dInfty
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
