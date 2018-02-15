@@ -1,5 +1,6 @@
 #include <stddef.h>
 #include <cmath>
+#include <numeric>// accumulate
 #include "src/EDType.hpp"
 #include "src/Basis/Basis.hpp"
 
@@ -143,5 +144,44 @@ void Basis::Phonon(){
     std::cout << "N_h = " << cnt << " finished, and number of basis = " << BTags.size() << std::endl;
   }
   // DummyCheckState();
+  assert( BStates.size() == BTags.size() );
+}
+
+void Basis::PhononK(){
+  /* Holstein phonon in momentum space with k=0 phonon mode. */
+  HaveU1 = false;
+  assert( !(isFermion) );
+  std::vector< std::vector<int> > work;
+  int k, NWork;
+  std::vector<int> Ivec(L-1, 0);// Get rid of k=0 phonon mode.
+  /* NOTE: loop over all N */
+  for ( int Nc = 0; Nc <= N; Nc++ ){
+    Ivec.at(0) = Nc;
+    work.push_back( Ivec );
+    BTags.push_back( BosonBasisTag(Ivec) );
+    while ( Ivec[L - 1] < Nc ) {
+      for (ptrdiff_t cnt = L - 2; cnt > -1; cnt--) {
+        if ( Ivec[cnt] != 0 ){
+          k = cnt;
+          break;//break for
+        }
+      }
+      Ivec[k] = Ivec[k] - 1;
+      NWork = std::accumulate(Ivec.begin(), Ivec.begin() + k + 1, 0);
+      Ivec.at(k+1) = (int)(Nc - NWork);
+      if ( k < L - 2 ){
+        for (ptrdiff_t cnt = k + 2; cnt < L; cnt++) {
+          Ivec.at(cnt) = 0;
+        }
+      }
+      work.push_back( Ivec );
+      // PrintBosonBasis(Ivec);
+      BTags.push_back( BosonBasisTag(Ivec) );
+      NWork = std::accumulate(Ivec.begin(), Ivec.end(), 0);
+      assert( Nc == NWork );
+    }
+  }
+  // sort BTags
+  BStates = SortBTags( work, BTags );
   assert( BStates.size() == BTags.size() );
 }

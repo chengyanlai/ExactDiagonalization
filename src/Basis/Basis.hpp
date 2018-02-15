@@ -81,6 +81,7 @@ public:
   /* Boson functions */
   void Boson();
   void Phonon();
+  void PhononK();
   inline std::vector< std::vector<int> > GetBStates()const{
     return BStates;
   };
@@ -100,7 +101,7 @@ public:
     // }
   };
 
-  /* Holstein Phonon */
+  /* Holstein Phonon - Limited functional space */
   RealType CreatePhonon( std::vector<int>& state, const int site=0 )const;
   RealType DestroyPhonon( std::vector<int>& state, const int site=0 )const;
   RealType FermionJumpRight( std::vector<int>& state, const int NumJumps = 1 )const;
