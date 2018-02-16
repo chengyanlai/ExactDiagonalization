@@ -86,7 +86,7 @@ public:
   };
 
   /* vvvvvvv Linear Algebra vvvvvvv */
-  void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true);
+  void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true, const std::string Target="SR");
   void diag( RealVectorType &Vals, MatrixType &Vec);
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
   // RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
@@ -97,6 +97,6 @@ protected:
 
 private:
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
-  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0);
+  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0, std::string Target="SR");
 };
 #endif//__HAMILTONIAN_HPP__

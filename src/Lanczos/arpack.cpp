@@ -1,9 +1,10 @@
 #include <iostream>
+#include <cstring>
 #include "src/Lanczos/arpack_wrapper.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<>
-void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol){
+void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target){
   /*
   // n        : dimension of the matrix
   // input_ptr: input trail vector pointer
@@ -15,7 +16,7 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, 
   // bmat: standard eigenvalue problem A*x=lambda*x
   char bmat = 'I';
   // which: calculate the smallest real part eigenvalue
-  char which[] = {'S','R'};
+  char which[] = {Target[0], Target[1]};
   // resid: the residual vector
   ComplexType *resid = new ComplexType[n];
   memcpy(resid, input_ptr, n * sizeof(ComplexType));
@@ -186,7 +187,7 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, 
 }
 
 template<>
-void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol){
+void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target){
   int ido = 0;
   char bmat = 'I';
   char which[] = {'S','A'};

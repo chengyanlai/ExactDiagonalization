@@ -3,12 +3,12 @@
 #include "src/numeric/lapack.h"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial){
+void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial, const std::string Target){
   size_t dim = GetTotalHilbertSpace();
   if ( randomInitial ) Vecs = MatrixType(dim, nev, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
-  arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0);
+  arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0, Target);
   Vecs = MatrixType(input_ptr, dim, nev);
   Vals = RealVectorType(Val);
 }

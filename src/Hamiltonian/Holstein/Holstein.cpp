@@ -48,7 +48,7 @@ void Holstein<Tnum>::FermionPhononCoupling( const std::vector<Tnum>& Gloc, const
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::FermionNNHoppingInfinite( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi){
+void Holstein<Tnum>::FermionNNHopping( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   int id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
@@ -79,15 +79,15 @@ void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType
   assert( Gloc.size() == bs.at(0).GetL() );
   PhononLocal( Wloc, bs.at(0) );
   FermionPhononCoupling( Gloc, bs.at(0) );
-  FermionNNHoppingInfinite( k, J, bs.at(0) );
+  FermionNNHopping( k, J, bs.at(0) );
   /* Build H_total */
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
 }
 
-
+/* The following function designed to work with Holstein model in momentum space. */
 
 template<typename Tnum>
-void Holstein<Tnum>::PhononLocalK( const int& KPoints, const RealType& W, const Basis& bs ){
+void Holstein<Tnum>::PhononK( const int& KPoints, const RealType& W, const Basis& bs ){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int state_id = 0;
@@ -95,7 +95,7 @@ void Holstein<Tnum>::PhononLocalK( const int& KPoints, const RealType& W, const 
     int Np = std::accumulate(b.begin(), b.end(), 0);
     Tnum val = (Tnum)W * (Tnum)Np;
     for ( size_t j = 0; j< KPoints; j++ ){
-      size_t idx = this->DetermineTotalIndex( vec<int>(j, state_id) );
+      size_t idx = this->DetermineTotalIndex( vec<size_t>(j, state_id) );
       MatElemts.push_back( std::make_tuple(idx, idx, val) );
     }
     state_id++;
@@ -104,13 +104,13 @@ void Holstein<Tnum>::PhononLocalK( const int& KPoints, const RealType& W, const 
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::FermionNNHoppingK( const int& KPoints, const RealType& J, const Basis& bs, const RealType& Phi){
+void Holstein<Tnum>::FermionK( const int& KPoints, const RealType& J, const Basis& bs, const RealType& Phi){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   for ( size_t j = 0; j < KPoints; j++ ){
     RealType Kf = RealType(j) * PI / RealType(KPoints);
     Tnum val = -2.0e0 * J * cos( (Kf + Phi) * PI );
     for ( size_t cnt = 0; cnt < bs.GetHilbertSpace(); cnt++ ){
-      size_t idx = this->DetermineTotalIndex( vec<int>(j, cnt) );
+      size_t idx = this->DetermineTotalIndex( vec<size_t>(j, cnt) );
       MatElemts.push_back( std::make_tuple(idx, idx, val) );
     }
   }
@@ -118,39 +118,60 @@ void Holstein<Tnum>::FermionNNHoppingK( const int& KPoints, const RealType& J, c
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::FermionPhononCouplingK( const std::vector<int>& KPoints, const RealType& G, const Basis& bs){
+void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const RealType& G, const Basis& bs, const int& Nmax){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
-  std::vector< std::vector<int> > States = bs.BStates;
-  for ( size_t jF = 1; jF < KPoints.size(); jF++ ){// there are no k=0 phonon mode
-    int KF = KPoints.at(jF);
-    size_t rid = 0;
-    typename std::vector< std::vector<int> >::const_iterator it = States.begin();
-    for (; it != States.end(); ++it ){
-      std::vector<int> state = *it;
-      RealType tg = bs.CreatePhonon(state);
-      RealType Npf = state.at(0);
-      if ( tg > -1.0e-5 ){
-        size_t cid = bs.GetIndexFromTag(tg);
-        if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc.at(0) * sqrt(Npf) ) );
+  int L = KPoints.size();
+  for ( int Ki = 0; Ki < L; Ki++ ){
+    int Kn = KPoints.at(Ki);
+    for ( int Qi = 0; Qi < L-1; Qi++ ){// from 1 due to the k=0 phonon mode
+      int Qn = KPoints.at( Qi + 1 );// +1 due to the k=0 phonon mode
+      int Pn = Kn + Qn;
+      FirstBZ(L, Pn);
+      int Pi = KnToIndex(Pn);// this is index for KPoints not the phonon basis!!
+      std::vector< std::vector<int> > States = bs.BStates;
+      size_t rPid = 0;
+      typename std::vector< std::vector<int> >::const_iterator it = States.begin();
+      for (; it != States.end(); ++it ){
+        // Create -q phonon
+        // The actual index for phonon basis is Qi
+        std::vector<int> state = *it;
+        int cQi;
+        if ( Qi == L-2 ) cQi = L-2;// Handle pi <-> -pi
+        else if ( Qi % 2 == 0 ) cQi = Qi + 1;// plus to minus
+        else cQi = Qi - 1;// minus to plus
+        state.at(cQi) += 1;
+        if ( std::accumulate(state.begin(), state.end(), 0) <= Nmax ){// state exist in basis
+          RealType tg = BosonBasisTag(state);
+          size_t cPid = bs.GetIndexFromTag(tg);
+          size_t rid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
+          size_t cid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          RealType Np = state.at(cQi);
+          MatElemts.push_back( std::make_tuple(rid, cid, -1.0e0 * (Tnum)G * sqrt(Np) ) );
+        }
+        // Destory q phonon
+        state = *it;
+        int dQi= Qi;
+        if ( state.at(dQi) ){
+          RealType Np = state.at(dQi);
+          state.at(dQi) -= 1;
+          RealType tg = BosonBasisTag(state);
+          size_t cPid = bs.GetIndexFromTag(tg);
+          size_t rid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
+          size_t cid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          MatElemts.push_back( std::make_tuple(rid, cid, -1.0e0 * (Tnum)G * sqrt(Np) ) );
+        }
+        rPid++;
       }
-      state = *it;
-      if ( state.at(0) ){
-        RealType Npi = state.at(0);
-        tg = bs.DestroyPhonon(state);
-        size_t cid = bs.GetIndexFromTag(tg);
-        if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc.at(0) * sqrt(Npi) ) );
-      }
-      rid++;
     }
   }
   H_Couple = this->BuildSparseHamiltonian( MatElemts );
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J ){
-  PhononLocalK( KPoints.size(), W, bs.at(0) );
-  FermionNNHoppingK( KPoints.size(), J, bs.at(0) );
-  FermionPhononCouplingK( KPoints, G, bs.at(0) );
+void Holstein<Tnum>::HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax ){
+  PhononK( KPoints.size(), W, bs.at(0) );
+  FermionK( KPoints.size(), J, bs.at(0) );
+  FermionPhononK( KPoints, G, bs.at(0), Nmax );
   /* Build H_total */
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
 }

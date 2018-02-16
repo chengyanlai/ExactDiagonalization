@@ -219,7 +219,7 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
   }
   bool Converged = false;
   int cntT = 1;
-  while ( !Converged && cntT < 100000000 ){
+  while ( !Converged && cntT < 1000000 ){
     FRK4( dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Bases, Hams, Rhos );
     if ( cntT % 100 == 0 ){
       CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
@@ -262,10 +262,10 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   std::vector<RealType> Vin(L, 0.0);
   dt = 0.005;
   std::vector<RealType> Gammas;
-  // const int num = 121;
-  // Logspace<> generator(-1.8, 2.2, num);
-  const int num = 36;
-  Logspace<> generator(-1.5, 2.0, num);
+  // const int num = 79;
+  // Logspace<> generator(-1.8, 2.1, num);
+  const int num = 73;
+  Logspace<> generator(-1.5, 2.1, num);
   for(int i = 0; i < num; ++i) Gammas.push_back(generator());
 
   LogOut << "Build 3-site Triangle Lattice - " << std::flush;

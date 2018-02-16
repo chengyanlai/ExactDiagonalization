@@ -153,9 +153,9 @@ void Basis::PhononK(){
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;
   int k, NWork;
-  std::vector<int> Ivec(L, 0);
   /* NOTE: loop over all N */
   for ( int Nc = 0; Nc <= N; Nc++ ){
+    std::vector<int> Ivec(L, 0);
     Ivec.at(0) = Nc;
     work.push_back( Ivec );
     BTags.push_back( BosonBasisTag(Ivec) );
