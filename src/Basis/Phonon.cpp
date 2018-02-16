@@ -153,7 +153,7 @@ void Basis::PhononK(){
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;
   int k, NWork;
-  std::vector<int> Ivec(L-1, 0);// Get rid of k=0 phonon mode.
+  std::vector<int> Ivec(L, 0);
   /* NOTE: loop over all N */
   for ( int Nc = 0; Nc <= N; Nc++ ){
     Ivec.at(0) = Nc;

@@ -26,6 +26,15 @@ public:
     size_t TotalDim = GetTotalHilbertSpace();
   };
 
+  Hamiltonian( const int& KPoints, const std::vector<Basis> &bs ){
+    HilbertSpaces.clear();
+    HilbertSpaces.push_back(KPoints);
+    for ( auto &b : bs ){
+      HilbertSpaces.push_back(b.GetHilbertSpace());
+    }
+    size_t TotalDim = GetTotalHilbertSpace();
+  };
+
   virtual ~Hamiltonian(){};
 
   inline size_t GetTotalHilbertSpace()const{
