@@ -20,7 +20,7 @@
   #include "mkl.h"
 #endif
 
-const int L = 3;
+const int L = 4;
 const int N1 = L;// Open system has no upper limit
 const int N2 = L;
 const RealType t12 = 1.0e0;
@@ -241,7 +241,7 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
   }
   /* NOTE: H5 group name */
   if ( Save ){
-    HDF5IO* file = new HDF5IO(prefix + "2QDs.h5");
+    HDF5IO* file = new HDF5IO(prefix + std::to_string((unsigned long)L) + "QDs.h5");
     std::string gname( std::to_string((unsigned long)Save) );
     file->SaveStdVector(gname, "tls", tls);
     file->SaveStdVector(gname, "Na", N1);
@@ -258,12 +258,14 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   std::ofstream LogOut;
   LogOut.open(prefix + std::to_string((unsigned long)L) + "QDs.SS", std::ios::app);
   RealType dt;
-  std::vector<RealType> Uin(L, 5.0);
+  std::vector<RealType> Uin(L, 1.0);
   std::vector<RealType> Vin(L, 0.0);
   dt = 0.005;
   std::vector<RealType> Gammas;
-  const int num = 121;
-  Logspace<> generator(-1.8, 2.2, num);
+  // const int num = 121;
+  // Logspace<> generator(-1.8, 2.2, num);
+  const int num = 36;
+  Logspace<> generator(-1.5, 2.0, num);
   for(int i = 0; i < num; ++i) Gammas.push_back(generator());
 
   LogOut << "Build 3-site Triangle Lattice - " << std::flush;
