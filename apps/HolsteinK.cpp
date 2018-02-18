@@ -34,16 +34,19 @@ ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorT
   return out;
 }
 
-ComplexVectorType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
+ComplexMatrixType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
   int L = Bases.at(0).GetL() + 1;
   // int N = Bases.at(0).GetN();
-  ComplexVectorType out(L, arma::fill::zeros);
+  ComplexMatrixType out(L, L, arma::fill::zeros);
   assert( Bases.at(0).GetHilbertSpace() * L == Vec.size() );
-  for ( size_t cnt = 0; cnt < L; cnt++ ){
-    int coff = 0;
-    for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
-      size_t idx = Ham.DetermineTotalIndex( vec<size_t>(cnt, b) );
-      out.at(cnt) += std::pow(std::abs(Vec(idx)), 2);
+  for ( size_t s1 = 0; s1 < L; s1++ ){
+    for ( size_t s2 = s1; s2 < L; s2++ ){
+      int coff = 0;
+      for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
+        size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(s1, b) );
+        size_t idx2 = Ham.DetermineTotalIndex( vec<size_t>(s2, b) );
+        out.at(s1, s2) += Vec(idx2) * Conjg(Vec(idx1));
+      }
     }
   }
   return out;
