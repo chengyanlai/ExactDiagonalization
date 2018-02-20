@@ -54,8 +54,8 @@ public:
   };
 
   inline void ShiftEnergy(const RealType& Esf){
-    SparseMatrixType EDiag = arma::speye<SparseMatrixType>(GetTotalHilbertSpace(), GetTotalHilbertSpace());
-    H_total -= EDiag;
+    SparseMatrixType EDiag = Esf * arma::speye<SparseMatrixType>(GetTotalHilbertSpace(), GetTotalHilbertSpace());
+    H_total += EDiag;
   };
 
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids )const{
