@@ -53,6 +53,11 @@ public:
     return H_total;
   };
 
+  inline void ShiftEnergy(const RealType& Esf){
+    SparseMatrixType EDiag = arma::speye<SparseMatrixType>(GetTotalHilbertSpace(), GetTotalHilbertSpace());
+    H_total -= EDiag;
+  };
+
   inline size_t DetermineTotalIndex( const std::vector<size_t> ids )const{
     assert( ids.size() == HilbertSpaces.size() );
     size_t tidx = 0;
