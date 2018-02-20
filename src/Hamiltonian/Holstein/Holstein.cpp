@@ -1,20 +1,17 @@
 #include <cassert>
 #include <cmath>//exp
 #include <tuple>
+#include <numeric>
 #include "src/Hamiltonian/Holstein/Holstein.hpp"
 
 template<typename Tnum>
-void Holstein<Tnum>::PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs ){
+void Holstein<Tnum>::PhononLocal( const RealType& Wloc, const Basis& bs ){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int state_id = 0;
   for ( std::vector<int> b : bs.BStates ){
     int loc = 0;
-    Tnum val = (Tnum)0.0;
-    for ( int &p : b ){
-      val += Wloc.at(loc) * (Tnum)p;
-      loc++;
-    }
+    Tnum val = (Tnum)Wloc * (Tnum)std::accumulate(b.begin(), b.end(), 0);
     MatElemts.push_back( std::make_tuple(state_id, state_id, val) );
     state_id++;
   }
@@ -22,7 +19,7 @@ void Holstein<Tnum>::PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs){
+void Holstein<Tnum>::FermionPhononCoupling( const RealType& Gloc, const Basis& bs){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   std::vector< std::vector<int> > States = bs.BStates;
   size_t rid = 0;
@@ -33,14 +30,14 @@ void Holstein<Tnum>::FermionPhononCoupling( const std::vector<Tnum>& Gloc, const
     RealType Npf = state.at(0);
     if ( tg > -1.0e-5 ){
       size_t cid = bs.GetIndexFromTag(tg);
-      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc.at(0) * sqrt(Npf) ) );
+      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc * sqrt(Npf) ) );
     }
     state = *it;
     if ( state.at(0) ){
       RealType Npi = state.at(0);
       tg = bs.DestroyPhonon(state);
       size_t cid = bs.GetIndexFromTag(tg);
-      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc.at(0) * sqrt(Npi) ) );
+      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc * sqrt(Npi) ) );
     }
     rid++;
   }
@@ -73,10 +70,8 @@ void Holstein<Tnum>::FermionNNHopping( const RealType& k, const RealType& J, con
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc ){
+void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const RealType& Wloc, const RealType& Gloc ){
   // Both species live in the same lattice and the same happing amplitudes
-  assert( Wloc.size() == bs.at(0).GetL() );
-  assert( Gloc.size() == bs.at(0).GetL() );
   PhononLocal( Wloc, bs.at(0) );
   FermionPhononCoupling( Gloc, bs.at(0) );
   FermionNNHopping( k, J, bs.at(0) );

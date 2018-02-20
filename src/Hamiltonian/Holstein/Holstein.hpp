@@ -15,10 +15,10 @@ public:
   Holstein ( const int& KPoints, const std::vector<Basis> &bs ):Hamiltonian<Tnum>(KPoints, bs){};
   virtual ~Holstein (void){};
 
-  void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const std::vector<Tnum>& Wloc, const std::vector<Tnum>& Gloc );
-  void PhononLocal( const std::vector<Tnum>& Wloc, const Basis& bs );
+  void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const RealType& Wloc, const RealType& Gloc );
+  void PhononLocal( const RealType& Wloc, const Basis& bs );
   void FermionNNHopping( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);
-  void FermionPhononCoupling( const std::vector<Tnum>& Gloc, const Basis& bs );
+  void FermionPhononCoupling( const RealType& Gloc, const Basis& bs );
 
   void HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax );
   void PhononK( const int& KPoints, const RealType& W, const Basis& bs );

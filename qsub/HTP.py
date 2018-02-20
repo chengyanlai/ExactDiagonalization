@@ -8,10 +8,14 @@ import ScriptGenerator as sg
 from Clusters import *
 
 L = 4
-Nh = 10 * L
+Nh = 20 * L
 
+# if ( Mid == 0 ) Method = "SR";
+# else if ( Mid == 1 ) Method = "SM";
+# else if ( Mid == 2 ) Method = "LR";
+Method = 0
 EShift = -100.
-Method = 1
+if np.abs(EShift) > 1.0-5: Method = 1
 
 OLs = [(10.0, 10.0),]
 

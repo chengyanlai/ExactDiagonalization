@@ -435,6 +435,128 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   file3->SaveNumber(gname, "Energy", Energy);
   delete file3;
   LogOut << "Finished pumping!!" << std::endl;
+  // LogOut << "Dynamics under original Hamiltonian." << std::endl;
+  // LogOut << "Done." << std::endl;
+  LogOut.close();
+}
+
+void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const int SaveWFEvery = 1000000 ){
+  std::ofstream LogOut;
+  LogOut.open(prefix + "State.fhm.1d", std::ios::app);
+  int L;
+  int OBC;
+  int N1, N2;
+  std::vector<RealType> Jeqm, Ueqm, Veqm;
+  int TSteps;
+  RealType dt;
+  try{
+    /* Load parameters from file */
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5("conf.h5");
+    LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
+    std::vector<RealType> At;
+    LoadPumpParameters( "conf.h5", At, TSteps, dt);
+  }catch(H5::FileIException){
+    L = 4;
+    OBC = 1;
+    N1 = 2;
+    N2 = 2;
+    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 1.0);
+    Veqm = std::vector<RealType>(L, 0.0);
+    TSteps = 10;
+    dt = 0.005;
+  }
+  LogOut << "Build Lattice - " << std::flush;
+  std::vector<ComplexType> J(Jeqm.begin(), Jeqm.end());
+  std::vector< Node<ComplexType>* > EqmLattice = NN_1D_Chain(L, J, OBC);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Basis - " << std::flush;
+  Basis F1(L, N1, true);
+  F1.Fermion();
+  Basis F2(L, N2, true);
+  F2.Fermion();
+  std::vector<Basis> Bases;
+  Bases.push_back(F1);
+  Bases.push_back(F2);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Hamiltonian - " << std::flush;
+  FHM<ComplexType> Ham0( Bases );
+  // Potential
+  std::vector<ComplexType> Vtmp(Veqm.begin(), Veqm.end());
+  std::vector< std::vector<ComplexType> > Vloc = vec(Vtmp, Vtmp);
+  // Interaction
+  std::vector<ComplexType> Uloc(Ueqm.begin(), Ueqm.end());
+  Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
+  LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
+  // Load Wavefunction
+  ComplexVectorType VecInit;
+  try{
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "PumpWF.h5");
+    LogOut << "Load Pump Wavefunction - " << std::flush;
+    HDF5IO *WFFile = new HDF5IO(prefix + "PumpWF.h5");
+    WFFile->LoadVector("WF", "Vec", VecInit);
+    delete WFFile;
+  }catch(H5::FileIException){
+    try{
+      H5::Exception::dontPrint();
+      H5::H5File::isHdf5(prefix + "FHMChainData.h5");
+      LogOut << "Load Eqm Wavefunction - " << std::flush;
+      HDF5IO *WFFile = new HDF5IO(prefix + "FHMChainData.h5");
+      WFFile->LoadVector("GS", "EVec", VecInit);
+      delete WFFile;
+    }catch(H5::FileIException){
+      RUNTIME_ERROR(" No input file with initial wavefunction, Pump.h5 or FHMChainData.h5!!");
+    }
+  }
+  LogOut << VecInit.n_rows << " DONE!" << std::endl;
+
+  /* Pumping */
+  ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
+  ComplexVectorType VecDyn = VecInit;
+  HDF5IO* file2 = new HDF5IO("QuenchState.h5");
+  std::string gname = "Obs-0/";
+  ComplexType Lecho = arma::cdot(VecInit, VecDyn);
+  std::vector<RealVectorType> Nfi = Ni( Bases, VecDyn, Ham0 );
+  file2->SaveNumber(gname, "Lecho", Lecho);
+  file2->SaveVector(gname, "Nup", Nfi.at(0));
+  file2->SaveVector(gname, "Ndn", Nfi.at(1));
+  delete file2;
+  LogOut << "Begin dynamics......" << std::endl;
+  for (size_t cntP = 1; cntP <= TSteps; cntP++) {
+    // Evolve the state
+    Ham0.expH(Prefactor, VecDyn);
+    if ( cntP % MeasureEvery == 0 ){
+      file2 = new HDF5IO("QuenchState.h5");
+      std::string gname = "Obs-";
+      gname.append( std::to_string((unsigned long long)cntP ));
+      gname.append("/");
+      ComplexType Lecho = arma::cdot(VecInit, VecDyn);
+      Nfi = Ni( Bases, VecDyn, Ham0 );
+      file2->SaveNumber(gname, "Lecho", Lecho);
+      file2->SaveVector(gname, "Nup", Nfi.at(0));
+      file2->SaveVector(gname, "Ndn", Nfi.at(1));
+      delete file2;
+    }
+    if ( cntP % SaveWFEvery == 0 ){
+      HDF5IO* file3 = new HDF5IO("QuenchStateWF.h5");
+      gname = "WF-";
+      gname.append( std::to_string((unsigned long long)cntP ));
+      gname.append("/");
+      file3->SaveVector(gname, "Vec", VecDyn);
+      delete file3;
+    }
+  }
+  Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
+  ComplexSparseMatrixType H0 = Ham0.GetTotalHamiltonian();
+  ComplexType Energy = arma::cdot(VecDyn, H0 * VecDyn);
+  HDF5IO* file3 = new HDF5IO("QuenchStateWF.h5");
+  gname = "WF";
+  file3->SaveVector(gname, "Vec", VecDyn);
+  file3->SaveNumber(gname, "Energy", Energy);
+  delete file3;
+  LogOut << "Finished dynamics!!" << std::endl;
   LogOut.close();
 }
 
@@ -607,6 +729,8 @@ int main(int argc, char *argv[]){
     PumpDynamics("");
   }else if ( std::atoi(argv[1]) == 2 ){
     XASDynamics("");
+  }else if ( std::atoi(argv[1]) == 3 ){
+    StateDynamics("");
   }else if ( std::atoi(argv[1]) == 10 ){
     Equilibrium("");
     PumpDynamics("");
@@ -619,6 +743,15 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 210 ){
     Equilibrium("");
     PumpDynamics("");
+    XASDynamics("");
+  }else if ( std::atoi(argv[1]) == 321 ){
+    PumpDynamics("");
+    StateDynamics("");
+    XASDynamics("");
+  }else if ( std::atoi(argv[1]) == 3210 ){
+    Equilibrium("");
+    PumpDynamics("");
+    StateDynamics("");
     XASDynamics("");
   }
   return 0;

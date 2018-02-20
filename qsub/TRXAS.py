@@ -9,9 +9,9 @@ from Clusters import *
 
 L = 14
 OBC = 1# 1:True
-N1 = 7
+N1 = 4
 N2 = N1
-Uinit = 5
+Us = [1,2,3,4,5]
 
 # XAS Parameters
 CHloc = np.int(L / 2)
@@ -47,50 +47,51 @@ else:
   Prefix = "-".join(["trxasP", "".join(["L", str(L)]), str(N1), str(N2)])
 DataDir = os.path.join(ExecDir, "ED", Prefix)
 
-for U, V in UVls:
-  if A0:
-    Pump = "".join(["T",str(Tau), "W", str(W0), "A", str(A0)])
-  else:
-    Pump = "NP"
-  JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["U", str(U), "V", str(V)]), Pump ])
+for Uinit in Us:
+  for U, V in UVls:
+    if A0:
+      Pump = "".join(["T",str(Tau), "W", str(W0), "A", str(A0)])
+    else:
+      Pump = "NP"
+    JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["U", str(U), "V", str(V)]), Pump ])
 
-  workdir = os.path.join(DataDir, JobName)
+    workdir = os.path.join(DataDir, JobName)
 
-  os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
+    os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
 
-  f = h5py.File(os.path.join(workdir, 'conf.h5'), 'w')
-  para = f.create_group("Parameters")
-  dset = para.create_dataset("L", data=L)
-  dset = para.create_dataset("OBC", data=OBC)
-  dset = para.create_dataset("N1", data=N1)
-  dset = para.create_dataset("N2", data=N2)
-  if OBC: Jls = np.ones(L-1, dtype=np.float64)
-  else: Jls = np.ones(L, dtype=np.float64)
-  dset = para.create_dataset("J", data=Jls)
-  Uls = np.ones(L, dtype=np.float64) * np.float64(Uinit)
-  dset = para.create_dataset("U", data=Uls)
-  Vls = np.zeros(L, dtype=np.float64)
-  dset = para.create_dataset("V", data=Vls)
-  # Pump
-  dset = para.create_dataset("At", data=At)
-  dset = para.create_dataset("TStepsA", data=At.shape[0])
-  dset = para.create_dataset("dtA", data=dt)
-  # XAS
-  Uls[CHloc] += U
-  dset = para.create_dataset("Uf", data=Uls)
-  Vls[CHloc] += V
-  dset = para.create_dataset("Vf", data=Vls)
-  dset = para.create_dataset("TStepsX", data=Tsteps)
-  dset = para.create_dataset("dtX", data=dt)
-  dset = para.create_dataset("CoreHole", data=CHloc)
-  dset = para.create_dataset("Type", data=1)
-  dset = para.create_dataset("Species", data=0)
-  f.close()
+    f = h5py.File(os.path.join(workdir, 'conf.h5'), 'w')
+    para = f.create_group("Parameters")
+    dset = para.create_dataset("L", data=L)
+    dset = para.create_dataset("OBC", data=OBC)
+    dset = para.create_dataset("N1", data=N1)
+    dset = para.create_dataset("N2", data=N2)
+    if OBC: Jls = np.ones(L-1, dtype=np.float64)
+    else: Jls = np.ones(L, dtype=np.float64)
+    dset = para.create_dataset("J", data=Jls)
+    Uls = np.ones(L, dtype=np.float64) * np.float64(Uinit)
+    dset = para.create_dataset("U", data=Uls)
+    Vls = np.zeros(L, dtype=np.float64)
+    dset = para.create_dataset("V", data=Vls)
+    # Pump
+    dset = para.create_dataset("At", data=At)
+    dset = para.create_dataset("TStepsA", data=At.shape[0])
+    dset = para.create_dataset("dtA", data=dt)
+    # XAS
+    Uls[CHloc] += U
+    dset = para.create_dataset("Uf", data=Uls)
+    Vls[CHloc] += V
+    dset = para.create_dataset("Vf", data=Vls)
+    dset = para.create_dataset("TStepsX", data=Tsteps)
+    dset = para.create_dataset("dtX", data=dt)
+    dset = para.create_dataset("CoreHole", data=CHloc)
+    dset = para.create_dataset("Type", data=1)
+    dset = para.create_dataset("Species", data=0)
+    f.close()
 
-  Filename = os.path.join(workdir, 'job')
-  if Cluster == "Kagome":
-    sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
-  elif Cluster == "Merced":
-    sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=20, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
-  elif Cluster == "LANL":
-    sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
+    Filename = os.path.join(workdir, 'job')
+    if Cluster == "Kagome":
+      sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+    elif Cluster == "Merced":
+      sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=20, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+    elif Cluster == "LANL":
+      sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
