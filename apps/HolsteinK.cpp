@@ -156,7 +156,7 @@ void LoadDynParameters( const std::string filename, int& L, int& N, RealType& G,
   h5f.LoadNumber("Parameters", "dt", dt);
 }
 
-void Dynamics(const std::string prefix, const int S1, const int S2, const int MeasureEvery = 20, const int SaveWFEvery = 1000000, const std::string InitialState = "R" ){
+void Dynamics(const std::string prefix, const std::string InitialState, const int S1, const int S2, const int MeasureEvery, const int SaveWFEvery ){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.K.dyn", std::ios::app);
   int L = 2;
@@ -203,40 +203,42 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
   LogOut << "Load Wavefunction - " << std::flush;
   ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
   std::string SaveFile = "QuenchState";
-  try{
-    H5::Exception::dontPrint();
-    H5::H5File::isHdf5(prefix + "HolsteinK.h5");
-    HDF5IO* file = new HDF5IO(prefix + "HolsteinK.h5");
-    ComplexVectorType V1, V2;
-    std::string gname = "S-";
-    gname.append( std::to_string((unsigned long)S1) );
-    SaveFile.append( "-" );
-    SaveFile.append( std::to_string((unsigned long)S1) );
-    LogOut << " <" << gname << std::flush;
-    file->LoadVector(gname, "EVec", V1);
-    gname = "S-";
-    gname.append( std::to_string((unsigned long)S2) );
-    SaveFile.append( "-" );
-    SaveFile.append( std::to_string((unsigned long)S2) );
-    LogOut << "|" << gname << std::flush;
-    file->LoadVector(gname, "EVec", V2);
-    delete file;
-    VecInit = ( V1 + V2 );
-    LogOut << "> = " << arma::cdot(V1, V2) << " DONE." << std::endl;
-  }catch(H5::FileIException){
-    if ( InitialState == "Zero" ){
-      SaveFile.append( "Z" );
-      for ( size_t f = 0; f < L; f++){
-        for ( size_t b = 0; Bases.at(0).GetHilbertSpace(); b++ ){
-          size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
-          if ( b == 0 ) VecInit[idx] = ComplexType(1.0e0, 0.0e0);
-          else VecInit[idx] = ComplexType(0.0e0, 0.0e0);
-        }
-      }
-    }else{
-      SaveFile.append( "R" );
-      LogOut << "Use random initial." << std::endl;
+  if ( InitialState == "E" && S1 >= 0 && S2 >= 0 ){
+    try{
+      H5::Exception::dontPrint();
+      H5::H5File::isHdf5(prefix + "HolsteinK.h5");
+      HDF5IO* file = new HDF5IO(prefix + "HolsteinK.h5");
+      ComplexVectorType V1, V2;
+      std::string gname = "S-";
+      gname.append( std::to_string((unsigned long)S1) );
+      SaveFile.append( "-" );
+      SaveFile.append( std::to_string((unsigned long)S1) );
+      LogOut << " <" << gname << std::flush;
+      file->LoadVector(gname, "EVec", V1);
+      gname = "S-";
+      gname.append( std::to_string((unsigned long)S2) );
+      SaveFile.append( "-" );
+      SaveFile.append( std::to_string((unsigned long)S2) );
+      LogOut << "|" << gname << std::flush;
+      file->LoadVector(gname, "EVec", V2);
+      delete file;
+      VecInit = ( V1 + V2 );
+      LogOut << "> = " << arma::cdot(V1, V2) << " DONE." << std::endl;
+    }catch(H5::FileIException){
+      RUNTIME_ERROR("Can not load eigensate from file - HolsteinK.h5. ");
     }
+  }else if ( InitialState == "Z" ){
+    SaveFile.append( "-Z" );
+    for ( size_t f = 0; f < L; f++){
+      for ( size_t b = 0; Bases.at(0).GetHilbertSpace(); b++ ){
+        size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
+        if ( b == 0 ) VecInit[idx] = ComplexType(1.0e0, 0.0e0);
+        else VecInit[idx] = ComplexType(0.0e0, 0.0e0);
+      }
+    }
+  }else{
+    SaveFile.append( "-R" );
+    LogOut << "Use random initial." << std::endl;
   }
   VecInit = arma::normalise(VecInit);
 
@@ -271,7 +273,7 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
       delete file2;
     }
     if ( cntP % SaveWFEvery == 0 ){
-      HDF5IO* file3 = new HDF5IO("QuenchStateWF.h5");
+      HDF5IO* file3 = new HDF5IO(SaveFile + "-WF.h5");
       gname = "WF-";
       gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
@@ -279,7 +281,7 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
       delete file3;
     }
   }
-  HDF5IO* file3 = new HDF5IO("QuenchStateWF.h5");
+  HDF5IO* file3 = new HDF5IO(SaveFile + "-WF.h5");
   gname = "WF";
   file3->SaveNumber(gname, "S1", S1);
   file3->SaveNumber(gname, "S2", S2);
@@ -301,15 +303,17 @@ int main(int argc, char *argv[]){
     if ( argc > 2 ) NEV = std::atoi(argv[2]);
     Equilibrium("", NEV);
   }else if ( std::atoi(argv[1]) == 1 ){
+    std::string InitialState = "R";
+    int S1 = -1, S2 = -1;
     int SaveWFEvery = 1000000, MeasureEvery = 20;
-    int S1 = 8, S2 = 9;
-    if ( argc > 3 ){
-      S1 = std::atoi(argv[2]);
-      S2 = std::atoi(argv[3]);
+    if ( argc > 2 ) InitialState = argv[2];
+    if ( argc > 4 ){
+      S1 = std::atoi(argv[3]);
+      S2 = std::atoi(argv[4]);
     }
-    if ( argc > 4 ) SaveWFEvery = std::atoi(argv[4]);
-    if ( argc > 5 ) MeasureEvery = std::atoi(argv[5]);
-    Dynamics("", S1, S2, MeasureEvery, SaveWFEvery);
+    if ( argc > 5 ) SaveWFEvery = std::atoi(argv[5]);
+    if ( argc > 6 ) MeasureEvery = std::atoi(argv[6]);
+    Dynamics("", InitialState, S1, S2, MeasureEvery, SaveWFEvery);
   }
   return 0;
 }
