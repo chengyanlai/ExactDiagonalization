@@ -202,6 +202,7 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
 
   LogOut << "Load Wavefunction - " << std::flush;
   ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
+  std::string SaveFile = "QuenchState";
   try{
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "HolsteinK.h5");
@@ -209,10 +210,14 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
     ComplexVectorType V1, V2;
     std::string gname = "S-";
     gname.append( std::to_string((unsigned long)S1) );
+    SaveFile.append( "-" );
+    SaveFile.append( std::to_string((unsigned long)S1) );
     LogOut << " <" << gname << std::flush;
     file->LoadVector(gname, "EVec", V1);
     gname = "S-";
     gname.append( std::to_string((unsigned long)S2) );
+    SaveFile.append( "-" );
+    SaveFile.append( std::to_string((unsigned long)S2) );
     LogOut << "|" << gname << std::flush;
     file->LoadVector(gname, "EVec", V2);
     delete file;
@@ -220,6 +225,7 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
     LogOut << "> = " << arma::cdot(V1, V2) << " DONE." << std::endl;
   }catch(H5::FileIException){
     if ( InitialState == "Zero" ){
+      SaveFile.append( "Z" );
       for ( size_t f = 0; f < L; f++){
         for ( size_t b = 0; Bases.at(0).GetHilbertSpace(); b++ ){
           size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
@@ -228,6 +234,7 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
         }
       }
     }else{
+      SaveFile.append( "R" );
       LogOut << "Use random initial." << std::endl;
     }
   }
@@ -235,10 +242,9 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
 
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   ComplexVectorType VecDyn = VecInit;
-  HDF5IO* file2 = new HDF5IO("QuenchState.h5");
+  SaveFile.append( ".h5" );
+  HDF5IO* file2 = new HDF5IO(prefix + SaveFile);
   std::string gname = "Obs-0/";
-  file2->SaveNumber(gname, "S1", S1);
-  file2->SaveNumber(gname, "S2", S2);
   ComplexType Lecho = arma::cdot(VecInit, VecDyn);
   file2->SaveNumber(gname, "F", Lecho);
   ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
@@ -252,7 +258,7 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
     Ham0.expH(Prefactor, VecDyn);
     VecDyn = arma::normalise(VecDyn);
     if ( cntP % MeasureEvery == 0 ){
-      file2 = new HDF5IO("QuenchState.h5");
+      file2 = new HDF5IO(prefix + SaveFile);
       std::string gname = "Obs-";
       gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
@@ -275,6 +281,8 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
   }
   HDF5IO* file3 = new HDF5IO("QuenchStateWF.h5");
   gname = "WF";
+  file3->SaveNumber(gname, "S1", S1);
+  file3->SaveNumber(gname, "S2", S2);
   file3->SaveVector(gname, "Vec", VecDyn);
   delete file3;
   LogOut << "Finished dynamics!!" << std::endl;
