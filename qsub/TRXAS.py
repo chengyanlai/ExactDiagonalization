@@ -9,7 +9,7 @@ from Clusters import *
 
 L = 14
 OBC = 1# 1:True
-N1 = 4
+N1 = 7
 N2 = N1
 Us = [1,2,3,4,5]
 
@@ -20,16 +20,18 @@ Tsteps = 3400
 dt = 0.005
 
 # For pumping pulse
-A0 = 1
+A0 = 0.5
 Tau = 2
 W0 = 3
+
 def getAt(tlist, td, tau=12, W=3, A0=1):
   p = []
   for t in tlist:
       val = A0 * np.exp( -(t - td) * (t - td) / (2. * tau * tau) ) * np.cos(W * (t - td))
       p.append(val)
   return np.array(p)
-if A0:
+
+if A0 > 1.0e-5:
   Td = np.int(Tau * np.rint(np.sqrt(2. * np.log(100 * A0))) )
   tl = np.arange(0, 2*Td, dt)
   At = getAt(tl, td=Td, tau=Tau, W=W0, A0=A0)
