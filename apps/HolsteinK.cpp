@@ -200,7 +200,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   Ham0.HolsteinModelK(Kn, Bases, Win, Gin, Jin, N);
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
-  LogOut << "Load Wavefunction - " << std::flush;
+  LogOut << "Load Wavefunction - " << InitialState << " " << std::flush;
   ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
   std::string SaveFile = "QuenchState";
   if ( InitialState == "E" && S1 >= 0 && S2 >= 0 ){
@@ -230,10 +230,10 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   }else if ( InitialState == "Z" ){
     SaveFile.append( "-Z" );
     for ( size_t f = 0; f < L; f++){
-      for ( size_t b = 0; Bases.at(0).GetHilbertSpace(); b++ ){
+      for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
         size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
-        if ( b == 0 ) VecInit[idx] = ComplexType(1.0e0, 0.0e0);
-        else VecInit[idx] = ComplexType(0.0e0, 0.0e0);
+        if ( b == 0 ) VecInit(idx) = ComplexType(1.0e0, 0.0e0);
+        else VecInit(idx) = ComplexType(0.0e0, 0.0e0);
       }
     }
   }else{
