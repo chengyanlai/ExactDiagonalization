@@ -24,7 +24,9 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, 
   // generated at each iteration, ncv <= n
   // We use the answer to life, the universe and everything, if possible
   int ncv = 42;
-  if( n < ncv )
+  if ( nev > ncv )
+    ncv = nev + 50;
+  if ( n < ncv )
     ncv = n;
   // v containts the lanczos basis vectors
   int ldv = n;
@@ -194,6 +196,8 @@ void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr, std::v
   RealType *resid = new RealType[n];
   memcpy(resid, input_ptr, n * sizeof(RealType));
   int ncv = 42;
+  if ( nev > ncv )
+    ncv = nev + 50;
   if( n < ncv )
     ncv = n;
   int ldv = n;

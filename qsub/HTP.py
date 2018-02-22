@@ -10,11 +10,11 @@ from Clusters import *
 L = 4
 Nh = 10 * L
 
-OLs = [(10.0, 10.0), (5.0, 10.0), (2.50, 10.0),]
+OLs = [(10.0, 10.0), (8.0, 10.0), (5.0, 10.0),]
 
-Method = 0
+Method = 2
 EShift = 0.
-if np.abs(EShift) > 1.0e-5: Method = 1
+if np.abs(EShift) > 1.0e-5: Method = 2
 
 TSteps = 40000
 dt = 0.005
@@ -27,7 +27,7 @@ DataDir = os.path.join(ExecDir, "ED", "HTP-K", Prefix1)
 APPs.append("/bin/touch DONE")
 
 for (Omega, Lambda) in OLs:
-    Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]), str(EShift) ])
+    Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]), str(Method), str(EShift) ])
 
     workdir = os.path.join(DataDir, Prefix2)
 

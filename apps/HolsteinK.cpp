@@ -25,8 +25,8 @@ void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G,
   int Mid = 0;
   h5f.LoadNumber("Parameters", "Method", Mid);
   if ( Mid == 0 ) Method = "SR";
-  else if ( Mid == 1 ) Method = "SM";
-  else if ( Mid == 2 ) Method = "LR";
+  else if ( Mid == 2 ) Method = "SM";
+  else if ( Mid == 1 ) Method = "LR";
 }
 
 ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
@@ -156,7 +156,7 @@ void LoadDynParameters( const std::string filename, int& L, int& N, RealType& G,
   h5f.LoadNumber("Parameters", "dt", dt);
 }
 
-void Dynamics(const std::string prefix, const int S1, const int S2, const int MeasureEvery = 20, const int SaveWFEvery = 1000000 ){
+void Dynamics(const std::string prefix, const int S1, const int S2, const int MeasureEvery = 20, const int SaveWFEvery = 1000000, const std::string InitialState = "R" ){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.K.dyn", std::ios::app);
   int L = 2;
@@ -219,7 +219,17 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
     VecInit = ( V1 + V2 );
     LogOut << "> = " << arma::cdot(V1, V2) << " DONE." << std::endl;
   }catch(H5::FileIException){
-    LogOut << "Use random initial." << std::endl;
+    if ( InitialState == "Zero" ){
+      for ( size_t f = 0; f < L; f++){
+        for ( size_t b = 0; Bases.at(0).GetHilbertSpace(); b++ ){
+          size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
+          if ( b == 0 ) VecInit[idx] = ComplexType(1.0e0, 0.0e0);
+          else VecInit[idx] = ComplexType(0.0e0, 0.0e0);
+        }
+      }
+    }else{
+      LogOut << "Use random initial." << std::endl;
+    }
   }
   VecInit = arma::normalise(VecInit);
 
@@ -227,6 +237,8 @@ void Dynamics(const std::string prefix, const int S1, const int S2, const int Me
   ComplexVectorType VecDyn = VecInit;
   HDF5IO* file2 = new HDF5IO("QuenchState.h5");
   std::string gname = "Obs-0/";
+  file2->SaveNumber(gname, "S1", S1);
+  file2->SaveNumber(gname, "S2", S2);
   ComplexType Lecho = arma::cdot(VecInit, VecDyn);
   file2->SaveNumber(gname, "F", Lecho);
   ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
@@ -278,7 +290,7 @@ int main(int argc, char *argv[]){
 #endif
   if ( std::atoi(argv[1]) == 0 ){
     int NEV = 40;
-    if ( argc > 3 ) NEV = std::atoi(argv[2]);
+    if ( argc > 2 ) NEV = std::atoi(argv[2]);
     Equilibrium("", NEV);
   }else if ( std::atoi(argv[1]) == 1 ){
     int SaveWFEvery = 1000000, MeasureEvery = 20;
@@ -289,7 +301,7 @@ int main(int argc, char *argv[]){
     }
     if ( argc > 4 ) SaveWFEvery = std::atoi(argv[4]);
     if ( argc > 5 ) MeasureEvery = std::atoi(argv[5]);
-    Dynamics("", MeasureEvery, SaveWFEvery);
+    Dynamics("", S1, S2, MeasureEvery, SaveWFEvery);
   }
   return 0;
 }
