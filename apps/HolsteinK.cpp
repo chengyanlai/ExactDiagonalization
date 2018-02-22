@@ -238,14 +238,13 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     }
   }else{
     SaveFile.append( "-R" );
-    LogOut << "Use random initial." << std::endl;
+    LogOut << "Use random initial - " << VecInit.n_rows << std::endl;
   }
   VecInit = arma::normalise(VecInit);
 
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   ComplexVectorType VecDyn = VecInit;
-  SaveFile.append( ".h5" );
-  HDF5IO* file2 = new HDF5IO(prefix + SaveFile);
+  HDF5IO* file2 = new HDF5IO(prefix + SaveFile + ".h5");
   std::string gname = "Obs-0/";
   ComplexType Lecho = arma::cdot(VecInit, VecDyn);
   file2->SaveNumber(gname, "F", Lecho);
@@ -254,13 +253,17 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
   file2->SaveMatrix(gname, "Fermion", Nfi);
   delete file2;
+  HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
+  gname = "WF";
+  file3->SaveVector(gname, "Vec", VecDyn);
+  delete file3;
   LogOut << "Begin dynamics......" << std::endl;
   for (size_t cntP = 1; cntP <= TSteps; cntP++) {
     // Evolve the state
     Ham0.expH(Prefactor, VecDyn);
     VecDyn = arma::normalise(VecDyn);
     if ( cntP % MeasureEvery == 0 ){
-      file2 = new HDF5IO(prefix + SaveFile);
+      file2 = new HDF5IO(prefix + SaveFile + ".h5");
       std::string gname = "Obs-";
       gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
@@ -273,7 +276,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       delete file2;
     }
     if ( cntP % SaveWFEvery == 0 ){
-      HDF5IO* file3 = new HDF5IO(SaveFile + "-WF.h5");
+      HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
       gname = "WF-";
       gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
@@ -281,10 +284,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       delete file3;
     }
   }
-  HDF5IO* file3 = new HDF5IO(SaveFile + "-WF.h5");
+  HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
   gname = "WF";
-  file3->SaveNumber(gname, "S1", S1);
-  file3->SaveNumber(gname, "S2", S2);
   file3->SaveVector(gname, "Vec", VecDyn);
   delete file3;
   LogOut << "Finished dynamics!!" << std::endl;
