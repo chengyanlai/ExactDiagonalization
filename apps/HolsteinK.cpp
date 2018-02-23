@@ -31,7 +31,6 @@ void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G,
 
 ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
   int L = Bases.at(0).GetL() + 1;
-  // int N = Bases.at(0).GetN();
   ComplexVectorType out(L-1, arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() * L == Vec.size() );
@@ -229,16 +228,10 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     }
   }else if ( InitialState == "Z" ){
     SaveFile.append( "-Z" );
+    /* T->\infty */
     // VecInit.fill( ComplexType(1.0e0, 0.0e0) );
-    // for ( size_t f = 0; f < L; f++){
-    //   for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
-    //     size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
-    //     if ( b == 10 ) VecInit(idx) = ComplexType(1.0e0, 0.0e0);
-    //     else VecInit(idx) = ComplexType(0.0e0, 0.0e0);
-    //   }
-    // }
-    // Target phonon mode
-    std::vector<int> PState(L-1,10);
+    /* Target phonon mode */
+    std::vector<int> PState(L-1, 5);
     size_t PTag = Bases.at(0).GetIndexFromTag( BosonBasisTag(PState) );
     VecInit.fill( ComplexType(0.0e0, 0.0e0) );
     for ( size_t f = 0; f < L; f++){

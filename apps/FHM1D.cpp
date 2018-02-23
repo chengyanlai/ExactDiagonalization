@@ -746,13 +746,31 @@ int main(int argc, char *argv[]){
     XASDynamics("");
   }else if ( std::atoi(argv[1]) == 321 ){
     PumpDynamics("");
-    StateDynamics("");
-    XASDynamics("");
+    #pragma omp parallel sections // starts a new team
+    {
+      #pragma omp section
+      {
+        StateDynamics("");
+      }
+      #pragma omp section
+      {
+        XASDynamics("");
+      }
+    }
   }else if ( std::atoi(argv[1]) == 3210 ){
     Equilibrium("");
     PumpDynamics("");
-    StateDynamics("");
-    XASDynamics("");
+    #pragma omp parallel sections // starts a new team
+    {
+      #pragma omp section
+      {
+        StateDynamics("");
+      }
+      #pragma omp section
+      {
+        XASDynamics("");
+      }
+    }
   }
   return 0;
 }
