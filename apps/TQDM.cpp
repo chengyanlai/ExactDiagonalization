@@ -23,7 +23,7 @@ const int N1 = L;// Open system has no upper limit
 const int N2 = L;
 const RealType t12 = 1.0e0;
 
-void LoadParameters( const std::string filename, RealType &t23,  RealType &t13, std::vector<RealType> &Uloc, std::vector<RealType> &Vloc, RealType &GammaL, RealType &GammaR, RealType &dt){
+void LoadParameters( const std::string filename, RealType &t23,  RealType &t13, std::vector<RealType> &Uloc, std::vector<RealType> &Vloc, RealType &GammaL, RealType &GammaR, RealType &dt, const int SearchJ, RealType& TargetJ){
   HDF5IO file(filename);
   file.LoadNumber("Parameters", "t23", t23);
   t23 *= t12;
@@ -34,6 +34,7 @@ void LoadParameters( const std::string filename, RealType &t23,  RealType &t13, 
   file.LoadNumber("Parameters", "GammaL", GammaL);
   file.LoadNumber("Parameters", "GammaR", GammaR);
   file.LoadNumber("Parameters", "dt", dt);
+  if ( SearchJ ) file.LoadNumber("Parameters", "TargetJ", TargetJ);
 }
 
 RealType TraceRhos(const std::vector<ComplexMatrixType> &Rhos){
@@ -211,11 +212,11 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
   ComplexType JS01 = JupJdn( 0, 1, Bases, Rhos, Hams );
   ComplexType JS12 = JupJdn( 1, 2, Bases, Rhos, Hams );
   ComplexType JS02 = JupJdn( 0, 2, Bases, Rhos, Hams );
+  Na.push_back( CM0(0,0) + CM1(0,0) );
+  Nb.push_back( CM0(1,1) + CM1(1,1) );
   if ( Save ){
     tls.push_back(0.0e0);
     NaUp.push_back(CM0(0,0));
-    Na.push_back( CM0(0,0) + CM1(0,0) );
-    Nb.push_back( CM0(1,1) + CM1(1,1) );
     Nc.push_back( CM0(2,2) + CM1(2,2) );
     n12.push_back( Nij0(0,1) + Nij1(0,1) );
     n23.push_back( Nij0(1,2) + Nij1(1,2) );
@@ -235,13 +236,13 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
       CM0 = SingleParticleDensityMatrix( 0, Bases, Rhos, Hams);
       CM1 = SingleParticleDensityMatrix( 1, Bases, Rhos, Hams);
       if ( (std::abs(Na.back() - (CM0(0,0) + CM1(0,0))) < 1.0e-8) && (std::abs(Nb.back() - (CM0(1,1) + CM1(1,1))) < 1.0e-8) ) Converged = true;
+      Na.push_back( CM0(0,0) + CM1(0,0) );
+      Nb.push_back( CM0(1,1) + CM1(1,1) );
       if ( Save ){
         Nij0 = NiNj( 0, Bases, Rhos, Hams);
         Nij1 = NiNj( 1, Bases, Rhos, Hams);
         tls.push_back(cntT * dt);
         NaUp.push_back(CM0(0,0));
-        Na.push_back( CM0(0,0) + CM1(0,0) );
-        Nb.push_back( CM0(1,1) + CM1(1,1) );
         Nc.push_back( CM0(2,2) + CM1(2,2) );
         n12.push_back( Nij0(0,1) + Nij1(0,1) );
         n23.push_back( Nij0(1,2) + Nij1(1,2) );
@@ -262,6 +263,7 @@ std::vector<ComplexMatrixType> SteadyState(const std::vector<std::vector<Basis> 
   /* NOTE: H5 group name */
   if ( Save ){
     HDF5IO* file = new HDF5IO(prefix + "TQDM.h5");
+    file->SaveStdVector("Obs", "Gammas", Gammas);
     file->SaveStdVector("Obs", "tls", tls);
     file->SaveStdVector("Obs", "NaUp", NaUp);
     file->SaveStdVector("Obs", "Na", Na);
@@ -287,11 +289,12 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   RealType t23, t13;
   RealType dt, GammaL, GammaR;
   std::vector<RealType> Uin, Vin;
+  RealType TargetJ = 0.190e0;
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
-    LoadParameters( prefix + "conf.h5", t23, t13, Uin, Vin, GammaL, GammaR, dt);
+    LoadParameters( prefix + "conf.h5", t23, t13, Uin, Vin, GammaL, GammaR, dt, SearchJ, TargetJ);
   }catch(H5::FileIException){
     t23 = t12;
     t13 = t12;
@@ -409,9 +412,40 @@ void Dynamics( const std::string prefix, const int SearchJ = 0 ){
   LogOut << "DONE!" << std::endl;
 
   int Save = 1;
+  if ( SearchJ ){
+    Save = 0;
+    LogOut << "Searching target current - " << TargetJ << std::endl;
+    bool Found = false;
+    int Runs = 0;
+    RealType Gamma0 = 1.5e-2, Gamma1 = 4.0e0;
+    if ( SearchJ == 2 ) Gamma0 = 8.0e+1;
+    while ( !Found && Runs < 100 ){
+      RealType Gamma = (Gamma0 + Gamma1) / 2.;
+      Gammas = std::vector<RealType>(4, Gamma);
+      LogOut << "Run - " << Runs << std::flush;
+      std::vector<ComplexMatrixType> RW = SteadyState( Bases, OriginalRhos, Hams, dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Save, prefix );
+      ComplexMatrixType CM0 = SingleParticleDensityMatrix( 0, Bases, RW, Hams);
+      ComplexMatrixType CM1 = SingleParticleDensityMatrix( 1, Bases, RW, Hams);
+      RealType J13 = 2. * t13 * ( ImaginaryPart(CM0(0,2)) + ImaginaryPart(CM1(0,2)) );
+      if ( std::abs(J13 - TargetJ) < 1.0e-8 ){
+        LogOut << " has currnet = " << J13 << " with gamma = " << Gamma << std::endl;
+        Found = true;
+      }else{
+        if ( J13 > TargetJ ){
+          Gamma1 = Gamma;
+        }else{
+          Gamma0 = Gamma;
+        }
+        LogOut << " has currnet = " << J13 << " with gamma = " << Gamma << std::endl;
+      }
+      Runs++;
+    }
+    LogOut << "Found? - " << Found << std::endl;
+  }
+  Save = 1;
   LogOut << "Dynamics with dt = " << dt << ", Gamma = " << Gammas.at(0) << std::endl;
   LogOut << "\tBegin dynamics, trace = " << TraceRhos(OriginalRhos) << std::endl;
-  std::vector<ComplexMatrixType>  FinalRhos = SteadyState( Bases, OriginalRhos, Hams, dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Save, prefix );
+  std::vector<ComplexMatrixType> FinalRhos = SteadyState( Bases, OriginalRhos, Hams, dt, Gammas, SiteTypesSpin, BasisIds, CollapseIds, Save, prefix );
   LogOut << "\tAfter dynamics, trace = " << TraceRhos(FinalRhos) << std::endl;
   LogOut.close();
 }

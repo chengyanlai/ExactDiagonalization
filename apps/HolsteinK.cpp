@@ -132,8 +132,8 @@ void Equilibrium(const std::string prefix, int NEV){
   HDF5IO* file = new HDF5IO(prefix + "HolsteinK.h5");
   for ( size_t i = 0; i < NEV; i++ ){
     std::string gname = "S-";
-    file->SaveNumber(gname, "EVal", Vals[i]);
     gname.append( std::to_string( (unsigned long)i) );
+    file->SaveNumber(gname, "EVal", Vals[i]);
     ComplexVectorType Vec = Vecs.col(i);
     file->SaveVector(gname, "EVec", Vec);
     ComplexVectorType Npi = NPhonon( Bases, Vec, Ham0);
@@ -229,12 +229,21 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     }
   }else if ( InitialState == "Z" ){
     SaveFile.append( "-Z" );
+    // VecInit.fill( ComplexType(1.0e0, 0.0e0) );
+    // for ( size_t f = 0; f < L; f++){
+    //   for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
+    //     size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
+    //     if ( b == 10 ) VecInit(idx) = ComplexType(1.0e0, 0.0e0);
+    //     else VecInit(idx) = ComplexType(0.0e0, 0.0e0);
+    //   }
+    // }
+    // Target phonon mode
+    std::vector<int> PState(L-1,10);
+    size_t PTag = Bases.at(0).GetIndexFromTag( BosonBasisTag(PState) );
+    VecInit.fill( ComplexType(0.0e0, 0.0e0) );
     for ( size_t f = 0; f < L; f++){
-      for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
-        size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, b) );
-        if ( b == 0 ) VecInit(idx) = ComplexType(1.0e0, 0.0e0);
-        else VecInit(idx) = ComplexType(0.0e0, 0.0e0);
-      }
+      size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, PTag) );
+      VecInit(idx) = ComplexType(1.0e0, 0.0e0);
     }
   }else{
     SaveFile.append( "-R" );
@@ -276,7 +285,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       delete file2;
     }
     if ( cntP % SaveWFEvery == 0 ){
-      HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
+      file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
       gname = "WF-";
       gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
@@ -284,7 +293,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       delete file3;
     }
   }
-  HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
+  file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
   gname = "WF";
   file3->SaveVector(gname, "Vec", VecDyn);
   delete file3;
@@ -306,7 +315,7 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 1 ){
     std::string InitialState = "R";
     int S1 = -1, S2 = -1;
-    int SaveWFEvery = 1000000, MeasureEvery = 20;
+    int SaveWFEvery = 100, MeasureEvery = 20;
     if ( argc > 2 ) InitialState = argv[2];
     if ( argc > 4 ){
       S1 = std::atoi(argv[3]);

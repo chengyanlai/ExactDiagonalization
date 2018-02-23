@@ -17,22 +17,13 @@ from Clusters import *
 t23 = 1.0
 Vin = 0.0
 
-SearchJ = 0
+SearchJ = 2
 
 if SearchJ:
-  t13List = np.linspace(0.9, 1.2, 31)# For searching
+  t13List = np.linspace(0.7, 1.0, 13)# For searching
   cntGStart = 0
-  GammaList = [1.0,]# Small gamma search
-  # cntGStart = 1
-  # GammaList = [9.0,]# Large gamma search
-  Uin = [0.0,]
-  TargetJ = 0.2# for searching U = 0.0
-  # Uin = [0.1,]
-  # TargetJ13 = 0.19# for searching U = 0.1
-  # Uin = [1.0,]
-  # TargetJ13 = 0.19# for searching U = 1.0
-  # Uin = [5.0,]
-  # TargetJ13 = 0.13# for searching U = 5.0
+  GammaList = [1.0,]# Not used
+  UinTj = [(0.1, 0.18), (1.0, 0.16), (3.0, 0.14)]
 else:
   # remember to set FIXJ to 0 in main program
   cntGStart = 0
@@ -44,10 +35,10 @@ else:
 # NOTE: Dynamics parameters
 dt = 0.005
 
-for U in Uin:
+for U, TargetJ in UinTj:
   for t13 in t13List:
     if SearchJ:
-      DataDir = os.path.join( ExecDir, "ED", "TQDM", "SearchJ", "".join(["U", str(U), "-t", str(t13)]) )
+      DataDir = os.path.join( ExecDir, "ED", "TQDM", "SearchJ" + str(SearchJ), "".join(["U", str(U), "-t", str(t13)]) )
     else:
       DataDir = os.path.join( ExecDir, "ED", "TQDM", "".join(["U", str(U), "-t", str(t13)]) )
     cntG = cntGStart
@@ -57,8 +48,12 @@ for U in Uin:
       elif GammaL > 600.: dt = 0.0002
       elif GammaL > 400.: dt = 0.0005
       elif GammaL > 200.: dt = 0.001
-      JobName =  "".join(["G", str(cntG),])
-      workdir = os.path.join(DataDir, JobName)
+      if SearchJ:
+        JobName =  "".join(["U", str(U), "-t", str(t13), "SJ", str(SearchJ)])
+        workdir = DataDir
+      else:
+        JobName =  "".join(["G", str(cntG),])
+        workdir = os.path.join(DataDir, JobName)
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
 
@@ -76,7 +71,7 @@ for U in Uin:
       dset = para.create_dataset("GammaL", data=GammaL)
       dset = para.create_dataset("GammaR", data=GammaR)
       dset = para.create_dataset("dt", data=dt)
-      if SearchJ: dset = para.create_dataset("TargetJ", data=TargetJ)
+      dset = para.create_dataset("TargetJ", data=TargetJ)
       f.close()
 
       if Cluster == "Kagome":

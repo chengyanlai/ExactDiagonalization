@@ -22,7 +22,7 @@ dt = 0.005
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 APPs.append(os.path.join(SrcDir, "build", "holstein.k 0 400"))
-# APPs.append(os.path.join(SrcDir, "build", "holstein.k 1"))
+APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 295 297"))
 DataDir = os.path.join(ExecDir, "ED", "HTP-K", Prefix1)
 APPs.append("/bin/touch DONE")
 

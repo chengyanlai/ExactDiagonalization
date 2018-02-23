@@ -20,7 +20,7 @@ Tsteps = 3400
 dt = 0.005
 
 # For pumping pulse
-A0 = 0.5
+A0 = 0.1
 Tau = 2
 W0 = 3
 
