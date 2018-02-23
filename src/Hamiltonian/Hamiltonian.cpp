@@ -3,7 +3,7 @@
 #include "src/numeric/lapack.h"
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial, const std::string Target){
+void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev, const bool randomInitial, const std::string Target)const{
   size_t dim = GetTotalHilbertSpace();
   if ( randomInitial ) Vecs = MatrixType(dim, nev, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
@@ -14,7 +14,7 @@ void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int 
 }
 
 template<typename Tnum>
-void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
+void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs)const{
   size_t dim = GetTotalHilbertSpace();
   // convert H_total to dense matrix
   MatrixType Mat(H_total);
@@ -27,7 +27,7 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs){
 }
 
 template<>
-void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax ){
+void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax )const{
   krylov(H_total, Vec, Prefactor, Kmax);
 }
 

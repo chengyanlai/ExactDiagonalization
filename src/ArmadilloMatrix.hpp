@@ -23,12 +23,24 @@ typedef arma::SpMat<ComplexType> ComplexSparseMatrixType;
 /** Sparse real matrix. */
 typedef arma::SpMat<RealType> RealSparseMatrixType;
 
-// inline RealSparseMatrixType BuildSparseMatrix( sizt_t& dim, ULongMatrixType& Locations, RealVectorType& Values ){
-//   RealSparseMatrixType out(true, Locations, Values, dim, dim);//, sort_locations = true, check_for_zeros = true);
-//   return out;
-// };
-// inline ComplexSparseMatrixType BuildSparseMatrix( sizt_t& dim, ULongMatrixType& Locations, ComplexVectorType& Values ){
-//   ComplexSparseMatrixType out(true, Locations, Values, dim, dim);//, sort_locations = true, check_for_zeros = true);
-//   return out;
-// };
+template<typename Tnum>
+inline arma::SpMat<Tnum> BuildSparseHamiltonian( const size_t& dim, const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
+  ULongMatrixType Locations(2, MatElemts.size());
+  arma::Col<Tnum> Values( MatElemts.size() );
+  typename std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
+  size_t cnt = 0;
+  for (; it != MatElemts.end(); ++it ){
+    int row, col;
+    Tnum val;
+    std::tie(row, col, val) = *it;
+    Locations(0,cnt) = row;
+    Locations(1,cnt) = col;
+    Values(cnt) = val;
+    cnt++;
+  }
+  // First true allows repeated matrix elements
+  arma::SpMat<Tnum> out(true, Locations, Values, dim, dim);//, sort_locations = true, check_for_zeros = true);
+  return out;
+};
+
 #endif	/* end of include guard: __ARMODILLO_MATRIX_HPP__ */

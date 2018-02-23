@@ -1,9 +1,5 @@
 #include <cmath>
-<<<<<<< HEAD
-// #include <Eigen/Eigenvalues>
-=======
 #include <cassert>
->>>>>>> holstein
 #ifdef MKL
     #include "mkl.h"
 #else
@@ -16,6 +12,9 @@
 #endif
 
 void krylov(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const ComplexType Prefactor, const size_t Kmax, const double threshNorm){
+#if defined(MKL)
+  mkl_set_num_threads(NumCores);
+#endif
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;

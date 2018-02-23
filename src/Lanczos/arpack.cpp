@@ -4,7 +4,7 @@
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<>
-void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target){
+void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target)const{
   /*
   // n        : dimension of the matrix
   // input_ptr: input trail vector pointer
@@ -189,7 +189,7 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, 
 }
 
 template<>
-void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target){
+void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target)const{
   int ido = 0;
   char bmat = 'I';
   char which[] = {'S','A'};

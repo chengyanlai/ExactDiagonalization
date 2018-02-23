@@ -15,7 +15,7 @@ void Holstein<Tnum>::PhononLocal( const RealType& Wloc, const Basis& bs ){
     MatElemts.push_back( std::make_tuple(state_id, state_id, val) );
     state_id++;
   }
-  H_Phonon = this->BuildSparseHamiltonian( MatElemts );
+  H_Phonon = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>
@@ -41,7 +41,7 @@ void Holstein<Tnum>::FermionPhononCoupling( const RealType& Gloc, const Basis& b
     }
     rid++;
   }
-  H_Couple = this->BuildSparseHamiltonian( MatElemts );
+  H_Couple = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>
@@ -66,7 +66,7 @@ void Holstein<Tnum>::FermionNNHopping( const RealType& k, const RealType& J, con
     }
     id1++;
   }
-  H_Kinetic = this->BuildSparseHamiltonian( MatElemts );
+  H_Kinetic = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>
@@ -95,7 +95,7 @@ void Holstein<Tnum>::PhononK( const int& KPoints, const RealType& W, const Basis
     }
     state_id++;
   }
-  H_Phonon = this->BuildSparseHamiltonian( MatElemts );
+  H_Phonon = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>
@@ -109,7 +109,7 @@ void Holstein<Tnum>::FermionK( const int& KPoints, const RealType& J, const Basi
       MatElemts.push_back( std::make_tuple(idx, idx, val) );
     }
   }
-  H_Kinetic = this->BuildSparseHamiltonian( MatElemts );
+  H_Kinetic = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>
@@ -159,7 +159,7 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Real
       }
     }
   }
-  H_Couple = this->BuildSparseHamiltonian( MatElemts );
+  H_Couple = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>

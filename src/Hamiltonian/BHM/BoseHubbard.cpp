@@ -25,8 +25,8 @@ void BHM<Tnum>::LocalTerms( const std::vector<Tnum> &Vloc, const std::vector<Tnu
     MatElemtsU.push_back( std::make_tuple(idx, idx, Uval) );
     state_id++;
   }
-  H_V = this->BuildSparseHamiltonian( MatElemtsV );
-  H_U = this->BuildSparseHamiltonian( MatElemtsU );
+  H_V = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemtsV );
+  H_U = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemtsU );
 }
 
 template<typename Tnum>
@@ -57,7 +57,7 @@ void BHM<Tnum>::NNHopping( const std::vector< Node<Tnum>* > &lt, const Basis& bs
     }
     state_id1++;
   }
-  H_J = this->BuildSparseHamiltonian( MatElemts );
+  H_J = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>

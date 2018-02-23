@@ -69,31 +69,10 @@ public:
     return tidx;
   };
 
-  inline SparseMatrixType BuildSparseHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
-    ULongMatrixType Locations(2, MatElemts.size());
-    VectorType Values( MatElemts.size() );
-    typename std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
-    size_t cnt = 0;
-    for (; it != MatElemts.end(); ++it ){
-      int row, col;
-      Tnum val;
-      std::tie(row, col, val) = *it;
-      // armadillo
-      Locations(0,cnt) = row;
-      Locations(1,cnt) = col;
-      Values(cnt) = val;
-      // Eigen3
-      cnt++;
-    }
-    // First true allows repeated matrix elements
-    SparseMatrixType out(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
-    return out;
-  };
-
   /* vvvvvvv Linear Algebra vvvvvvv */
-  void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true, const std::string Target="SR");
-  void diag( RealVectorType &Vals, MatrixType &Vec);
-  void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
+  void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true, const std::string Target="SR")const;
+  void diag( RealVectorType &Vals, MatrixType &Vec)const;
+  void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 )const;
   // RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
 
 protected:
@@ -102,6 +81,6 @@ protected:
 
 private:
   void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
-  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0, std::string Target="SR");
+  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0, std::string Target="SR")const;
 };
 #endif//__HAMILTONIAN_HPP__
