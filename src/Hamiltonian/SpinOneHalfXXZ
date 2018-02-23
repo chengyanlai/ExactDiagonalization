@@ -13,8 +13,8 @@ void Hamiltonian<Tnum>::SpinOneHalfXXZ( const Tnum Delta,
   for ( int b : bs.FStates ){
     for ( Node<Tnum>* l : lt ) {
       size_t site_i = l->data;
-      std::vector< Node<Tnum>* > nn = l->getNeighbors();
-      std::vector< Tnum > Jxy = l->getJval();
+      std::vector< Node<Tnum>* > nn = l->GetNeighbors();
+      std::vector< Tnum > Jxy = l->GetJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
         size_t site_j = nn.at(cnt)->data;// spin flipping from site-j to site-i
         /* see if flipping exist */
@@ -44,12 +44,12 @@ void Hamiltonian<Tnum>::TIsing( const Tnum hz,
   size_t bid = 0, pid = 0;//l and p's index
   for ( int b : bs.FStates ){
     bid = bs.FTags.at(b);// Find their indices
-    Tnum valueLocal = (Tnum)(-1.0e0 * hz * (Tnum)bs.getSzTotal(b));
+    Tnum valueLocal = (Tnum)(-1.0e0 * hz * (Tnum)bs.GetSzTotal(b));
     hhop.push_back(Triplet(bid, bid, valueLocal));
     for ( Node<Tnum>* l : lt ) {
       size_t site_i = l->data;
-      std::vector< Node<Tnum>* > nn = l->getNeighbors();
-      std::vector< Tnum > Jxx = l->getJval();
+      std::vector< Node<Tnum>* > nn = l->GetNeighbors();
+      std::vector< Tnum > Jxx = l->GetJval();
       for (size_t cnt = 0; cnt < l->NumNeighbors(); cnt++) {
         size_t site_j = nn.at(cnt)->data;
         int p = b;

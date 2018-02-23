@@ -28,7 +28,7 @@ std::vector<std::string> GetPrefix(const std::string FileName){
   std::ifstream file(FileName);
   std::vector<std::string> out;
   std::string s;
-  while (std::getline(file, s)){
+  while (std::GetLine(file, s)){
     out.push_back(s + "/");
   }
   return out;
@@ -72,20 +72,20 @@ void LoadParameters( const std::string filename, int &BL, int &FL, int &maxLocal
 void density( const std::vector<Basis> &bs, const RealVectorType GS, Hamiltonian<double> Ham,
   std::vector<double> &nb, std::vector<double> &nf){
   nb.clear();
-  nb.assign(bs.at(0).getL(), 0.0e0);
+  nb.assign(bs.at(0).GetL(), 0.0e0);
   nf.clear();
-  nf.assign(bs.at(1).getL(), 0.0e0);
+  nf.assign(bs.at(1).GetL(), 0.0e0);
   size_t bid = 0;
-  for ( std::vector<int> b : bs.at(0).getBStates() ){
+  for ( std::vector<int> b : bs.at(0).GetBStates() ){
     size_t fid = 0;
-    for ( int f : bs.at(1).getFStates() ){
-      for ( size_t fl = 0; fl < bs.at(1).getL(); fl++ ){
+    for ( int f : bs.at(1).GetFStates() ){
+      for ( size_t fl = 0; fl < bs.at(1).GetL(); fl++ ){
         if ( btest(f, fl) ){
           size_t id = Ham.DetermineTotalIndex(vec<size_t>(bid, fid));
           nf.at(fl) += GS(id) * GS(id);
         }
       }
-      for ( size_t bl = 0; bl < bs.at(0).getL(); bl++ ){
+      for ( size_t bl = 0; bl < bs.at(0).GetL(); bl++ ){
         if ( b.at(bl) > 0 ){
           size_t id = Ham.DetermineTotalIndex(vec<size_t>(bid, fid));
           nb.at(bl) += GS(id) * GS(id);
@@ -99,15 +99,15 @@ void density( const std::vector<Basis> &bs, const RealVectorType GS, Hamiltonian
 
 RealVectorType AdaggerState( const int site, const std::vector<Basis> &bs,
   Hamiltonian<double> Ham, const RealVectorType State, const int maxLocalB ){
-  assert( !(bs.at(0).getType()) );
+  assert( !(bs.at(0).GetType()) );
   RealVectorType psi = RealVectorType::Zero(State.rows());
   size_t bid1 = 0;
-  for ( std::vector<int> b : bs.at(0).getBStates() ){
+  for ( std::vector<int> b : bs.at(0).GetBStates() ){
     std::vector<int> nb = b;
-    if( (b.at(site) < maxLocalB && maxLocalB) || (b.at(site) < bs.at(0).getN() && !(maxLocalB)) ){
+    if( (b.at(site) < maxLocalB && maxLocalB) || (b.at(site) < bs.at(0).GetN() && !(maxLocalB)) ){
       nb.at(site) += 1;
-      size_t bid2 = bs.at(0).getIndexFromTag( BosonBasisTag(nb) );
-      for ( size_t j = 0; j < bs.at(1).getHilbertSpace(); j++ ){
+      size_t bid2 = bs.at(0).GetIndexFromTag( BosonBasisTag(nb) );
+      for ( size_t j = 0; j < bs.at(1).GetHilbertSpace(); j++ ){
         size_t id1 = Ham.DetermineTotalIndex(vec<size_t>(bid1, j));
         size_t id2 = Ham.DetermineTotalIndex(vec<size_t>(bid2, j));
         psi(id2) = State(id1);
@@ -120,15 +120,15 @@ RealVectorType AdaggerState( const int site, const std::vector<Basis> &bs,
 
 RealVectorType AState( const int site, const std::vector<Basis> &bs,
   Hamiltonian<double> Ham, const RealVectorType State, const int maxLocalB ){
-  assert( !(bs.at(0).getType()) );
+  assert( !(bs.at(0).GetType()) );
   RealVectorType psi = RealVectorType::Zero(State.rows());
   size_t bid1 = 0;
-  for ( std::vector<int> b : bs.at(0).getBStates() ){
+  for ( std::vector<int> b : bs.at(0).GetBStates() ){
     std::vector<int> nb = b;
     if( b.at(site) > 0 && maxLocalB ){
       nb.at(site) -= 1;
-      size_t bid2 = bs.at(0).getIndexFromTag( BosonBasisTag(nb) );
-      for ( size_t j = 0; j < bs.at(1).getHilbertSpace(); j++ ){
+      size_t bid2 = bs.at(0).GetIndexFromTag( BosonBasisTag(nb) );
+      for ( size_t j = 0; j < bs.at(1).GetHilbertSpace(); j++ ){
         size_t id1 = Ham.DetermineTotalIndex(vec<size_t>(bid1, j));
         size_t id2 = Ham.DetermineTotalIndex(vec<size_t>(bid2, j));
         psi(id2) = State(id1);
@@ -161,8 +161,8 @@ std::vector<Basis> BuildBasis(const int& BL, const int& FL, const int& maxLocalB
   Bosons.Boson(maxLocalB);
   Bs.push_back(Bosons);
   /* Print to check. Only for small matrix */
-  // std::vector< std::vector<int> > BStates = Bosons.getBStates();
-  // std::vector<RealType> BTags = Bosons.getBTags();
+  // std::vector< std::vector<int> > BStates = Bosons.GetBStates();
+  // std::vector<RealType> BTags = Bosons.GetBTags();
   // for( size_t i = 0; i < BTags.size(); ++i ){
   //   OASOut << BTags.at(i) << ": " << std::flush;
   //   Bosons.printBosonBasis( BStates.at(i) );
@@ -174,8 +174,8 @@ std::vector<Basis> BuildBasis(const int& BL, const int& FL, const int& maxLocalB
   Fermions.Fermion(0);
   Bs.push_back(Fermions);
   /* Print to check. Only for small matrix */
-  // std::vector<int> FStates = Fermions.getFStates();
-  // std::vector<size_t> FTags = Fermions.getFTags();
+  // std::vector<int> FStates = Fermions.GetFStates();
+  // std::vector<size_t> FTags = Fermions.GetFTags();
   // for( size_t i = 0; i < FTags.size(); ++i ){
   //   OASOut << FTags.at(i) << ": " << std::flush;
   //   Fermions.printFermionBasis( FStates.at(i) );
@@ -215,22 +215,22 @@ Hamiltonian<T> BuildHamiltonian( const int& maxLocalB, const std::vector<Basis>&
   Hamiltonian<T> Ham(Bs);
   // Local potential
   std::vector<std::vector<T> > Vls;
-  std::vector<T> Vloc(Bs.at(0).getL(), T(Ed));
+  std::vector<T> Vloc(Bs.at(0).GetL(), T(Ed));
   Vls.push_back(Vloc);
-  Vloc.assign(Bs.at(1).getL(), T(Ec));
+  Vloc.assign(Bs.at(1).GetL(), T(Ec));
   Vls.push_back(Vloc);
   // Local interaction
   //    Here, U for fermion is NN density density terms.
   std::vector<std::vector<T> > Uls;
-  std::vector<T> Uloc(Bs.at(0).getL(), T(0.0e0));
+  std::vector<T> Uloc(Bs.at(0).GetL(), T(0.0e0));
   Uls.push_back(Uloc);
-  Uloc.assign(Bs.at(1).getL(), T(Vc));
+  Uloc.assign(Bs.at(1).GetL(), T(Vc));
   Uls.push_back(Uloc);
   Ham.BuildLocalHamiltonian(Vls, Uls, Bs);
   Ham.BuildHoppingHamiltonian(Bs, LT);
   std::vector< std::tuple<int, int, T> > DeltaTerm;
-  for ( size_t i = 0; i < Bs.at(1).getL(); i++){
-    for (size_t j = 0; j < Bs.at(0).getL(); j++){
+  for ( size_t i = 0; i < Bs.at(1).GetL(); i++){
+    for (size_t j = 0; j < Bs.at(0).GetL(); j++){
       DeltaTerm.push_back(std::make_tuple(j, i, T(DeltaDC.at(i).at(j))));
     }
   }
@@ -269,7 +269,7 @@ void OAS(const std::string prefix, const int dynamics=0){
 
   /* Get ground state and excited states */
   int GetFullSpectrum = 1;
-  if ( Ham.getTotalHilbertSpace() > 5000 ){
+  if ( Ham.GetTotalHilbertSpace() > 5000 ){
     GetFullSpectrum = 0;
   }
   RealVectorType EigVals, GS;
@@ -287,7 +287,7 @@ void OAS(const std::string prefix, const int dynamics=0){
 
   /* Get equilibrium spectrum */
   size_t MaxNumPeak;
-  if ( GetFullSpectrum ) MaxNumPeak =  Ham.getTotalHilbertSpace();
+  if ( GetFullSpectrum ) MaxNumPeak =  Ham.GetTotalHilbertSpace();
   else MaxNumPeak = 20;
   std::vector<std::vector<double> > PeakLocations, PeakWeights;
   for ( size_t cnt = 0; cnt < BL; cnt ++ ){

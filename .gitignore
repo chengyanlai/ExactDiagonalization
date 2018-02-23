@@ -124,3 +124,6 @@ tags
 *.h5
 eigen
 env.in
+*eqm
+*.1d
+*.log

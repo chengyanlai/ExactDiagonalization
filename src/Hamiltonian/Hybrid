@@ -9,9 +9,9 @@ void Hamiltonian<Tnum>::Hybridization( const int species1, const int species2, c
   /* assuming only two species now */
   assert( bs.size() > 1 );
   Basis b1 = bs.at(species1);
-  assert( !(b1.getType()) );
+  assert( !(b1.GetType()) );
   Basis f2 = bs.at(species2);
-  assert( f2.getType() );
+  assert( f2.GetType() );
   for ( int f : f2.FStates ){
     for ( typename std::vector< std::tuple<int, int, Tnum> >::const_iterator obj = hybVals.begin(); obj != hybVals.end(); ++obj ){
       int site1, site2;
@@ -21,7 +21,7 @@ void Hamiltonian<Tnum>::Hybridization( const int species1, const int species2, c
       for ( std::vector<int> b : b1.BStates ){
         size_t rid = 0, cid = 0;
         Tnum value = (Tnum)0.0e0;
-        if ( btest(f, site2) && ( (b.at(site1) < maxLocalB && maxLocalB) || (b.at(site1) < b1.getN() && !(maxLocalB)) ) ){// hopping happens
+        if ( btest(f, site2) && ( (b.at(site1) < maxLocalB && maxLocalB) || (b.at(site1) < b1.GetN() && !(maxLocalB)) ) ){// hopping happens
           size_t fid1 = f2.FTags.at(f);
           rid = DetermineTotalIndex( vec<size_t>(bid1, fid1) );
           int CrossFermionNumber = 0;
@@ -38,8 +38,8 @@ void Hamiltonian<Tnum>::Hybridization( const int species1, const int species2, c
           // Find new basis for boson
           std::vector<int> q = b;
           q.at(site1) += 1;//creation
-          size_t bid2 = b1.getIndexFromTag( BosonBasisTag(q) );
-          if ( bid2 == b1.getHilbertSpace() ){
+          size_t bid2 = b1.GetIndexFromTag( BosonBasisTag(q) );
+          if ( bid2 == b1.GetHilbertSpace() ){
             continue;
           }
           cid = DetermineTotalIndex( vec<size_t>(bid2, fid2) );
@@ -62,8 +62,8 @@ void Hamiltonian<Tnum>::Hybridization( const int species1, const int species2, c
           // Find new basis for boson
           std::vector<int> q = b;
           q.at(site1) -= 1;//annihilation
-          size_t bid2 = b1.getIndexFromTag( BosonBasisTag(q) );
-          if ( bid2 == b1.getHilbertSpace() ){
+          size_t bid2 = b1.GetIndexFromTag( BosonBasisTag(q) );
+          if ( bid2 == b1.GetHilbertSpace() ){
             continue;
           }
           cid = DetermineTotalIndex( vec<size_t>(bid2, fid2) );

@@ -1,11 +1,11 @@
 #include <cmath>//pow
 #include "src/EDType.hpp"
-#include "src/bitwise.h"
 #include "src/Basis/Basis.hpp"
 
 void Basis::Fermion(){
   HaveU1 = true;
   assert( isFermion );
+  FStates.clear();
   size_t minrange = 0;
   size_t maxrange = 0;
   for (size_t cnt = 0; cnt < N; cnt++) {
@@ -31,14 +31,15 @@ void Basis::Fermion(){
   FTags = windex;
 }
 
-void Basis::Fermion( const int MinF ){
+void Basis::Fermion( const int IncludeAllU1 ){
   HaveU1 = false;
   // This will include all possible fermion numbers, the input parameter has no meaning for now.
   assert( isFermion );
-  // assert( L % 2 == 0 );
+  FStates.clear();
+  FTags.clear();
+  NTotal.clear();
   size_t minrange = 0;
   size_t maxrange = pow(2, L);
-  NTotal.clear();
   for (size_t cnt1 = minrange; cnt1 < maxrange; cnt1++) {
     int nbit = 0;
     for (size_t cnt2 = 0; cnt2 < L; cnt2++) {
@@ -49,11 +50,5 @@ void Basis::Fermion( const int MinF ){
     FStates.push_back(cnt1);
     FTags.push_back(cnt1);
     NTotal.push_back(nbit);
-  }
-}
-
-void Basis::printFermionBasis( const int state )const{
-  for (size_t cnt = 0; cnt < L; cnt++) {
-    INFO_NONEWLINE( btest(state, cnt) << ", " );
   }
 }

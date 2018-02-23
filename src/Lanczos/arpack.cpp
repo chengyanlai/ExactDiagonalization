@@ -1,10 +1,10 @@
 #include <iostream>
+#include <cstring>
 #include "src/Lanczos/arpack_wrapper.hpp"
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
 template<>
-void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
-  ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol){
+void Hamiltonian<ComplexType>::arpackDiagonalize(int n, ComplexType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target){
   /*
   // n        : dimension of the matrix
   // input_ptr: input trail vector pointer
@@ -16,7 +16,7 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
   // bmat: standard eigenvalue problem A*x=lambda*x
   char bmat = 'I';
   // which: calculate the smallest real part eigenvalue
-  char which[] = {'S','R'};
+  char which[] = {Target[0], Target[1]};
   // resid: the residual vector
   ComplexType *resid = new ComplexType[n];
   memcpy(resid, input_ptr, n * sizeof(ComplexType));
@@ -24,7 +24,9 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
   // generated at each iteration, ncv <= n
   // We use the answer to life, the universe and everything, if possible
   int ncv = 42;
-  if( n < ncv )
+  if ( nev > ncv )
+    ncv = nev + 50;
+  if ( n < ncv )
     ncv = n;
   // v containts the lanczos basis vectors
   int ldv = n;
@@ -156,7 +158,6 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
     znaupd_(&ido, &bmat, &n, &which[0], &nev, &tol, resid, &ncv, v, &ldv,
             iparam, ipntr, workd, workl, &lworkl, rwork, &info);
   }
-
   if( info < 0 )
     std::cerr << "Error with znaupd, info = " << info << std::endl;
   else if ( info == 1 )
@@ -188,14 +189,15 @@ void Hamiltonian<ComplexType>::arpackDiagonalize(int n,
 }
 
 template<>
-void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr,
-  std::vector<RealType> &evals, int nev, RealType tol){
+void Hamiltonian<RealType>::arpackDiagonalize(int n, RealType* input_ptr, std::vector<RealType> &evals, int nev, RealType tol, std::string Target){
   int ido = 0;
   char bmat = 'I';
   char which[] = {'S','A'};
   RealType *resid = new RealType[n];
   memcpy(resid, input_ptr, n * sizeof(RealType));
   int ncv = 42;
+  if ( nev > ncv )
+    ncv = nev + 50;
   if( n < ncv )
     ncv = n;
   int ldv = n;

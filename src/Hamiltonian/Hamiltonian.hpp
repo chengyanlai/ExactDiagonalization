@@ -4,91 +4,61 @@
 #include <utility>
 #include <tuple>
 #include "src/EDType.hpp"
-#include "src/EigenMatrix.hpp"
+#include "src/ArmadilloMatrix.hpp"
 #include "src/Node/Node.hpp"
 #include "src/Basis/Basis.hpp"
 
 template<typename Tnum = RealType>
 class Hamiltonian{
 public:
-  typedef Eigen::Matrix<Tnum, Eigen::Dynamic, Eigen::Dynamic,
-    Eigen::AutoAlign|Eigen::RowMajor> MatrixType;
-  typedef Eigen::SparseMatrix<Tnum, Eigen::AutoAlign|Eigen::RowMajor>
-    SparseMatrixType;
-  typedef Eigen::Matrix<Tnum, Eigen::Dynamic, 1, Eigen::AutoAlign> VectorType;
-  typedef Eigen::Triplet<Tnum> Triplet;
-  typedef Eigen::Map<MatrixType> MapMatrix;
+  typedef arma::Col<Tnum> VectorType;
+  typedef arma::Mat<Tnum> MatrixType;
+  typedef arma::SpMat<Tnum> SparseMatrixType;
+
+  /* Constructors */
   Hamiltonian(){};
-  Hamiltonian( const std::vector<Basis> &bs );
+
+  Hamiltonian( const std::vector<Basis> &bs ){
+    HilbertSpaces.clear();
+    for ( auto &b : bs ){
+      HilbertSpaces.push_back(b.GetHilbertSpace());
+    }
+    size_t TotalDim = GetTotalHilbertSpace();
+  };
+
+  Hamiltonian( const int& KPoints, const std::vector<Basis> &bs ){
+    HilbertSpaces.clear();
+    HilbertSpaces.push_back(KPoints);
+    for ( auto &b : bs ){
+      HilbertSpaces.push_back(b.GetHilbertSpace());
+    }
+    size_t TotalDim = GetTotalHilbertSpace();
+  };
+
   virtual ~Hamiltonian(){};
-  inline size_t getTotalHilbertSpace()const{
+
+  inline size_t GetTotalHilbertSpace()const{
     size_t tmp = 1;
     for (auto &j : HilbertSpaces){
       tmp *= j;
     }
     return tmp;
   };
-  inline void BuildTotalHamiltonian(){H_total = H_hop + H_local + H_hybridization;};
-  inline void CheckTotalHamiltonian(){std::cout << H_total.isApprox(H_total) << std::endl;};
-  void BuildLocalHamiltonian(
-    const std::vector< std::vector<Tnum> > &Vloc,
-    const std::vector< std::vector<Tnum> > &Uloc,
-    const std::vector<Basis> &bs );
-  void BuildHoppingHamiltonian(
-    const std::vector<Basis> &bs, const std::vector< Node<Tnum>* > &lt );
-  void BuildHoppingHamiltonian(
-    const std::vector<Basis> &bs, const std::vector< std::vector< Node<Tnum>* > > &lt );
-  void BuildXXZHamiltonian(const Tnum Delta, const std::vector<Basis> &bs,
-    const std::vector< Node<Tnum>* > &lt );
-  void BuildTIsingHamiltonian(const Tnum hz, const std::vector<Basis> &bs,
-    const std::vector< Node<Tnum>* > &lt );
-  /* vvvvvvv Boson Functions vvvvvvv */
-  void BosonIntraLocalPart( const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
-    const Basis &bs, std::vector<Triplet> &hloc );
-  void BosonIntraLocalPart( const size_t species_id,
-    const std::vector<Tnum> &Vloc, const std::vector<Tnum> &Uloc,
-    const Basis &bs, std::vector<Triplet> &hloc );
-  void BosonIntraHoppingPart( const std::vector< Node<Tnum>* > &lt,
-    const Basis &bs, std::vector<Triplet> &hhop );
-  void BosonIntraHoppingPart( const size_t species_id, const std::vector< Node<Tnum>* > &lt,
-    const Basis &bs, std::vector<Triplet> &hhop );
-  /* ^^^^^^^ Boson Functions ^^^^^^^ */
-  /* vvvvvvv Fermion Functions vvvvvvv */
-  void FermionIntraLocalPart( const size_t species_id,
-    const std::vector<Tnum> &Vloc, const Basis &bs, std::vector<Triplet> &hloc );
-  void FermionInterLocalPart( const std::vector<int> species_id, const Tnum &Uloc,
-      const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
-  void FermionInterLocalPart( const std::vector<int> species_id, const std::vector<Tnum> &Uloc,
-      const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
-  void FermionIntraHoppingPart( const size_t species_id,
-    const std::vector< Node<Tnum>* > &lt,
-    const Basis &bs, std::vector<Triplet> &hhop );
-  void FermionIntraNN( const int speciesId,
-    const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
-    const Basis &bs, std::vector<Triplet> &hloc );
-  // void FermionDensityDensity(
-  //   const std::vector<std::pair<int,int> > betweenSpecies, const std::vector<std::tuple<int, int, Tnum> > betweenSitesVals,
-  //   const std::vector<Basis> &bs, std::vector<Triplet> &hloc );
-  /* ^^^^^^^ Fermion Functions ^^^^^^^ */
-  /* vvvvvvv Spin Functions vvvvvvv */
-  void SpinOneHalfXXZ( const Tnum Delta, const std::vector< Node<Tnum>* > &lt,
-    const Basis &bs, std::vector<Triplet> &hhop);
-    void TIsing( const Tnum Jz, const std::vector< Node<Tnum>* > &lt,
-      const Basis &bs, std::vector<Triplet> &hhop );
-  /* ^^^^^^^ Spin Functions ^^^^^^^ */
-  /* vvvvvvv Hybrid systems vvvvvvv */
-  void BuildHybridHamiltonian( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, const int maxLocalB = 0);
-  void Hybridization( const int species1, const int species2, const std::vector< std::tuple<int, int, Tnum> > &hybVals, const std::vector<Basis> &bs, std::vector<Triplet> &hhyb, const int maxLocalB);
-  /* ^^^^^^^ Hybrid systems ^^^^^^^ */
-  void eigh( RealVectorType &Vals, RealMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
-  void eigh( RealVectorType &Vals, ComplexMatrixType &Vecs, const int nev=4, const bool randomInitial=true);
-  void diag( RealVectorType &Vals, RealMatrixType &Vec);
-  void diag( RealVectorType &Vals, ComplexMatrixType &Vec);
-  void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
-  RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
-  void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
-  inline SparseMatrixType getTotalHamiltonian()const{return H_total;};
-  inline size_t DetermineTotalIndex( const std::vector<size_t> ids ){
+
+  inline int CheckHermitian(){
+    return arma::approx_equal(H_total, H_total.t(), "absdiff", 1.0e-5);
+  };
+
+  inline SparseMatrixType GetTotalHamiltonian()const{
+    return H_total;
+  };
+
+  inline void ShiftEnergy(const RealType& Esf){
+    SparseMatrixType EDiag = Esf * arma::speye<SparseMatrixType>(GetTotalHilbertSpace(), GetTotalHilbertSpace());
+    H_total += EDiag;
+  };
+
+  inline size_t DetermineTotalIndex( const std::vector<size_t> ids )const{
     assert( ids.size() == HilbertSpaces.size() );
     size_t tidx = 0;
     size_t factor = 1;
@@ -98,10 +68,40 @@ public:
     }
     return tidx;
   };
-private:
-  std::vector<size_t> HilbertSpaces;
-  SparseMatrixType H_hop, H_local, H_hybridization;
+
+  inline SparseMatrixType BuildSparseHamiltonian( const std::vector<std::tuple<int, int, Tnum> >& MatElemts ){
+    ULongMatrixType Locations(2, MatElemts.size());
+    VectorType Values( MatElemts.size() );
+    typename std::vector<std::tuple<int, int, Tnum> >::const_iterator it = MatElemts.begin();
+    size_t cnt = 0;
+    for (; it != MatElemts.end(); ++it ){
+      int row, col;
+      Tnum val;
+      std::tie(row, col, val) = *it;
+      // armadillo
+      Locations(0,cnt) = row;
+      Locations(1,cnt) = col;
+      Values(cnt) = val;
+      // Eigen3
+      cnt++;
+    }
+    // First true allows repeated matrix elements
+    SparseMatrixType out(true, Locations, Values, GetTotalHilbertSpace(), GetTotalHilbertSpace());//, sort_locations = true, check_for_zeros = true);
+    return out;
+  };
+
+  /* vvvvvvv Linear Algebra vvvvvvv */
+  void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true, const std::string Target="SR");
+  void diag( RealVectorType &Vals, MatrixType &Vec);
+  void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 15 );
+  // RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
+
+protected:
   SparseMatrixType H_total;
-  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0);
+  std::vector<size_t> HilbertSpaces;
+
+private:
+  void mvprod(Tnum* x, Tnum* y, RealType alpha) const;
+  void arpackDiagonalize(int n, Tnum* input_ptr, std::vector<RealType> &evals, int nev = 1, RealType tol = 0.0e0, std::string Target="SR");
 };
 #endif//__HAMILTONIAN_HPP__

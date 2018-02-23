@@ -1,20 +1,38 @@
 include env.in
 
 MODULES   := Node Lattice Basis Hamiltonian Lanczos hdf5io numeric
-SRC_DIR   := $(addprefix src/,$(MODULES))
-SRC       := $(foreach sdir,$(SRC_DIR),$(wildcard $(sdir)/*.cpp))
-OBJ       := $(patsubst src/%.cpp,build/%.o,$(SRC))
+SRC_DIR   := $(addprefix src/, $(MODULES))
+SRC       := $(foreach sdir, $(SRC_DIR), $(wildcard $(sdir)/*.cpp))
+OBJ       := $(patsubst src/%.cpp,build/%.o, $(SRC))
 
-PE_MODULES   := Lindblad-PE
-PE_SRC_DIR   := $(addprefix src/,$(MODULES) $(PE_MODULES))
-PE_SRC       := $(foreach sdir,$(PE_SRC_DIR),$(wildcard $(sdir)/*.cpp))
-PE_OBJ       := $(patsubst src/%.cpp,build/%.o,$(PE_SRC))
+FHM_MODULES   := Hamiltonian/FHM
+FHM_SRC_DIR   := $(addprefix src/, $(FHM_MODULES))
+FHM_SRC       := $(foreach sdir, $(FHM_SRC_DIR), $(wildcard $(sdir)/*.cpp))
+FHM_OBJ       := $(patsubst src/%.cpp, build/%.o, $(FHM_SRC))
 
-BUILD_DIR := $(addprefix build/,$(MODULES) $(PE_MODULES) apps)
+BHM_MODULES   := Hamiltonian/BHM
+BHM_SRC_DIR   := $(addprefix src/, $(BHM_MODULES))
+BHM_SRC       := $(foreach sdir, $(BHM_SRC_DIR), $(wildcard $(sdir)/*.cpp))
+BHM_OBJ       := $(patsubst src/%.cpp, build/%.o, $(BHM_SRC))
+
+Holstein_MODULES   := Hamiltonian/Holstein
+Holstein_SRC_DIR   := $(addprefix src/, $(Holstein_MODULES))
+Holstein_SRC       := $(foreach sdir, $(Holstein_SRC_DIR), $(wildcard $(sdir)/*.cpp))
+Holstein_OBJ       := $(patsubst src/%.cpp, build/%.o, $(Holstein_SRC))
+
+PE_MODULES   := Lindblad/ParticleExchange
+PE_SRC_DIR   := $(addprefix src/, $(PE_MODULES))
+PE_SRC       := $(foreach sdir, $(PE_SRC_DIR), $(wildcard $(sdir)/*.cpp))
+PE_OBJ       := $(patsubst src/%.cpp, build/%.o, $(PE_SRC))
+
+BUILD_DIR := $(addprefix build/, $(MODULES) $(FHM_MODULES) $(BHM_MODULES) $(Holstein_MODULES) $(PE_MODULES) apps)
 
 INCLUDES  := -I./
 
 vpath %.cpp $(SRC_DIR)
+vpath %.cpp $(FHM_SRC_DIR)
+vpath %.cpp $(BHM_SRC_DIR)
+vpath %.cpp $(Holstein_SRC_DIR)
 vpath %.cpp $(PE_SRC_DIR)
 vpath %.cpp apps/
 
@@ -25,40 +43,30 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/loop.f build/trxas.f build/plex build/1D.f build/rixs
+all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/qds build/holstein.1dInfty build/holstein.k
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
 
-build/1D.f: build/apps/1D_fermion.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/fhm.1d: build/apps/FHM1D.o $(OBJ) $(FHM_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/trxas.f: build/apps/TRXAS.o $(OBJ)
-# build/xas.f: build/apps/XAS2.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/bhm.1d: build/apps/BHM1D.o $(OBJ) $(BHM_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/loop.f: build/apps/LoopFermion.o $(PE_OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/tqdm: build/apps/TQDM.o $(OBJ) $(FHM_OBJ) $(PE_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/plex: build/apps/FermionBosonMix.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/qds: build/apps/NQDs.o $(OBJ) $(FHM_OBJ) $(PE_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/rixs: build/apps/RIXS.o $(OBJ)
-	$(CC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/holstein.1dInfty: build/apps/Holstein1DInfty.o $(OBJ) $(Holstein_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
-build/apps/FermionBosonMixMPI.o: apps/FermionBosonMix.cpp
-	$(MPICC) $(INCLUDES) -c $< -o $@
-
-build/plex.mpi: build/apps/FermionBosonMixMPI.o $(OBJ)
-	$(MPICC) $^ -o $@ $(LAPACK) $(HDF5LIB)
-
-build/apps/RIXSMPI.o: apps/RIXS.cpp
-	$(MPICC) $(INCLUDES) -c $< -o $@
-
-build/rixs.mpi: build/apps/RIXSMPI.o $(OBJ)
-	$(MPICC) $^ -o $@ $(LAPACK) $(HDF5LIB)
+build/holstein.k: build/apps/HolsteinK.o $(OBJ) $(Holstein_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)
 

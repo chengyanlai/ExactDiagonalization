@@ -65,8 +65,8 @@ int main(int argc, char const *argv[]) {
   // int N1 = (L+1)/2;
   Basis S12(L, 0, true);
   S12.TIsing();
-  std::vector<int> st1 = S12.getFStates();
-  std::vector<size_t> tg1 = S12.getFTags();
+  std::vector<int> st1 = S12.GetFStates();
+  std::vector<size_t> tg1 = S12.GetFTags();
   INFO("DONE!");
   INFO_NONEWLINE("Build Hamiltonian - ");
   std::vector<Basis> Bases;
@@ -85,10 +85,10 @@ int main(int argc, char const *argv[]) {
   Hamiltonian<DT>::MatrixType Vec;
   ham.diag(Val, Vec);
   Hamiltonian<DT>::MatrixType eVal = ham.expVals( Temp, Val ).asDiagonal();
-  Hamiltonian<DT>::MatrixType SzOp(S12.getHilbertSpace(), S12.getHilbertSpace());
+  Hamiltonian<DT>::MatrixType SzOp(S12.GetHilbertSpace(), S12.GetHilbertSpace());
   SzOp.setZero();
-  for ( size_t i = 0; i < S12.getHilbertSpace(); i++){
-    SzOp(i,i) = S12.getSzTotal(i);
+  for ( size_t i = 0; i < S12.GetHilbertSpace(); i++){
+    SzOp(i,i) = S12.GetSzTotal(i);
     // std::cout << Val(i) << " " << eVal(i,i) << " " << SzOp(i,i) << std::endl;
   }
   RealType Z0 = (Vec.transpose() * eVal * Vec).trace();

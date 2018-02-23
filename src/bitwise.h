@@ -1,13 +1,13 @@
 #ifndef __BITWISE_H__
 #define __BITWISE_H__
 
-inline bool btest(int i, int j)
+inline bool btest(const int i, const int j)
 {
   /* This is equavalent to n_j = c^\dagger_jc_j */
   return ( i & (1 << j) );
 }
 
-inline int ibset(int i, int j)
+inline int ibset(const int i, const int j)
 {
   /* This is equivalent to c^\dagger_j */
   int number = i;
@@ -15,7 +15,7 @@ inline int ibset(int i, int j)
   return number;
 }
 
-inline int ibclr(int i, int j)
+inline int ibclr(const int i, const int j)
 {
   /* This is equivalent to c_j */
   int number = i;

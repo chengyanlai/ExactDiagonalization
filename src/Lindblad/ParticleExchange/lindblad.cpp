@@ -1,4 +1,4 @@
-#include "src/Lindblad-PE/lindblad.hpp"
+#include "src/Lindblad/ParticleExchange/lindblad.hpp"
 
 /* NOTE: 4-th order Runge-Kutta integration.
 
@@ -16,13 +16,7 @@ x[i] is the Mat(\Rhos)
 # x[i+1] = x[i] + ( k1 + 2.0 * ( k2 + k3 ) + k4 ) / 6.0
 */
 
-void FRK4( const RealType &dt, const std::vector<RealType> &gammas,
-  const std::vector<std::tuple<int,int,int> > &SiteTypesSpin,
-  const std::vector<std::vector<std::pair<int,int> > > &BasisIds,
-  const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > > &CollapseIds,
-  const std::vector<std::vector<Basis> > &bas,
-  const std::vector<Hamiltonian<ComplexType> > &hams,
-  std::vector<ComplexMatrixType> &Rhos ) {
+void FRK4( const RealType& dt, const std::vector<RealType>& gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const std::vector<std::vector<Basis> >& bas, const std::vector<FHM<ComplexType> >& hams, std::vector<ComplexMatrixType>& Rhos ) {
   /* NOTE: This is only for quench */
   std::vector<ComplexMatrixType> k1 = Rhos;
   FNewton( dt, gammas, SiteTypesSpin, BasisIds, CollapseIds, bas, hams, k1);
@@ -52,13 +46,7 @@ void FRK4( const RealType &dt, const std::vector<RealType> &gammas,
   }
 }
 
-void FNewton( const RealType &dt, const std::vector<RealType> &gammas,
-  const std::vector<std::tuple<int,int,int> > &SiteTypesSpin,
-  const std::vector<std::vector<std::pair<int,int> > > &BasisIds,
-  const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > > &CollapseIds,
-  const std::vector<std::vector<Basis> > &bas,
-  const std::vector<Hamiltonian<ComplexType> > &hams,
-  std::vector<ComplexMatrixType> &Rhos ) {
+void FNewton( const RealType& dt, const std::vector<RealType>& gammas, const std::vector<std::tuple<int,int,int> >& SiteTypesSpin, const std::vector<std::vector<std::pair<int,int> > >& BasisIds, const std::vector<std::vector<std::vector<std::pair<size_t, size_t> > > >& CollapseIds, const std::vector<std::vector<Basis> >& bas, const std::vector<FHM<ComplexType> >& hams, std::vector<ComplexMatrixType>& Rhos ){
   assert( hams.size() == Rhos.size() );
   assert( gammas.size()  == SiteTypesSpin.size() );
   assert( SiteTypesSpin.size()  == BasisIds.size() );
@@ -67,8 +55,8 @@ void FNewton( const RealType &dt, const std::vector<RealType> &gammas,
   std::vector<ComplexMatrixType> Commutator = Rhos;
   std::vector<ComplexMatrixType> LindbladMatrix;
   for ( size_t i = 0; i < hams.size(); i++){
-    Commutator.at(i) = imagI * (Rhos.at(i) * hams.at(i).getTotalHamiltonian() - hams.at(i).getTotalHamiltonian() * Rhos.at(i));
-    LindbladMatrix.push_back(ComplexMatrixType::Zero(Rhos.at(i).rows(), Rhos.at(i).cols()));
+    Commutator.at(i) = imagI * (Rhos.at(i) * hams.at(i).GetTotalHamiltonian() - hams.at(i).GetTotalHamiltonian() * Rhos.at(i));
+    LindbladMatrix.push_back( ComplexMatrixType(Rhos.at(i).n_rows, Rhos.at(i).n_cols, arma::fill::zeros) );
   }
   for (size_t cnt = 0; cnt < gammas.size(); cnt++) {
     int site, type, spin;
@@ -79,23 +67,20 @@ void FNewton( const RealType &dt, const std::vector<RealType> &gammas,
       int NewBsIdx = BasisIdx.at(j).first;
       int OldBsIdx = BasisIdx.at(j).second;
       std::vector<std::pair<size_t, size_t> > CIdx = CollapseIds.at(cnt).at(j);
-      LindbladMatrix.at(NewBsIdx) += gamma * LindbladTerm(LindbladMatrix.at(NewBsIdx).cols(), CIdx, Rhos.at(OldBsIdx)) ;
+      LindbladMatrix.at(NewBsIdx) += gamma * LindbladTerm(LindbladMatrix.at(NewBsIdx).n_cols, CIdx, Rhos.at(OldBsIdx)) ;
     }
     for ( size_t i = 0; i < hams.size(); i++){
       LindbladMatrix.at(i) -= gamma * AntiCommutatorF( type, site, spin, bas.at(i), hams.at(i), Rhos.at(i));
     }
   }
   for ( size_t cnt = 0; cnt < Rhos.size(); cnt++ ){
-    // std::cout << cnt << " " << LindbladMatrix.at(cnt).trace() << std::endl;
     Rhos.at(cnt) = dt * ( Commutator.at(cnt) + LindbladMatrix.at(cnt) );
   }
 }
 
-ComplexMatrixType LindbladTerm( const size_t dim,
-  const std::vector<std::pair<size_t, size_t> > &CIds,
-  const ComplexMatrixType &MapMat) {
+ComplexMatrixType LindbladTerm( const size_t dim, const std::vector<std::pair<size_t, size_t> > &CIds, const ComplexMatrixType &MapMat) {
   // std::cout << "LB" << std::endl;
-  ComplexMatrixType work = ComplexMatrixType::Zero(dim, dim);
+  ComplexMatrixType work(dim, dim, arma::fill::zeros);
   for ( auto row : CIds ){
     size_t newr = row.first;
     size_t oldr = row.second;
@@ -110,8 +95,7 @@ ComplexMatrixType LindbladTerm( const size_t dim,
   return work;
 }
 
-ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size_t Spin,
-  const std::vector<Basis> Bs, Hamiltonian<ComplexType> ham, const ComplexMatrixType &rho){
+ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size_t Spin, const std::vector<Basis> Bs, FHM<ComplexType> ham, const ComplexMatrixType &rho){
   /* NOTE: This returns the desity matrix multiply the particle number on Site
   respectively to each basis.
   type -  1 : c^\dagger c
@@ -119,8 +103,8 @@ ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size
   */
   // std::cout << "AC" << std::endl;
   ComplexMatrixType tmp1 = rho;
-  // std::cout << tmp1.rows() << " " << tmp1.cols() << " " << Bs.at(0).getHilbertSpace() << " " <<  Bs.at(1).getHilbertSpace() << std::endl;
-  std::vector<int> f = Bs.at(Spin).getFStates();
+  // std::cout << tmp1.rows() << " " << tmp1.cols() << " " << Bs.at(0).GetHilbertSpace() << " " <<  Bs.at(1).GetHilbertSpace() << std::endl;
+  std::vector<int> f = Bs.at(Spin).GetFStates();
   int Spin2;
   if ( Spin ) Spin2 = 0;
   else Spin2 = 1;
@@ -128,7 +112,7 @@ ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size
   for ( auto &fstate : f ){
     if ( (!(btest(fstate, Site)) && type == -1) || (btest(fstate, Site) && type == 1) ){
       // Without particle and destroy OR with particle and create.
-      for ( size_t p=0; p < Bs.at(Spin2).getHilbertSpace(); p++){
+      for ( size_t p=0; p < Bs.at(Spin2).GetHilbertSpace(); p++){
         size_t idx;
         if ( Spin ){
           std::vector<size_t> ids = vec<size_t>(p, coff);
@@ -143,17 +127,13 @@ ComplexMatrixType AntiCommutatorF( const int type, const size_t Site, const size
     coff++;
   }
   // std::cout << "AC done" << std::endl;
-  return 0.50e0 * ( tmp1 + tmp1.adjoint() );
+  return 0.50e0 * ( tmp1 + tmp1.t() );
 }
 
 /* This is Lindblad operator set to C which belongs to type -1
     d \rho ~ c \rho c^dagger
 */
-void Cf(const size_t Site, const int Spin,
-  const std::vector<std::vector<Basis> > &Bs, std::vector<Hamiltonian<ComplexType> > &hams,
-  const std::map<std::pair<int,int>, int > PairIndex1,
-  const std::map<int, std::pair<int,int> > PairIndex2,
-  std::vector<std::pair<int,int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
+void Cf(const size_t Site, const int Spin, const std::vector<std::vector<Basis> > &Bs, std::vector<FHM<ComplexType> > &hams, const std::map<std::pair<int,int>, int > PairIndex1, const std::map<int, std::pair<int,int> > PairIndex2, std::vector<std::pair<int,int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
   BasisIdx.clear();
   CollapseIdx.clear();
   int spin1, spin2;
@@ -173,23 +153,23 @@ void Cf(const size_t Site, const int Spin,
       Nup_Afr = Nup_Bfr + 1;
       Ndn_Afr = Ndn_Bfr;
       /* NOTE: Hot fix */
-      if ( Nup_Afr > Bs.at(cnt).at(Spin).getL() ) continue;
+      if ( Nup_Afr > Bs.at(cnt).at(Spin).GetL() ) continue;
     }else if ( Spin == 1 ){
       Nup_Afr = Nup_Bfr;
       Ndn_Afr = Ndn_Bfr + 1;
       /* NOTE: Hot fix */
-      if ( Ndn_Afr > Bs.at(cnt).at(Spin).getL() ) continue;
+      if ( Ndn_Afr > Bs.at(cnt).at(Spin).GetL() ) continue;
     }
     // std::cout << Nup_Bfr << " " << Ndn_Bfr << " -> " << Nup_Afr << " " << Ndn_Afr << std::endl;
     int BsIndex = PairIndex1.at(std::make_pair(Nup_Afr, Ndn_Afr));
     BasisIdx.push_back(std::make_pair(cnt, BsIndex));
     std::vector<std::pair<size_t, size_t> > tmp_idx;
     size_t oid1 = 0;
-    for ( auto &ef: Bs.at(cnt).at(spin1).getFStates() ) {
+    for ( auto &ef: Bs.at(cnt).at(spin1).GetFStates() ) {
       if ( !(btest(ef, Site)) ){
         int nef = ibset(ef, Site);
-        size_t id1 = Bs.at(BsIndex).at(spin1).getFTags().at(nef);
-        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).getHilbertSpace(); id2++ ){
+        size_t id1 = Bs.at(BsIndex).at(spin1).GetFTags().at(nef);
+        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).GetHilbertSpace(); id2++ ){
           std::vector<size_t> oids, ids;
           if ( Spin == 0 ){
             oids.push_back(oid1);
@@ -214,11 +194,7 @@ void Cf(const size_t Site, const int Spin,
 /* This is Lindblad operator set to C^\dagger which belongs to type 1
     d \rho ~ c^dagger \rho c
 */
-void Cfdagger( const size_t Site, const int Spin,
-  const std::vector<std::vector<Basis> > &Bs, std::vector<Hamiltonian<ComplexType> > &hams,
-  const std::map<std::pair<int,int>, int > PairIndex1,
-  const std::map<int, std::pair<int,int> > PairIndex2,
-  std::vector<std::pair<int, int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
+void Cfdagger( const size_t Site, const int Spin, const std::vector<std::vector<Basis> > &Bs, std::vector<FHM<ComplexType> > &hams, const std::map<std::pair<int,int>, int > PairIndex1, const std::map<int, std::pair<int,int> > PairIndex2, std::vector<std::pair<int, int> > &BasisIdx, std::vector<std::vector<std::pair<size_t, size_t> > > &CollapseIdx) {
   BasisIdx.clear();
   CollapseIdx.clear();
   int spin1, spin2;
@@ -249,11 +225,11 @@ void Cfdagger( const size_t Site, const int Spin,
     BasisIdx.push_back(std::make_pair(cnt, BsIndex));
     std::vector<std::pair<size_t, size_t> > tmp_idx;
     size_t oid1 = 0;
-    for ( auto &ef: Bs.at(cnt).at(spin1).getFStates() ) {
+    for ( auto &ef: Bs.at(cnt).at(spin1).GetFStates() ) {
       if ( btest(ef, Site) ){
         int nef = ibclr(ef, Site);
-        size_t id1 = Bs.at(BsIndex).at(spin1).getFTags().at(nef);
-        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).getHilbertSpace(); id2++ ){
+        size_t id1 = Bs.at(BsIndex).at(spin1).GetFTags().at(nef);
+        for ( size_t id2 = 0; id2 < Bs.at(cnt).at(spin2).GetHilbertSpace(); id2++ ){
           std::vector<size_t> oids, ids;
           if ( Spin == 0 ){
             oids.push_back(oid1);
