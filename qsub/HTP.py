@@ -8,26 +8,22 @@ import ScriptGenerator as sg
 from Clusters import *
 
 L = 4
-Nh = 10 * L
+Nh = 20 * L
 
 OLs = [(10.0, 10.0), (8.0, 10.0), (5.0, 10.0),]
 
-Method = 0
-EShift = 0.
-if np.abs(EShift) > 1.0e-5: Method = 2
-
-TSteps = 400000
+TSteps = 1000000
 dt = 0.005
 
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 APPs.append(os.path.join(SrcDir, "build", "holstein.k 0 400"))
-APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 295 297"))
+APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 178 179"))
 DataDir = os.path.join(ExecDir, "ED", "HTP-K", Prefix1)
 APPs.append("/bin/touch DONE")
 
 for (Omega, Lambda) in OLs:
-    Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]), str(Method), str(EShift) ])
+    Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]) ])
 
     workdir = os.path.join(DataDir, Prefix2)
 
@@ -40,8 +36,8 @@ for (Omega, Lambda) in OLs:
     dset = g.create_dataset("N", data=Nh)
     dset = g.create_dataset("W", data=Omega)
     dset = g.create_dataset("G", data=Lambda)
-    dset = g.create_dataset("EShift", data=EShift*Omega)
-    dset = g.create_dataset("Method", data=Method)
+    dset = g.create_dataset("EShift", data=0)
+    dset = g.create_dataset("Method", data=0)
     if TSteps:
         dset = g.create_dataset("TSteps", data=TSteps)
         dset = g.create_dataset("dt", data=dt)

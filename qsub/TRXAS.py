@@ -9,7 +9,7 @@ from Clusters import *
 
 L = 14
 OBC = 1# 1:True
-N1 = 7
+N1 = 6
 N2 = N1
 Us = [1,2,3,4,5]
 
@@ -20,7 +20,7 @@ Tsteps = 3400
 dt = 0.005
 
 # For pumping pulse
-A0 = 0.1
+A0 = 0.5
 Tau = 2
 W0 = 3
 
@@ -94,6 +94,6 @@ for Uinit in Us:
     if Cluster == "Kagome":
       sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "Merced":
-      sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=20, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+      sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=2, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "LANL":
-      sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
+      sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='w18_xasrixs')

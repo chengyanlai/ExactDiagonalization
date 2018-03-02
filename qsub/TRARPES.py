@@ -14,15 +14,17 @@ L = 14
 OBC = 1# 1:True
 N1 = 7
 N2 = N1
-Uinit = 9
+Uinit = 5
 
 # ARPES Parameters
 OpSites = range(L)
+Type = 1# absorption
+# Type = -1# emission
 Tsteps = 4000
 dt = 0.005
 
 # For pumping pulse
-A0 = 1
+A0 = 0.1
 Tau = 2
 W0 = 3
 def getAt(tlist, td, tau=12, W=3, A0=1):
@@ -39,27 +41,29 @@ else:
   At = np.array([])
 
 APPs = []
-if A0: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 210"))
+if A0: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3210"))
 else: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 20"))
 APPs.append("/bin/touch DONE")
 
 if OBC:
-  Prefix = "-".join(["trArpesO", "".join(["L", str(L)]), str(N1), str(N2)])
+  Prefix1 = "-".join(["trArpesO", "".join(["L", str(L)]), str(N1), str(N2)])
 else:
-  Prefix = "-".join(["trArpesP", "".join(["L", str(L)]), str(N1), str(N2)])
-DataDir = os.path.join(ExecDir, "ED", Prefix)
+  Prefix1 = "-".join(["trArpesP", "".join(["L", str(L)]), str(N1), str(N2)])
+
+Prefix2 = "".join(["Ui", str(Uinit)])
+
+DataDir = os.path.join(ExecDir, "ED", Prefix1, Prefix2)
 
 for OpSite in OpSites:
   if A0:
     Pump = "".join(["T",str(Tau), "W", str(W0), "A", str(A0)])
   else:
     Pump = "NP"
-  JobName =  "-".join(["".join(["Ui", str(Uinit)]), "".join(["OP", str(OpSite)]), Pump ])
-
-  workdir = os.path.join(DataDir, JobName)
-
+  OPSite = "".join(["OP", str(OpSite), "T", str(Type)])
+  workdir = os.path.join(DataDir, Pump, OPSite)
   os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
 
+  JobName =  "-".join([Prefix2, OPSite, Pump ])
   f = h5py.File(os.path.join(workdir, 'conf.h5'), 'w')
   para = f.create_group("Parameters")
   dset = para.create_dataset("L", data=L)
@@ -83,7 +87,7 @@ for OpSite in OpSites:
   dset = para.create_dataset("TStepsX", data=Tsteps)
   dset = para.create_dataset("dtX", data=dt)
   dset = para.create_dataset("CoreHole", data=OpSite)
-  dset = para.create_dataset("Type", data=1)
+  dset = para.create_dataset("Type", data=Type)
   dset = para.create_dataset("Species", data=0)
   f.close()
 
@@ -91,6 +95,6 @@ for OpSite in OpSites:
   if Cluster == "Kagome":
     sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
   elif Cluster == "Merced":
-    sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=20, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+    sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=2, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
   elif Cluster == "LANL":
-    sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
+    sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=2, WallTime='16:00:00', Partition='standard', ProjectName='w18_xasrixs')
