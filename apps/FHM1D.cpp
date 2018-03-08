@@ -728,9 +728,9 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 1 ){
     PumpDynamics("");
   }else if ( std::atoi(argv[1]) == 2 ){
-    XASDynamics("");
+    XASDynamics("", 50, 50);
   }else if ( std::atoi(argv[1]) == 3 ){
-    StateDynamics("");
+    StateDynamics("", 50, 50);
   }else if ( std::atoi(argv[1]) == 10 ){
     Equilibrium("");
     PumpDynamics("");
