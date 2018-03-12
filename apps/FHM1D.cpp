@@ -452,10 +452,13 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
-    H5::H5File::isHdf5("conf.h5");
-    LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
-    std::vector<RealType> At;
-    LoadPumpParameters( "conf.h5", At, TSteps, dt);
+    H5::H5File::isHdf5( prefix + "conf.h5" );
+    LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
+    // std::vector<RealType> At;
+    // LoadPumpParameters( "conf.h5", At, TSteps, dt);
+    std::vector<RealType> Uch, Vch;
+    int CoreHole, Species, Type;
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
     L = 4;
     OBC = 1;
