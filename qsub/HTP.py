@@ -7,20 +7,20 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
+Space = "R"
 L = 4
-Nh = 20 * L
+Nh = 15 * L
 
-# OLs = [(10.0, 10.0), (8.0, 10.0), (6.0, 10.0),]
-OLs = [(10.0, 0.01), (8.0, 0.01), (6.0, 0.01),]
+OLs = [(0.80, 1.0), (0.70, 1.0), (0.90, 1.0),]
 
 TSteps = 1000000
 dt = 0.005
 
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
-APPs.append(os.path.join(SrcDir, "build", "holstein.k 0 400"))
+APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 400"))
 # APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 178 179"))
-DataDir = os.path.join(ExecDir, "ED", "HTP-K", Prefix1)
+DataDir = os.path.join(ExecDir, "ED", "HTP-"+Space, Prefix1)
 APPs.append("/bin/touch DONE")
 
 for (Omega, Lambda) in OLs:

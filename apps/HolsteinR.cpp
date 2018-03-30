@@ -28,11 +28,11 @@ ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorT
   ComplexVectorType out(L, arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() * L == Vec.size() );
-  for ( size_t cnt = 0; cnt < L; cnt++ ){
+  for ( size_t cnt = 0; cnt < L; cnt++ ){// phono r
     int coff = 0;
     for ( auto &nbi : b ){
-      for (size_t cnt = 0; cnt < L; cnt++) {
-        size_t idx = Ham.DetermineTotalIndex( vec<size_t>(cnt, coff) );
+      for (size_t cnt2 = 0; cnt2 < L; cnt2++) {// fermion r
+        size_t idx = Ham.DetermineTotalIndex( vec<size_t>(cnt2, coff) );
         out.at(cnt) += (RealType)nbi.at(cnt) * std::pow(std::abs(Vec(idx)), 2);
       }
       coff++;
@@ -46,7 +46,6 @@ ComplexVectorType NFermion( const std::vector<Basis> &Bases, const ComplexVector
   ComplexVectorType out(L, arma::fill::zeros);
   assert( Bases.at(0).GetHilbertSpace() * L == Vec.size() );
   for ( size_t s1 = 0; s1 < L; s1++ ){
-    int coff = 0;
     for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
       size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(s1, b) );
       out.at(s1) += Vec(idx1) * Conjg(Vec(idx1));
@@ -59,10 +58,10 @@ void Equilibrium(const std::string prefix, int NEV){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.R.eqm", std::ios::app);
   int L = 4;
-  int N = 10 * L;
+  int N = 5 * L;
   const RealType Jin = 1.0;
-  RealType Win = 0.10;
-  RealType Gin = 2.0;
+  RealType Win = 0.50;
+  RealType Gin = 1.0;
 
   try{
     H5::Exception::dontPrint();
@@ -96,10 +95,16 @@ void Equilibrium(const std::string prefix, int NEV){
     NEV = Ham0.GetTotalHilbertSpace();
   }
   LogOut << "DONE!" << std::endl;
+  // Sort eigenvalues
+  std::vector<size_t> IndexOrder(Vals.size());
+  std::iota( IndexOrder.begin(), IndexOrder.end(), 0 );
+  std::sort( IndexOrder.begin(), IndexOrder.end(), [&Vals](size_t i1, size_t i2) {return Vals[i1] < Vals[i2];});
+  // End sorting
   LogOut << "\tGS energy = " << std::setprecision(12) << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << std::setprecision(12) << Vals[1] << std::endl;
   HDF5IO* file = new HDF5IO(prefix + "HolsteinR.h5");
-  for ( size_t i = 0; i < NEV; i++ ){
+  for ( size_t j = 0; j < IndexOrder.size(); j++ ){
+    size_t i = IndexOrder.at(j);
     std::string gname = "S-";
     gname.append( std::to_string( (unsigned long)i) );
     file->SaveNumber(gname, "EVal", Vals[i]);
@@ -109,7 +114,7 @@ void Equilibrium(const std::string prefix, int NEV){
     file->SaveVector(gname, "Phonon", Npi);
     ComplexMatrixType Nfi = NFermion( Bases, Vec, Ham0);
     file->SaveMatrix(gname, "Fermion", Nfi);
-    LogOut << i << ": E = " << Vals[i] << ", Np = " << arma::accu(Npi) << ", Nf = " << arma::trace(Nfi) << std::endl;
+    LogOut << i << ": E = " << Vals[i] << ", Np = " << arma::accu(Npi) << ", Nf = " << arma::accu(Nfi) << std::endl;
   }
   delete file;
   LogOut.close();

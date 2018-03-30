@@ -101,19 +101,17 @@ std::vector<std::vector<int> > SortBTags( const std::vector<std::vector<int> >& 
   std::iota( idx.begin(), idx.end(), 0 );
 
   // sort indexes based on comparing values in v
-  std::sort(idx.begin(), idx.end(),
-       [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
+  std::sort(idx.begin(), idx.end(), [&v](size_t i1, size_t i2) {return v[i1] < v[i2];});
 
   // put v in order.
   std::vector<T> new_v;
   for ( auto i : idx ){
     new_v.push_back( v.at(i) );
+    NewSt.push_back( st.at(i) );
   }
   v = new_v;
   assert( v.size() == idx.size() );
-  for ( auto i : idx){
-    NewSt.push_back( st.at(i) );
-  }
+  assert( NewSt.size() == v.size() );
   return NewSt;
 }
 template std::vector<std::vector<int> > SortBTags( const std::vector<std::vector<int> >& st, std::vector<RealType> &v );

@@ -34,12 +34,12 @@ ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorT
   ComplexVectorType out(L-1, arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() * L == Vec.size() );
-  for ( size_t cnt = 0; cnt < L; cnt++ ){
+  for ( size_t cnt = 0; cnt < L; cnt++ ){//Fermion k
     int coff = 0;
     for ( auto &nbi : b ){
-      for (size_t cnt = 0; cnt < L-1; cnt++) {
-        size_t idx = Ham.DetermineTotalIndex( vec<size_t>(cnt, coff) );
-        out.at(cnt) += (RealType)nbi.at(cnt) * std::pow(std::abs(Vec(idx)), 2);
+      size_t idx = Ham.DetermineTotalIndex( vec<size_t>(cnt, coff) );
+      for (size_t cnt2 = 0; cnt2 < L-1; cnt2++) {// Phonon k
+        out.at(cnt2) += (RealType)nbi.at(cnt2) * std::pow(std::abs(Vec(idx)), 2);
       }
       coff++;
     }

@@ -105,8 +105,8 @@ template<typename Tnum>
 void Holstein<Tnum>::FermionR( const int& RPoints, const RealType& J, const Basis& bs ){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   for ( size_t j = 0; j < RPoints; j++ ){
+    size_t jp = (j == RPoints - 1) ? 0 : j + 1;
     for ( size_t cnt = 0; cnt < bs.GetHilbertSpace(); cnt++ ){
-      size_t jp = (j == RPoints - 1) ? 0 : j + 1;
       size_t idx1 = this->DetermineTotalIndex( vec<size_t>(j, cnt) );
       size_t idx2 = this->DetermineTotalIndex( vec<size_t>(jp, cnt) );
       Tnum val = -1.0 * (Tnum)J;
@@ -158,6 +158,9 @@ void Holstein<Tnum>::HolsteinModelR( const int& RPoints, const std::vector<Basis
   FermionPhononR( RPoints, G, bs.at(0) );
   /* Build H_total */
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
+  H_Phonon.set_size(0,0);
+  H_Kinetic.set_size(0,0);
+  H_Couple.set_size(0,0);
 }
 
 

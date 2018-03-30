@@ -8,6 +8,7 @@ void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int 
   if ( randomInitial ) Vecs = MatrixType(dim, nev, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
+  std::cout << " in arpack ...... " << std::flush;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0, Target);
   Vecs = MatrixType(input_ptr, dim, nev);
   Vals = RealVectorType(Val);
