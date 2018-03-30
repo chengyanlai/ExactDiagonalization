@@ -14,8 +14,12 @@ static void PrintBosonBasis( const std::vector<int> state ){
 };
 
 RealType Basis::CreatePhonon( std::vector<int>& state, const int site )const{
-  state.at(site) += 1;
-  return BosonBasisTag(state);
+  if ( state.at(site) < N - 1 ){
+    state.at(site) += 1;
+    return BosonBasisTag(state);
+  }else{
+    return -1;
+  }
 }
 
 RealType Basis::DestroyPhonon( std::vector<int>& state, const int site )const{
@@ -128,7 +132,7 @@ std::vector<std::vector<int> > Basis::ApplyOffdiagonal( const std::vector<std::v
   return NewStates;
 }
 
-void Basis::Phonon(){
+void Basis::PhononLFS(){
   /* Limited function space with one fermion at site-0 */
   HaveU1 = false;
   assert( !(isFermion) );
@@ -147,8 +151,8 @@ void Basis::Phonon(){
   assert( BStates.size() == BTags.size() );
 }
 
-void Basis::PhononK(){
-  /* Holstein phonon in momentum space with k=0 phonon mode. */
+void Basis::Phonon(){
+  /* Holstein phonon in momentum space without k=0 phonon mode. */
   HaveU1 = false;
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;

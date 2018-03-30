@@ -15,29 +15,23 @@
   #include "mkl.h"
 #endif
 
-void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W, RealType& EShift, std::string& Method){
+void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W){
   HDF5IO h5f(filename);
   h5f.LoadNumber("Parameters", "L", L);
   h5f.LoadNumber("Parameters", "N", N);
   h5f.LoadNumber("Parameters", "G", G);
   h5f.LoadNumber("Parameters", "W", W);
-  h5f.LoadNumber("Parameters", "EShift", EShift);
-  int Mid = 0;
-  h5f.LoadNumber("Parameters", "Method", Mid);
-  if ( Mid == 0 ) Method = "SR";
-  else if ( Mid == 2 ) Method = "SM";
-  else if ( Mid == 1 ) Method = "LR";
 }
 
 ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
-  int L = Bases.at(0).GetL() + 1;
-  ComplexVectorType out(L-1, arma::fill::zeros);
+  int L = Bases.at(0).GetL();
+  ComplexVectorType out(L, arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() * L == Vec.size() );
   for ( size_t cnt = 0; cnt < L; cnt++ ){
     int coff = 0;
     for ( auto &nbi : b ){
-      for (size_t cnt = 0; cnt < L-1; cnt++) {
+      for (size_t cnt = 0; cnt < L; cnt++) {
         size_t idx = Ham.DetermineTotalIndex( vec<size_t>(cnt, coff) );
         out.at(cnt) += (RealType)nbi.at(cnt) * std::pow(std::abs(Vec(idx)), 2);
       }
@@ -47,19 +41,15 @@ ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorT
   return out;
 }
 
-ComplexMatrixType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
-  int L = Bases.at(0).GetL() + 1;
-  // int N = Bases.at(0).GetN();
-  ComplexMatrixType out(L, L, arma::fill::zeros);
+ComplexVectorType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
+  int L = Bases.at(0).GetL();
+  ComplexVectorType out(L, arma::fill::zeros);
   assert( Bases.at(0).GetHilbertSpace() * L == Vec.size() );
   for ( size_t s1 = 0; s1 < L; s1++ ){
-    for ( size_t s2 = 0; s2 < L; s2++ ){
-      int coff = 0;
-      for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
-        size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(s1, b) );
-        size_t idx2 = Ham.DetermineTotalIndex( vec<size_t>(s2, b) );
-        out.at(s1, s2) += Vec(idx2) * Conjg(Vec(idx1));
-      }
+    int coff = 0;
+    for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
+      size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(s1, b) );
+      out.at(s1) += Vec(idx1) * Conjg(Vec(idx1));
     }
   }
   return out;
@@ -67,40 +57,23 @@ ComplexMatrixType NFermion( const std::vector<Basis> &Bases, const ComplexVector
 
 void Equilibrium(const std::string prefix, int NEV){
   std::ofstream LogOut;
-  LogOut.open(prefix + "Holstein.K.eqm", std::ios::app);
+  LogOut.open(prefix + "Holstein.R.eqm", std::ios::app);
   int L = 4;
   int N = 10 * L;
   const RealType Jin = 1.0;
-  RealType Win = 10.0;
-  RealType Gin = 10.0;
-  RealType EShift = 0;
-  std::string Target;
-  if ( std::abs(EShift) > 1.0e-5 ) Target = "SM";
-  else Target = "SR";
+  RealType Win = 0.10;
+  RealType Gin = 2.0;
 
   try{
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
-    LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win, EShift, Target);
+    LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win);
   }catch(H5::FileIException){
     LogOut << "Use default settings." << std::endl;
   }
-  /* k points */
-  LogOut << "Build k-point - " << std::flush;
-  std::vector<int> Kn;
-  Kn.clear();
-  Kn.push_back(0);
-  for ( size_t n = 1; n <= L/2 - 1; n++ ){
-    Kn.push_back(+n);
-    Kn.push_back(-n);
-  }
-  Kn.push_back(L/2);
-  // PrintVector(Kn, 3, " ");
-  assert( Kn.size() == L );
-  LogOut << Kn.size() << " k-points DONE!" << std::endl;
 
   LogOut << "Build Basis - max. phonon quanta = " << N << ", ends up with Phonon Hilbert space = " << std::flush;
-  Basis P1(L-1, N);// Get rid og k=0 phonon mode, so using L - 1!!
+  Basis P1(L, N);// Get rid og k=0 phonon mode, so using L - 1!!
   P1.Phonon();
   LogOut << P1.GetHilbertSpace() << std::flush;
   // LogOut << P1 << std::endl;
@@ -109,18 +82,15 @@ void Equilibrium(const std::string prefix, int NEV){
   LogOut << " DONE!" << std::endl;
 
   LogOut << "Build Hamiltonian - " << std::flush;
-  Holstein<ComplexType> Ham0( Kn.size(), Bases );
-  Ham0.HolsteinModelK(Kn, Bases, Win, Gin, Jin, N);
+  Holstein<ComplexType> Ham0( L, Bases );
+  Ham0.HolsteinModelR(L, Bases, Win, Gin, Jin);
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
-  LogOut << "Shift energy by - " << EShift << std::flush;
-  Ham0.ShiftEnergy(EShift);
-  LogOut << ", Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
-  LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
+  LogOut << "Diagonalize Hamiltonian to find GS " << std::flush;
   RealVectorType Vals;
   ComplexMatrixType Vecs;
   if ( Ham0.GetTotalHilbertSpace() > 1200 ){
-    Ham0.eigh(Vals, Vecs, NEV, true, Target);
+    Ham0.eigh(Vals, Vecs, NEV, true);
   }else{
     Ham0.diag(Vals, Vecs);// Full spectrum
     NEV = Ham0.GetTotalHilbertSpace();
@@ -128,7 +98,7 @@ void Equilibrium(const std::string prefix, int NEV){
   LogOut << "DONE!" << std::endl;
   LogOut << "\tGS energy = " << std::setprecision(12) << Vals[0] << std::endl;
   LogOut << "\tFES energy = " << std::setprecision(12) << Vals[1] << std::endl;
-  HDF5IO* file = new HDF5IO(prefix + "HolsteinK.h5");
+  HDF5IO* file = new HDF5IO(prefix + "HolsteinR.h5");
   for ( size_t i = 0; i < NEV; i++ ){
     std::string gname = "S-";
     gname.append( std::to_string( (unsigned long)i) );
@@ -157,12 +127,12 @@ void LoadDynParameters( const std::string filename, int& L, int& N, RealType& G,
 
 void Dynamics(const std::string prefix, const std::string InitialState, const int S1, const int S2, const int MeasureEvery, const int SaveWFEvery ){
   std::ofstream LogOut;
-  LogOut.open(prefix + "Holstein.K.dyn", std::ios::app);
-  int L = 2;
+  LogOut.open(prefix + "Holstein.R.dyn", std::ios::app);
+  int L = 4;
   int N = 10 * L;
   const RealType Jin = 1.0;
-  RealType Win = 10.0;
-  RealType Gin = 10.0;
+  RealType Win = 0.10;
+  RealType Gin = 2.0;
   int TSteps = 20000;
   RealType dt = 0.005;
   try{
@@ -172,22 +142,9 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   }catch(H5::FileIException){
     LogOut << "Use default settings." << std::endl;
   }
-  /* k points */
-  LogOut << "Build k-point - " << std::flush;
-  std::vector<int> Kn;
-  Kn.clear();
-  Kn.push_back(0);
-  for ( size_t n = 1; n <= L/2 - 1; n++ ){
-    Kn.push_back(+n);
-    Kn.push_back(-n);
-  }
-  Kn.push_back(L/2);
-  // PrintVector(Kn, 3, " ");
-  assert( Kn.size() == L );
-  LogOut << Kn.size() << " k-points DONE!" << std::endl;
 
   LogOut << "Build Basis - max. phonon quanta = " << N << ", ends up with Phonon Hilbert space = " << std::flush;
-  Basis P1(L-1, N);// Get rid og k=0 phonon mode, so using L - 1!!
+  Basis P1(L, N);// Get rid og k=0 phonon mode, so using L - 1!!
   P1.Phonon();
   LogOut << P1.GetHilbertSpace() << std::flush;
   std::vector<Basis> Bases;
@@ -195,8 +152,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   LogOut << " DONE!" << std::endl;
 
   LogOut << "Build Hamiltonian - " << std::flush;
-  Holstein<ComplexType> Ham0( Kn.size(), Bases );
-  Ham0.HolsteinModelK(Kn, Bases, Win, Gin, Jin, N);
+  Holstein<ComplexType> Ham0( L, Bases );
+  Ham0.HolsteinModelR(L, Bases, Win, Gin, Jin);
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
   LogOut << "Load Wavefunction - " << InitialState << " " << std::flush;
@@ -205,8 +162,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   if ( InitialState == "E" && S1 >= 0 && S2 >= 0 ){
     try{
       H5::Exception::dontPrint();
-      H5::H5File::isHdf5(prefix + "HolsteinK.h5");
-      HDF5IO* file = new HDF5IO(prefix + "HolsteinK.h5");
+      H5::H5File::isHdf5(prefix + "HolsteinR.h5");
+      HDF5IO* file = new HDF5IO(prefix + "HolsteinR.h5");
       ComplexVectorType V1, V2;
       std::string gname = "S-";
       gname.append( std::to_string((unsigned long)S1) );
@@ -224,7 +181,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       VecInit = ( V1 + V2 );
       LogOut << "> = " << arma::cdot(V1, V2) << " DONE." << std::endl;
     }catch(H5::FileIException){
-      RUNTIME_ERROR("Can not load eigensate from file - HolsteinK.h5. ");
+      RUNTIME_ERROR("Can not load eigensate from file - HolsteinR.h5. ");
     }
   }else if ( InitialState == "Z" ){
     SaveFile.append( "-Z" );

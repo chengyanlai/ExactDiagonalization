@@ -63,7 +63,7 @@ void Equilibrium(const std::string prefix, const bool SaveBasis = false ){
     B1.Load(prefix + BasisFile, "LFS");
     LogOut << B1.GetHilbertSpace() << " loaded from " << BasisFile << std::flush;
   }catch(H5::FileIException){
-    B1.Phonon();
+    B1.PhononLFS();
     LogOut << B1.GetHilbertSpace() << std::flush;
     if ( SaveBasis ) B1.Save(prefix + BasisFile, "LFS" );
   }
@@ -163,7 +163,7 @@ void iQDynamics(const std::string prefix, const int MeasureEvery = 20, const int
     B1.Load(prefix + BasisFile, "LFS");
     LogOut << B1.GetHilbertSpace() << " loaded from " << BasisFile << std::flush;
   }catch(H5::FileIException){
-    B1.Phonon();
+    B1.PhononLFS();
     LogOut << B1.GetHilbertSpace() << std::flush;
     if ( SaveBasis ) B1.Save(prefix + BasisFile, "LFS" );
   }

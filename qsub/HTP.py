@@ -10,7 +10,8 @@ from Clusters import *
 L = 4
 Nh = 20 * L
 
-OLs = [(10.0, 10.0), (8.0, 10.0), (6.0, 10.0),]
+# OLs = [(10.0, 10.0), (8.0, 10.0), (6.0, 10.0),]
+OLs = [(10.0, 0.01), (8.0, 0.01), (6.0, 0.01),]
 
 TSteps = 1000000
 dt = 0.005
@@ -18,7 +19,7 @@ dt = 0.005
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 APPs.append(os.path.join(SrcDir, "build", "holstein.k 0 400"))
-APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 178 179"))
+# APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 178 179"))
 DataDir = os.path.join(ExecDir, "ED", "HTP-K", Prefix1)
 APPs.append("/bin/touch DONE")
 

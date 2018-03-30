@@ -20,6 +20,11 @@ public:
   void FermionNNHopping( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);
   void FermionPhononCoupling( const RealType& Gloc, const Basis& bs );
 
+  void HolsteinModelR( const int& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J );
+  void PhononR( const int& KPoints, const RealType& W, const Basis& bs );
+  void FermionR( const int& KPoints, const RealType& J, const Basis& bs );
+  void FermionPhononR( const int& KPoints, const RealType& G, const Basis& bs);
+
   void HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax );
   void PhononK( const int& KPoints, const RealType& W, const Basis& bs );
   void FermionK( const int& KPoints, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);

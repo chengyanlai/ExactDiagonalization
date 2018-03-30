@@ -4,6 +4,8 @@
 #include <numeric>
 #include "src/Hamiltonian/Holstein/Holstein.hpp"
 
+/* The following function designed to work with Holstein model in limited functional space - thermodynamic limit. */
+
 template<typename Tnum>
 void Holstein<Tnum>::PhononLocal( const RealType& Wloc, const Basis& bs ){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
@@ -78,6 +80,86 @@ void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType
   /* Build H_total */
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
 }
+
+
+/* The following function designed to work with Holstein model in real space. */
+
+template<typename Tnum>
+void Holstein<Tnum>::PhononR( const int& RPoints, const RealType& W, const Basis& bs ){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  MatElemts.clear();
+  int state_id = 0;
+  for ( std::vector<int> b : bs.BStates ){
+    int Np = std::accumulate(b.begin(), b.end(), 0);
+    Tnum val = (Tnum)W * (Tnum)Np;
+    for ( size_t j = 0; j < RPoints; j++ ){// For fermion positions
+      size_t idx = this->DetermineTotalIndex( vec<size_t>(j, state_id) );
+      MatElemts.push_back( std::make_tuple(idx, idx, val) );
+    }
+    state_id++;
+  }
+  H_Phonon = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
+}
+
+template<typename Tnum>
+void Holstein<Tnum>::FermionR( const int& RPoints, const RealType& J, const Basis& bs ){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  for ( size_t j = 0; j < RPoints; j++ ){
+    for ( size_t cnt = 0; cnt < bs.GetHilbertSpace(); cnt++ ){
+      size_t jp = (j == RPoints - 1) ? 0 : j + 1;
+      size_t idx1 = this->DetermineTotalIndex( vec<size_t>(j, cnt) );
+      size_t idx2 = this->DetermineTotalIndex( vec<size_t>(jp, cnt) );
+      Tnum val = -1.0 * (Tnum)J;
+      MatElemts.push_back( std::make_tuple(idx1, idx2, val) );
+      MatElemts.push_back( std::make_tuple(idx2, idx1, val) );
+    }
+  }
+  H_Kinetic = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
+}
+
+template<typename Tnum>
+void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, const Basis& bs ){
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  std::vector< std::vector<int> > States = bs.BStates;
+  size_t rid = 0;
+  typename std::vector< std::vector<int> >::const_iterator it = States.begin();
+  for (; it != States.end(); ++it ){
+    for ( int Floc = 0; Floc< RPoints; Floc++ ){
+      std::vector<int> state = *it;
+      RealType tg = bs.CreatePhonon(state, Floc);
+      RealType Npf = state.at(Floc);
+      if ( tg > -1.0e-5 ){
+        size_t bid = bs.GetIndexFromTag(tg);
+        if ( state == bs.BStates.at(bid) ){
+          size_t tidx = this->DetermineTotalIndex( vec<size_t>(Floc, bid) );
+          MatElemts.push_back( std::make_tuple(tidx, tidx, -1.0e0 * G * sqrt(Npf) ) );
+        }
+      }
+      state = *it;
+      if ( state.at(Floc) ){
+        RealType Npi = state.at(Floc);
+        tg = bs.DestroyPhonon(state, Floc);
+        size_t bid = bs.GetIndexFromTag(tg);
+        if ( state == bs.BStates.at(bid) ) {
+          size_t tidx = this->DetermineTotalIndex( vec<size_t>(Floc, bid) );
+          MatElemts.push_back( std::make_tuple(tidx, tidx, -1.0e0 * G * sqrt(Npi) ) );
+        }
+      }
+    }
+    rid++;
+  }
+  H_Couple = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
+}
+
+template<typename Tnum>
+void Holstein<Tnum>::HolsteinModelR( const int& RPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J ){
+  PhononR( RPoints, W, bs.at(0) );
+  FermionR( RPoints, J, bs.at(0) );
+  FermionPhononR( RPoints, G, bs.at(0) );
+  /* Build H_total */
+  this->H_total = H_Phonon + H_Kinetic + H_Couple;
+}
+
 
 /* The following function designed to work with Holstein model in momentum space. */
 

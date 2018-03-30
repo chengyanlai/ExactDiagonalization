@@ -43,7 +43,7 @@ endef
 
 .PHONY: all checkdirs clean
 
-all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/qds build/holstein.1dInfty build/holstein.k
+all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/qds build/holstein.1dInfty build/holstein.k build/holstein.r
 
 mpi: checkdirs build/plex.mpi build/rixs.mpi
 
@@ -66,6 +66,9 @@ build/holstein.1dInfty: build/apps/Holstein1DInfty.o $(OBJ) $(Holstein_OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 build/holstein.k: build/apps/HolsteinK.o $(OBJ) $(Holstein_OBJ)
+	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
+
+build/holstein.r: build/apps/HolsteinR.o $(OBJ) $(Holstein_OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 checkdirs: $(BUILD_DIR)

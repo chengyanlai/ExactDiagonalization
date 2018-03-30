@@ -80,8 +80,8 @@ public:
 
   /* Boson functions */
   void Boson();
+  void PhononLFS();
   void Phonon();
-  void PhononK();
   inline std::vector< std::vector<int> > GetBStates()const{
     return BStates;
   };
