@@ -8,7 +8,6 @@ void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int 
   if ( randomInitial ) Vecs = MatrixType(dim, nev, arma::fill::randu);
   Tnum* input_ptr = Vecs.memptr();
   std::vector<RealType> Val;
-  std::cout << " in arpack ...... " << std::flush;
   arpackDiagonalize(dim, input_ptr, Val, nev, /*tol*/0.0e0, Target);
   Vecs = MatrixType(input_ptr, dim, nev);
   Vals = RealVectorType(Val);
@@ -29,7 +28,12 @@ void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs)const{
 
 template<>
 void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorType& Vec, const size_t Kmax )const{
-  krylov(H_total, Vec, Prefactor, Kmax);
+  krylovEXP(H_total, Vec, Prefactor, Kmax);
+}
+
+template<>
+void Hamiltonian<ComplexType>::HKrylov( RealVectorType &Vals, ComplexMatrixType &Vecs, const ComplexVectorType& Vec, const size_t Kmax )const{
+  krylov(H_total, Vec, Vecs, Vals, Kmax);
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y

@@ -14,7 +14,7 @@ static void PrintBosonBasis( const std::vector<int> state ){
 };
 
 RealType Basis::CreatePhonon( std::vector<int>& state, const int site )const{
-  if ( state.at(site) < N - 1 ){
+  if ( std::accumulate(state.begin(), state.end(), 0) < N ){// Need to check for LFS
     state.at(site) += 1;
     return BosonBasisTag(state);
   }else{

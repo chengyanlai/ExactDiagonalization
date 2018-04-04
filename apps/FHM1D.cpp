@@ -212,6 +212,20 @@ RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonia
   return arma::real(out);
 }
 
+void SpectralPeaks( const double EG, const ComplexVectorType AS, const RealVectorType &EigVal, const ComplexMatrixType &EigVec,
+  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight, const int MaxNumPeak){
+  PeakLocation.clear();
+  PeakWeight.clear();
+  for ( size_t i = 0; i < EigVec.n_cols; i++){
+    PeakLocation.push_back(EigVal(i) - EG);
+    ComplexVectorType An = EigVec.col(i);
+    ComplexType val = arma::cdot(An, AS);
+    PeakWeight.push_back( RealPart(Conjg(val) * val) );
+    if ( i > MaxNumPeak ) break;
+  }
+  assert( PeakLocation.size() == PeakWeight.size() );
+}
+
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
   LogOut.open(prefix + "FHM.1d.eqm", std::ios::app);
@@ -227,10 +241,10 @@ void Equilibrium(const std::string prefix){
   }catch(H5::FileIException){
     L = 4;
     OBC = 1;
-    N1 = 2;
-    N2 = 2;
+    N1 = 1;
+    N2 = 1;
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
-    Uin = std::vector<RealType>(L, 1.0);
+    Uin = std::vector<RealType>(L, 0.0);
     Vin = std::vector<RealType>(L, 0.0);
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
@@ -318,6 +332,143 @@ void Equilibrium(const std::string prefix){
   file->SaveMatrix("Obs", "CMDn", CMDn);
   delete file;
   LogOut.close();
+}
+
+void Spectral(const std::string prefix){
+  std::ofstream LogOut;
+  LogOut.open(prefix + "Spectral.fhm.1d", std::ios::app);
+  int L;
+  int OBC;
+  int N1, N2;
+  std::vector<RealType> Jeqm, Ueqm, Veqm, Uch, Vch;
+  int TSteps;
+  RealType dt;
+  int CoreHole, Species, Type;
+  try{
+    /* Load parameters from file */
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "conf.h5");
+    LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+  }catch(H5::FileIException){
+    L = 4;
+    OBC = 1;
+    N1 = 2;
+    N2 = 2;
+    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 0.0);
+    Veqm = std::vector<RealType>(L, 0.0);
+    Uch = std::vector<RealType>(L, 0.0);
+    Vch = std::vector<RealType>(L, 0.0);
+    CoreHole = L / 2;
+    Vch.at(CoreHole) = 0.0;
+    Species = 0;
+    Type = 1;
+  }
+  /* Eqm or Pump */
+  LogOut << "Build Eqm/Pump Basis - " << std::flush;
+  Basis F1EQM(L, N1, true);
+  F1EQM.Fermion();
+  Basis F2EQM(L, N2, true);
+  F2EQM.Fermion();
+  std::vector<Basis> EqmBases;
+  EqmBases.push_back(F1EQM);
+  EqmBases.push_back(F2EQM);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Eqm Lattice (shared with core Hole) - " << std::flush;
+  std::vector<ComplexType> J(Jeqm.begin(), Jeqm.end());
+  std::vector< Node<ComplexType>* > Lattice = NN_1D_Chain(L, J, OBC);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Eqm Hamiltonian - " << std::flush;
+  FHM<ComplexType> EqmHam( EqmBases );
+  // Potential
+  std::vector<ComplexType> Vw(Veqm.begin(), Veqm.end());
+  std::vector< std::vector<ComplexType> > EqmVloc = vec(Vw, Vw);
+  // Interaction
+  std::vector<ComplexType> EqmUloc(Ueqm.begin(), Ueqm.end());
+  EqmHam.FermiHubbardModel(EqmBases, Lattice, EqmVloc, EqmUloc);
+  LogOut << "Hermitian = " << EqmHam.CheckHermitian() << ", Hilbert space = " << EqmHam.GetTotalHilbertSpace() << ", DONE!" << std::endl;
+  /* Core Hole */
+  LogOut << "Build Core Hole Basis - " << std::flush;
+  int N1CH, N2CH;
+  if ( Species == 0 ){
+    if ( Type == 1 ) N1CH = N1 + 1;
+    else if ( Type == -1 ) N1CH = N1 - 1;
+    N2CH = N2;
+  }else if ( Species == 1 ){
+    N1CH = N1;
+    if ( Type == 1 ) N2CH = N2 + 1;
+    else if ( Type == -1 ) N2CH = N2 - 1;
+  }
+  Basis F1CH(L, N1CH, true);
+  F1CH.Fermion();
+  Basis F2CH(L, N2CH, true);
+  F2CH.Fermion();
+  std::vector<Basis> CoreHoleBases;
+  CoreHoleBases.push_back(F1CH);
+  CoreHoleBases.push_back(F2CH);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Core Hole Hamiltonian - " << std::flush;
+  FHM<ComplexType> CoreHoleHam( CoreHoleBases );
+  // Potential
+  std::vector<ComplexType> CoreHoleVw(Vch.begin(), Vch.end());
+  std::vector< std::vector<ComplexType> > CoreHoleVloc = vec(CoreHoleVw, CoreHoleVw);
+  // Interaction
+  std::vector<ComplexType> CoreHoleUloc(Uch.begin(), Uch.end());
+  CoreHoleHam.FermiHubbardModel(CoreHoleBases, Lattice, CoreHoleVloc, CoreHoleUloc);
+  LogOut << "Hermitian = " << CoreHoleHam.CheckHermitian() << ", Hilbert space = " << CoreHoleHam.GetTotalHilbertSpace() << ", DONE!" << std::endl;
+
+  // Load Wavefunction
+  RealVectorType ValInput;
+  ComplexVectorType VecInput;
+  try{
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "PumpWF.h5");
+    LogOut << "Load Pump Wavefunction - " << std::flush;
+    HDF5IO *WFFile = new HDF5IO(prefix + "PumpWF.h5");
+    WFFile->LoadVector("WF", "Vec", VecInput);
+    // WFFile->LoadNumber("WF", "Energy", E0);
+    delete WFFile;
+  }catch(H5::FileIException){
+    try{
+      H5::Exception::dontPrint();
+      H5::H5File::isHdf5(prefix + "FHMChainData.h5");
+      LogOut << "Load Eqm Wavefunction - " << std::flush;
+      HDF5IO *WFFile = new HDF5IO(prefix + "FHMChainData.h5");
+      WFFile->LoadVector("GS", "EVec", VecInput);
+      WFFile->LoadVector("GS", "EVal", ValInput);
+      delete WFFile;
+    }catch(H5::FileIException){
+      RUNTIME_ERROR(" No input file with initial wavefunction, Pump.h5 or FHMChainData.h5!!");
+    }
+  }
+  LogOut << VecInput.n_rows << " DONE!" << std::endl;
+  // Create Core Hole on wf
+  LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
+  ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+  // HDF5IO* file2 = new HDF5IO("SpectralWF.h5");
+  // std::string gname = "WF-0";
+  // file2->SaveVector(gname, "Vec", VecInit);
+  // delete file2;
+  LogOut << ", DONE!" << std::endl;
+
+
+  LogOut << "Get spectrum ... " << std::flush;
+  size_t MaxNumPeak;
+  MaxNumPeak = 40;
+  std::vector<double> PeakLocations, PeakWeights;
+  DTM Vecs(VecInit.n_rows, MaxNumPeak);
+  RealVectorType Vals;
+  // Vecs.col(0) = VecInit;
+  // CoreHoleHam.eigh(Vals, Vecs, MaxNumPeak, false);
+  CoreHoleHam.HKrylov(Vals, Vecs, VecInit, MaxNumPeak);
+  SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
+  LogOut << " DONE!" << std::endl;
+  HDF5IO* file1 = new HDF5IO("Spectral.h5");
+  file1->SaveStdVector("Iw", "ei", PeakLocations);
+  file1->SaveStdVector("Iw", "wi", PeakWeights);
+  LogOut << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::endl;
+  delete file1;
 }
 
 void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const int SaveWFEvery = 1000000 ){
@@ -734,6 +885,8 @@ int main(int argc, char *argv[]){
     XASDynamics("", 50, 50);
   }else if ( std::atoi(argv[1]) == 3 ){
     StateDynamics("", 50, 50);
+  }else if ( std::atoi(argv[1]) == 4 ){
+    Spectral("");
   }else if ( std::atoi(argv[1]) == 10 ){
     Equilibrium("");
     PumpDynamics("");

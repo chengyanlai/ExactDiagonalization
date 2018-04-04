@@ -14,12 +14,12 @@ L = 14
 OBC = 1# 1:True
 N1 = 7
 N2 = N1
-Uinit = 5
+Uinit = 0
 
 # ARPES Parameters
 OpSites = range(L)
-Type = 1# absorption
-# Type = -1# emission
+# Type = 1# absorption
+Type = -1# emission
 Tsteps = 4000
 dt = 0.005
 

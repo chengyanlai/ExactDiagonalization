@@ -8,13 +8,19 @@ import ScriptGenerator as sg
 from Clusters import *
 
 Space = "R"
-L = 4
+L = 3
 Nh = 15 * L
 
-OLs = [(0.80, 1.0), (0.70, 1.0), (0.90, 1.0),]
+OLs = [(0.30, 1.0), (0.40, 1.0), (0.50, 1.0),
+       (0.40, 3.0), (0.40, 5.0), (0.40,10.0),]
 
-TSteps = 1000000
+TSteps = 1000
 dt = 0.005
+
+# AlphaReal = np.random.randn(5., 0.2, L)
+# AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
+AlphaReal = np.array([5.4, 8.3, 10.2])
+AlphaPhase = np.array([-0.2, 0.4, 0.1]) * np.pi
 
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
@@ -39,6 +45,8 @@ for (Omega, Lambda) in OLs:
     dset = g.create_dataset("G", data=Lambda)
     dset = g.create_dataset("EShift", data=0)
     dset = g.create_dataset("Method", data=0)
+    dset = g.create_dataset("AlphaReal", data=AlphaReal)
+    dset = g.create_dataset("AlphaPhase", data=AlphaPhase)
     if TSteps:
         dset = g.create_dataset("TSteps", data=TSteps)
         dset = g.create_dataset("dt", data=dt)

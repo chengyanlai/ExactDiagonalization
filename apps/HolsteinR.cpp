@@ -41,14 +41,17 @@ ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorT
   return out;
 }
 
-ComplexVectorType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
+ComplexMatrixType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
   int L = Bases.at(0).GetL();
-  ComplexVectorType out(L, arma::fill::zeros);
+  ComplexMatrixType out(L, L, arma::fill::zeros);
   assert( Bases.at(0).GetHilbertSpace() * L == Vec.size() );
   for ( size_t s1 = 0; s1 < L; s1++ ){
-    for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
-      size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(s1, b) );
-      out.at(s1) += Vec(idx1) * Conjg(Vec(idx1));
+    for ( size_t s2 = 0; s2 < L; s2++ ){
+      for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
+        size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(s1, b) );
+        size_t idx2 = Ham.DetermineTotalIndex( vec<size_t>(s2, b) );
+        out.at(s1, s2) += Vec(idx1) * Conjg(Vec(idx2));
+      }
     }
   }
   return out;
@@ -130,14 +133,26 @@ void LoadDynParameters( const std::string filename, int& L, int& N, RealType& G,
   h5f.LoadNumber("Parameters", "dt", dt);
 }
 
+void LoadAlphas(const std::string filename, std::vector<ComplexType>& Alphas){
+  HDF5IO h5f(filename);
+  std::vector<RealType> Ar, Ap;
+  h5f.LoadStdVector("Parameters", "AlphaReal", Ar);
+  h5f.LoadStdVector("Parameters", "AlphaPhase", Ap);
+  assert( Ar.size() == Ap.size() );
+  Alphas.clear();
+  for ( size_t i = 0; i < Ar.size(); i++ ){
+    Alphas.push_back( Ar.at(i) * exp(ComplexType(0.0, 1.0)*Ap.at(i)) );
+  }
+}
+
 void Dynamics(const std::string prefix, const std::string InitialState, const int S1, const int S2, const int MeasureEvery, const int SaveWFEvery ){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.R.dyn", std::ios::app);
-  int L = 4;
-  int N = 10 * L;
+  int L = 3;
+  int N = 15 * L;
   const RealType Jin = 1.0;
-  RealType Win = 0.10;
-  RealType Gin = 2.0;
+  RealType Win = 0.30;
+  RealType Gin = 10.0;
   int TSteps = 20000;
   RealType dt = 0.005;
   try{
@@ -162,7 +177,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
   LogOut << "Load Wavefunction - " << InitialState << " " << std::flush;
-  ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
+  ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
   std::string SaveFile = "QuenchState";
   if ( InitialState == "E" && S1 >= 0 && S2 >= 0 ){
     try{
@@ -190,21 +205,52 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     }
   }else if ( InitialState == "Z" ){
     SaveFile.append( "-Z" );
-    /* T->\infty */
-    // VecInit.fill( ComplexType(1.0e0, 0.0e0) );
-    /* Target phonon mode */
-    std::vector<int> PState(L-1, 5);
-    size_t PTag = Bases.at(0).GetIndexFromTag( BosonBasisTag(PState) );
-    VecInit.fill( ComplexType(0.0e0, 0.0e0) );
-    for ( size_t f = 0; f < L; f++){
-      size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(f, PTag) );
-      VecInit(idx) = ComplexType(1.0e0, 0.0e0);
+    size_t FermionLocation = 0;
+    /* Target phonon mode - coherent state */
+    std::vector<ComplexType> alphas;
+    try{
+      H5::Exception::dontPrint();
+      H5::H5File::isHdf5(prefix + "conf.h5");
+      LoadAlphas( prefix + "conf.h5", alphas );
+    }catch(H5::FileIException){
+      alphas.push_back( 5.2 * exp(0.3*PI*ComplexType(0.0,1.0)) );
+      alphas.push_back( 7.9 * exp(0.7*PI*ComplexType(0.0,1.0)) );
+      alphas.push_back(10.1 * exp(-0.2*PI*ComplexType(0.0,1.0)) );
+      alphas.push_back( 3.2 * exp(0.4*PI*ComplexType(0.0,1.0)) );
+      LogOut << "Use default settings." << std::endl;
     }
+    LogOut << "Fermion is at " << FermionLocation << ", and phonon coherent state: alpha_i = " << std::flush;
+    for ( auto val : alphas ){
+      LogOut << val << " " << std::flush;
+    }
+    std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
+    for ( size_t i = 0; i < b.size(); i++ ){
+      std::vector<int> nb = b.at(i);
+      ComplexType Coff(0.0e0, 0.0e0);
+      for ( size_t j = 0; j < nb.size(); j++ ){
+        int Nbj = nb.at(j);
+        ComplexType CoffTmp(0.0e0, 0.0e0);
+        ComplexType val(1.0e0, 0.0e0);
+        for ( size_t k = 0; k <= Nbj; k++ ){
+          CoffTmp += val;
+          ComplexType tmp = alphas.at(j) / RealType(k+1);
+          val *= tmp;
+          if ( std::abs(val) < 1.0e-10 ) break;
+        }
+        if ( j == 0 ) Coff = CoffTmp;
+        else Coff *= CoffTmp;
+      }
+      size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+      VecInit(idx) = 1.0e-1 * Coff;
+    }
+    LogOut << " DONE!" << std::endl;
   }else{
     SaveFile.append( "-R" );
+    VecInit = ComplexVectorType(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
     LogOut << "Use random initial - " << VecInit.n_rows << std::endl;
   }
   VecInit = arma::normalise(VecInit);
+  LogOut << "Energy of this initial state E = " <<  arma::cdot(VecInit, Ham0.GetTotalHamiltonian() * VecInit) << std::endl;
 
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
   ComplexVectorType VecDyn = VecInit;
