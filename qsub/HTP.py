@@ -11,8 +11,8 @@ Space = "R"
 L = 3
 Nh = 15 * L
 
-OLs = [(0.30, 1.0), (0.40, 1.0), (0.50, 1.0),
-       (0.40, 3.0), (0.40, 5.0), (0.40,10.0),]
+OLs = [(0.20,1.50), (0.30,1.50), (0.40, 1.0),
+       (0.40,1.50), (0.40, 2.0), (0.40, 3.0),]
 
 TSteps = 1000
 dt = 0.005
@@ -24,7 +24,8 @@ AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
 
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
-APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 400"))
+APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z"))
+# APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 400"))
 # APPs.append(os.path.join(SrcDir, "build", "holstein.k 1 E 178 179"))
 DataDir = os.path.join(ExecDir, "ED", "HTP-"+Space, Prefix1)
 APPs.append("/bin/touch DONE")

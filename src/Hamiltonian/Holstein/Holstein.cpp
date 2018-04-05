@@ -32,14 +32,14 @@ void Holstein<Tnum>::FermionPhononCoupling( const RealType& Gloc, const Basis& b
     RealType Npf = state.at(0);
     if ( tg > -1.0e-5 ){
       size_t cid = bs.GetIndexFromTag(tg);
-      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc * sqrt(Npf) ) );
+      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(rid, cid, -1.0e0 * Gloc * sqrt(Npf) ) );
     }
     state = *it;
     if ( state.at(0) ){
       RealType Npi = state.at(0);
       tg = bs.DestroyPhonon(state);
       size_t cid = bs.GetIndexFromTag(tg);
-      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(cid, rid, -1.0e0 * Gloc * sqrt(Npi) ) );
+      if ( state == bs.BStates.at(cid) ) MatElemts.push_back( std::make_tuple(rid, cid, -1.0e0 * Gloc * sqrt(Npi) ) );
     }
     rid++;
   }
@@ -129,20 +129,22 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
       RealType tg = bs.CreatePhonon(state, Floc);
       RealType Npf = state.at(Floc);
       if ( tg > -1.0e-5 ){
-        size_t bid = bs.GetIndexFromTag(tg);
-        if ( state == bs.BStates.at(bid) ){
-          size_t tidx = this->DetermineTotalIndex( vec<size_t>(Floc, bid) );
-          MatElemts.push_back( std::make_tuple(tidx, tidx, -1.0e0 * G * sqrt(Npf) ) );
+        size_t cid = bs.GetIndexFromTag(tg);
+        if ( state == bs.BStates.at(cid) ){
+          size_t ridx = this->DetermineTotalIndex( vec<size_t>(Floc, rid) );
+          size_t cidx = this->DetermineTotalIndex( vec<size_t>(Floc, cid) );
+          MatElemts.push_back( std::make_tuple(ridx, cidx, -1.0e0 * G * sqrt(Npf) ) );
         }
       }
       state = *it;
       if ( state.at(Floc) ){
         RealType Npi = state.at(Floc);
         tg = bs.DestroyPhonon(state, Floc);
-        size_t bid = bs.GetIndexFromTag(tg);
-        if ( state == bs.BStates.at(bid) ) {
-          size_t tidx = this->DetermineTotalIndex( vec<size_t>(Floc, bid) );
-          MatElemts.push_back( std::make_tuple(tidx, tidx, -1.0e0 * G * sqrt(Npi) ) );
+        size_t cid = bs.GetIndexFromTag(tg);
+        if ( state == bs.BStates.at(cid) ) {
+          size_t ridx = this->DetermineTotalIndex( vec<size_t>(Floc, rid) );
+          size_t cidx = this->DetermineTotalIndex( vec<size_t>(Floc, cid) );
+          MatElemts.push_back( std::make_tuple(ridx, cidx, -1.0e0 * G * sqrt(Npi) ) );
         }
       }
     }
