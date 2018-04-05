@@ -19,8 +19,8 @@ dt = 0.005
 
 # AlphaReal = np.random.randn(5., 0.2, L)
 # AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
-AlphaReal = np.array([5.4, 8.3, 10.2])
-AlphaPhase = np.array([-0.2, 0.4, 0.1]) * np.pi
+AlphaReal = np.array([5., 5., 5.])
+AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
 
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])

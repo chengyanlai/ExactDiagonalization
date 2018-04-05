@@ -229,12 +229,11 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       ComplexType Coff(0.0e0, 0.0e0);
       for ( size_t j = 0; j < nb.size(); j++ ){
         int Nbj = nb.at(j);
-        ComplexType CoffTmp(0.0e0, 0.0e0);
-        ComplexType val(1.0e0, 0.0e0);
-        for ( size_t k = 0; k <= Nbj; k++ ){
-          CoffTmp += val;
-          ComplexType tmp = alphas.at(j) / RealType(k+1);
-          val *= tmp;
+        ComplexType CoffTmp(1.0e0, 0.0e0);
+        for ( size_t k = 1; k <= Nbj; k++ ){
+          // Check this
+          ComplexType tmp = alphas.at(j) / std::sqrt(RealType(k));
+          CoffTmp *= tmp;
           if ( std::abs(val) < 1.0e-10 ) break;
         }
         if ( j == 0 ) Coff = CoffTmp;
