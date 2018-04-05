@@ -117,7 +117,7 @@ void Equilibrium(const std::string prefix, int NEV){
     file->SaveVector(gname, "Phonon", Npi);
     ComplexMatrixType Nfi = NFermion( Bases, Vec, Ham0);
     file->SaveMatrix(gname, "Fermion", Nfi);
-    LogOut << i << ": E = " << Vals[i] << ", Np = " << arma::accu(Npi) << ", Nf = " << arma::accu(Nfi) << std::endl;
+    LogOut << i << ": E = " << Vals[i] << ", Np = " << arma::accu(Npi) << ", Nf = " << arma::trace(Nfi) << std::endl;
   }
   delete file;
   LogOut.close();
@@ -234,7 +234,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
           // Check this
           ComplexType tmp = alphas.at(j) / std::sqrt(RealType(k));
           CoffTmp *= tmp;
-          if ( std::abs(val) < 1.0e-10 ) break;
+          // if ( std::abs(tmp) < 1.0e-10 ) break;
         }
         if ( j == 0 ) Coff = CoffTmp;
         else Coff *= CoffTmp;
