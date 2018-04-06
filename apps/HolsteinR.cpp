@@ -177,7 +177,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
   LogOut << "Load Wavefunction - " << InitialState << " " << std::flush;
-  ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  // ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
   std::string SaveFile = "QuenchState";
   if ( InitialState == "E" && S1 >= 0 && S2 >= 0 ){
     try{
@@ -205,7 +206,6 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     }
   }else if ( InitialState == "Z" ){
     SaveFile.append( "-Z" );
-    size_t FermionLocation = 0;
     /* Target phonon mode - coherent state */
     std::vector<ComplexType> alphas;
     try{
@@ -219,10 +219,13 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       alphas.push_back( 3.2 * exp(0.4*PI*ComplexType(0.0,1.0)) );
       LogOut << "Use default settings." << std::endl;
     }
-    LogOut << "Fermion is at " << FermionLocation << ", and phonon coherent state: alpha_i = " << std::flush;
+    LogOut << "Fermion is localized, and phonon coherent state: alpha_i = " << std::flush;
     for ( auto val : alphas ){
       LogOut << val << " " << std::flush;
     }
+    ComplexVectorType Vec0(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+    ComplexVectorType Vec1(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+    ComplexVectorType Vec2(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
     std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
     for ( size_t i = 0; i < b.size(); i++ ){
       std::vector<int> nb = b.at(i);
@@ -239,13 +242,31 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
         if ( j == 0 ) Coff = CoffTmp;
         else Coff *= CoffTmp;
       }
+      size_t FermionLocation = 0;
       size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
-      VecInit(idx) = 1.0e-1 * Coff;
+      Vec0(idx) = 1.0e-1 * Coff;
+      FermionLocation = 1;
+      idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+      Vec1(idx) = 1.0e-1 * Coff;
+      FermionLocation = 2;
+      idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+      Vec2(idx) = 1.0e-1 * Coff;
     }
-    LogOut << " DONE!" << std::endl;
+    Vec0 = arma::normalise(Vec0);
+    Vec1 = arma::normalise(Vec1);
+    Vec2 = arma::normalise(Vec2);
+    RealType E0 = RealPart( arma::cdot(Vec0, Ham0.GetTotalHamiltonian() * Vec0) );
+    RealType E1 = RealPart( arma::cdot(Vec1, Ham0.GetTotalHamiltonian() * Vec1) );
+    RealType E2 = RealPart( arma::cdot(Vec2, Ham0.GetTotalHamiltonian() * Vec2) );
+    if ( E0 <  E1 ){
+      VecInit = ( E0 < E2 )? Vec0 : Vec2;
+    }else{
+      VecInit = ( E1 < E2 )? Vec1 : Vec2;
+    }
+    LogOut << "Local interaction energy - " << E0 << " " << E1 << " " << E2 << " DONE!" << std::endl;
   }else{
     SaveFile.append( "-R" );
-    VecInit = ComplexVectorType(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
+    // VecInit = ComplexVectorType(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
     LogOut << "Use random initial - " << VecInit.n_rows << std::endl;
   }
   VecInit = arma::normalise(VecInit);
