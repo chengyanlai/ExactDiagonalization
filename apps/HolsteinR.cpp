@@ -208,7 +208,7 @@ ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<Comple
   RealType E1 = RealPart( arma::cdot(Vec1, Ham0.GetTotalHamiltonian() * Vec1) );
   RealType E2 = RealPart( arma::cdot(Vec2, Ham0.GetTotalHamiltonian() * Vec2) );
   /* At zero */
-  LogOut << E0 << " " << E1 << " " << E2 << std::endl;
+  LogOut << E0 << " " << E1 << " " << E2 << std::flush;
   if ( E0 < E1 ){
     if ( E0 < E2 ) return Vec0;
     else return Vec2;
@@ -238,10 +238,10 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.R.dyn", std::ios::app);
   int L = 3;
-  int N = 15 * L;
-  const RealType Jin = 1.0;
-  RealType Win = 0.30;
-  RealType Gin = 10.0;
+  int N = 1 * L;
+  const RealType Jin = 0.0;
+  RealType Win = 1.0;
+  RealType Gin = 0.0;
   int TSteps = 20000;
   RealType dt = 0.005;
   try{
@@ -332,6 +332,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   file2->SaveVector(gname, "Phonon", Npi);
   ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
   file2->SaveMatrix(gname, "Fermion", Nfi);
+  std::vector<RealType> Ei = LocalEnergy(VecDyn, Bases, Ham0 );
+  file2->SaveStdVector(gname, "Ei", Ei);
   delete file2;
   // HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
   // gname = "WF";
@@ -353,7 +355,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       file2->SaveVector(gname, "Phonon", Npi);
       ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
       file2->SaveMatrix(gname, "Fermion", Nfi);
-      std::vector<RealType> Ei = LocalEnergy(VecDyn, Bases, Ham0 );
+      Ei = LocalEnergy(VecDyn, Bases, Ham0 );
       file2->SaveStdVector(gname, "Ei", Ei);
       delete file2;
     }

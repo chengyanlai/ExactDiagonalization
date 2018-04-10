@@ -9,10 +9,12 @@ from Clusters import *
 
 Space = "R"
 L = 3
-Nh = 20 * L
+Nh = 30 * L
 
-OLs = [(0.100,1.00), (0.120, 1.00), (0.080, 1.00),
-       (0.100,1.10), (0.080, 0.90), (0.080, 1.10),]
+# OLs = [(0.100,1.00), (0.120, 1.00), (0.080, 1.00),
+#        (0.100,1.10), (0.080, 0.90), (0.080, 1.10),]
+OLs = [(0.50,1.00), (0.60, 1.00), (0.40, 1.00),
+       (0.50,1.10), (0.40, 0.90), (0.40, 1.10),]
 
 TSteps = 20000
 dt = 0.005
@@ -20,7 +22,7 @@ dt = 0.005
 # AlphaReal = np.random.randn(5., 0.2, L)
 # AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
 AlphaReal = np.array([2., 2., 2.])
-AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
+AlphaPhase = np.array([0.,-2./3., 2./3.]) * np.pi
 
 APPs = []
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])

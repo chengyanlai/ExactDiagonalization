@@ -24,7 +24,7 @@ RealType Basis::CreatePhonon( std::vector<int>& state, const int site )const{
 
 RealType Basis::DestroyPhonon( std::vector<int>& state, const int site )const{
   if ( state.at(site) ){
-    state.at(site) = state.at(site) - 1;
+    state.at(site) -= 1;
     return BosonBasisTag(state);
   }else{
     return -1;
