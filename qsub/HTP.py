@@ -9,17 +9,17 @@ from Clusters import *
 
 Space = "R"
 L = 3
-Nh = 15 * L
+Nh = 20 * L
 
-OLs = [(0.20,1.50), (0.30,1.50), (0.40, 1.0),
-       (0.40,1.50), (0.40, 2.0), (0.40, 3.0),]
+OLs = [(0.100,1.00), (0.120, 1.00), (0.080, 1.00),
+       (0.100,1.10), (0.080, 0.90), (0.080, 1.10),]
 
 TSteps = 20000
 dt = 0.005
 
 # AlphaReal = np.random.randn(5., 0.2, L)
 # AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
-AlphaReal = np.array([5., 5., 5.])
+AlphaReal = np.array([2., 2., 2.])
 AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
 
 APPs = []
