@@ -10,6 +10,7 @@
 #include "src/Basis/Basis.hpp"
 #include "src/Hamiltonian/Holstein/Holstein.hpp"
 #include "src/hdf5io/hdf5io.hpp"
+#include "src/numeric/lapack.h"
 
 #ifdef MKL
   #include "mkl.h"
@@ -145,6 +146,94 @@ void LoadAlphas(const std::string filename, std::vector<ComplexType>& Alphas){
   }
 }
 
+std::vector<RealType> LocalEnergy(ComplexVectorType& VecIn, const std::vector<Basis>& Bases, const Holstein<ComplexType>& Ham0 ){
+  ComplexVectorType Vec0(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  ComplexVectorType Vec1(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  ComplexVectorType Vec2(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
+  for ( size_t i = 0; i < b.size(); i++ ){
+    size_t FermionLocation = 0;
+    size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+    Vec0(idx) = VecIn(idx);
+    FermionLocation = 1;
+    idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+    Vec1(idx) = VecIn(idx);
+    FermionLocation = 2;
+    idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+    Vec2(idx) = VecIn(idx);
+  }
+  Vec0 = arma::normalise(Vec0);
+  Vec1 = arma::normalise(Vec1);
+  Vec2 = arma::normalise(Vec2);
+  RealType E0 = RealPart( arma::cdot(Vec0, Ham0.GetTotalHamiltonian() * Vec0) );
+  RealType E1 = RealPart( arma::cdot(Vec1, Ham0.GetTotalHamiltonian() * Vec1) );
+  RealType E2 = RealPart( arma::cdot(Vec2, Ham0.GetTotalHamiltonian() * Vec2) );
+  return vec(E0, E1, E2);
+}
+
+ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<ComplexType>& alphas, const std::vector<Basis>& Bases, const Holstein<ComplexType>& Ham0){
+  ComplexVectorType Vec0(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  ComplexVectorType Vec1(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  ComplexVectorType Vec2(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
+  for ( size_t i = 0; i < b.size(); i++ ){
+    std::vector<int> nb = b.at(i);
+    ComplexType Coff(0.0e0, 0.0e0);
+    for ( size_t j = 0; j < nb.size(); j++ ){
+      int Nbj = nb.at(j);
+      ComplexType CoffTmp(1.0e0, 0.0e0);
+      for ( size_t k = 1; k <= Nbj; k++ ){
+        // Check this
+        ComplexType tmp = alphas.at(j) / std::sqrt(RealType(k));
+        CoffTmp *= tmp;
+        // if ( std::abs(tmp) < 1.0e-10 ) break;
+      }
+      if ( j == 0 ) Coff = CoffTmp;
+      else Coff *= CoffTmp;
+    }
+    size_t FermionLocation = 0;
+    size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+    Vec0(idx) = 1.0e-1 * Coff;
+    FermionLocation = 1;
+    idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+    Vec1(idx) = 1.0e-1 * Coff;
+    FermionLocation = 2;
+    idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
+    Vec2(idx) = 1.0e-1 * Coff;
+  }
+  Vec0 = arma::normalise(Vec0);
+  Vec1 = arma::normalise(Vec1);
+  Vec2 = arma::normalise(Vec2);
+  RealType E0 = RealPart( arma::cdot(Vec0, Ham0.GetTotalHamiltonian() * Vec0) );
+  RealType E1 = RealPart( arma::cdot(Vec1, Ham0.GetTotalHamiltonian() * Vec1) );
+  RealType E2 = RealPart( arma::cdot(Vec2, Ham0.GetTotalHamiltonian() * Vec2) );
+  /* At zero */
+  LogOut << E0 << " " << E1 << " " << E2 << std::endl;
+  if ( E0 < E1 ){
+    if ( E0 < E2 ) return Vec0;
+    else return Vec2;
+  }else{
+    if ( E1 < E2 ) return Vec1;
+    else return Vec2;
+  }
+  /* Eigen state */
+  // RealMatrixType Mat(3,3,arma::fill::zeros);
+  // Mat(0,0) = E0;
+  // Mat(1,1) = E1;
+  // Mat(2,2) = E2;
+  // Mat.diag(1) -= 1.0e0;
+  // Mat.diag(-1) -= 1.0e0;
+  // Mat.diag(2) -= 1.0e0;
+  // Mat.diag(-2) -= 1.0e0;
+  // RealType* EigVec = (RealType*)malloc( 3 * 3 * sizeof(RealType) );
+  // RealType* Eig = (RealType*)malloc( 3 * sizeof(RealType) );
+  // syDiag(Mat.memptr(), 3, Eig, EigVec);
+  // LogOut << "Eigenvalues - " << std::endl;
+  // LogOut << Eig[0] << " " << Eig[1] << " " << Eig[2] << std::endl;
+  // LogOut << EigVec[0] << " " << EigVec[1] << " " << EigVec[2] << std::endl;
+  // return EigVec[0] * Vec0 + EigVec[1] * Vec1 + EigVec[2] * Vec2;
+}
+
 void Dynamics(const std::string prefix, const std::string InitialState, const int S1, const int S2, const int MeasureEvery, const int SaveWFEvery ){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.R.dyn", std::ios::app);
@@ -219,51 +308,12 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       alphas.push_back( 3.2 * exp(0.4*PI*ComplexType(0.0,1.0)) );
       LogOut << "Use default settings." << std::endl;
     }
-    LogOut << "Fermion is localized, and phonon coherent state: alpha_i = " << std::flush;
+    LogOut << "Fermion is at GS, and phonon coherent state: alpha_i = " << std::flush;
     for ( auto val : alphas ){
       LogOut << val << " " << std::flush;
     }
-    ComplexVectorType Vec0(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
-    ComplexVectorType Vec1(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
-    ComplexVectorType Vec2(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
-    std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
-    for ( size_t i = 0; i < b.size(); i++ ){
-      std::vector<int> nb = b.at(i);
-      ComplexType Coff(0.0e0, 0.0e0);
-      for ( size_t j = 0; j < nb.size(); j++ ){
-        int Nbj = nb.at(j);
-        ComplexType CoffTmp(1.0e0, 0.0e0);
-        for ( size_t k = 1; k <= Nbj; k++ ){
-          // Check this
-          ComplexType tmp = alphas.at(j) / std::sqrt(RealType(k));
-          CoffTmp *= tmp;
-          // if ( std::abs(tmp) < 1.0e-10 ) break;
-        }
-        if ( j == 0 ) Coff = CoffTmp;
-        else Coff *= CoffTmp;
-      }
-      size_t FermionLocation = 0;
-      size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
-      Vec0(idx) = 1.0e-1 * Coff;
-      FermionLocation = 1;
-      idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
-      Vec1(idx) = 1.0e-1 * Coff;
-      FermionLocation = 2;
-      idx = Ham0.DetermineTotalIndex( vec<size_t>(FermionLocation, i) );
-      Vec2(idx) = 1.0e-1 * Coff;
-    }
-    Vec0 = arma::normalise(Vec0);
-    Vec1 = arma::normalise(Vec1);
-    Vec2 = arma::normalise(Vec2);
-    RealType E0 = RealPart( arma::cdot(Vec0, Ham0.GetTotalHamiltonian() * Vec0) );
-    RealType E1 = RealPart( arma::cdot(Vec1, Ham0.GetTotalHamiltonian() * Vec1) );
-    RealType E2 = RealPart( arma::cdot(Vec2, Ham0.GetTotalHamiltonian() * Vec2) );
-    if ( E0 <  E1 ){
-      VecInit = ( E0 < E2 )? Vec0 : Vec2;
-    }else{
-      VecInit = ( E1 < E2 )? Vec1 : Vec2;
-    }
-    LogOut << "Local interaction energy - " << E0 << " " << E1 << " " << E2 << " DONE!" << std::endl;
+    VecInit = CoherentState(LogOut, alphas, Bases, Ham0);
+    LogOut << " DONE!" << std::endl;
   }else{
     SaveFile.append( "-R" );
     // VecInit = ComplexVectorType(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
@@ -283,10 +333,10 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
   file2->SaveMatrix(gname, "Fermion", Nfi);
   delete file2;
-  HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
-  gname = "WF";
-  file3->SaveVector(gname, "Vec", VecDyn);
-  delete file3;
+  // HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
+  // gname = "WF";
+  // file3->SaveVector(gname, "Vec", VecDyn);
+  // delete file3;
   LogOut << "Begin dynamics......" << std::endl;
   for (size_t cntP = 1; cntP <= TSteps; cntP++) {
     // Evolve the state
@@ -303,21 +353,23 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       file2->SaveVector(gname, "Phonon", Npi);
       ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
       file2->SaveMatrix(gname, "Fermion", Nfi);
+      std::vector<RealType> Ei = LocalEnergy(VecDyn, Bases, Ham0 );
+      file2->SaveStdVector(gname, "Ei", Ei);
       delete file2;
     }
-    if ( cntP % SaveWFEvery == 0 ){
-      file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
-      gname = "WF-";
-      gname.append( std::to_string((unsigned long long)cntP ));
-      gname.append("/");
-      file3->SaveVector(gname, "Vec", VecDyn);
-      delete file3;
-    }
+    // if ( cntP % SaveWFEvery == 0 ){
+    //   file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
+    //   gname = "WF-";
+    //   gname.append( std::to_string((unsigned long long)cntP ));
+    //   gname.append("/");
+    //   file3->SaveVector(gname, "Vec", VecDyn);
+    //   delete file3;
+    // }
   }
-  file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
-  gname = "WF";
-  file3->SaveVector(gname, "Vec", VecDyn);
-  delete file3;
+  // file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
+  // gname = "WF";
+  // file3->SaveVector(gname, "Vec", VecDyn);
+  // delete file3;
   LogOut << "Finished dynamics!!" << std::endl;
 
   LogOut.close();
