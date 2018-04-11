@@ -4,7 +4,7 @@ if [[ -z "$1" ]]; then
 elif [[ "$1" == "to" ]]; then
   echo "Upload source code to" $2
   if [[ "$2" == "lanl" ]]; then
-    scp -r Makefile src qsub apps lanl:gr-fe.lanl.gov:/usr/projects/cint/cint_sces/ExactDiagonalization/
+    scp -r Makefile src qsub apps lanl:ar-tn.lanl.gov:/usr/projects/cint/cint_sces/ExactDiagonalization/
   else
     rsync -avzh \
     --include-from 'code-include.txt' \
@@ -14,7 +14,7 @@ elif [[ "$1" == "to" ]]; then
 elif [[ "$1" == "ad" ]]; then
   echo "Upload source code to (advance)" $2
   if [[ "$2" == "lanl" ]]; then
-    scp -r Makefile src qsub apps lanl:gr-fe.lanl.gov:/usr/projects/cint/cint_sces/advance/ExactDiagonalization/
+    scp -r Makefile src qsub apps lanl:ar-tn.lanl.gov:/usr/projects/cint/cint_sces/advance/ExactDiagonalization/
   else
     rsync -avzh \
     --include-from 'code-include.txt' \

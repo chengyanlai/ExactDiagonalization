@@ -239,7 +239,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   LogOut.open(prefix + "Holstein.R.dyn", std::ios::app);
   int L = 3;
   int N = 1 * L;
-  const RealType Jin = 0.0;
+  const RealType Jin = 1.0;
   RealType Win = 1.0;
   RealType Gin = 0.0;
   int TSteps = 20000;
@@ -266,7 +266,6 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
   LogOut << "Load Wavefunction - " << InitialState << " " << std::flush;
-  // ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
   ComplexVectorType VecInit(Ham0.GetTotalHilbertSpace(), arma::fill::randn);
   std::string SaveFile = "QuenchState";
   if ( InitialState == "E" && S1 >= 0 && S2 >= 0 ){
