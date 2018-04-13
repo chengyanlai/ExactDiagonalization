@@ -154,12 +154,12 @@ void PrintVector(const std::vector<T> Vin, const int width=3, const std::string 
   std::cout << std::endl;
 }
 
-// template <typename T>
-// void PrintVector(std::ofstream& file, const std::vector<T> Vin, const int digit=9, const std::string separation="\n"){
-//   for ( size_t i = 0; i < Vin.size(); i++){
-//     file << "\t" << std::setw(2) << i << " " << std::scientific << std::setprecision(digit) << Vin.at(i) << separation << std::flush;
-//   }
-//   file << "\n";
-// }
+template <typename T>
+void PrintVector(std::ofstream& file, const std::vector<T> Vin, const int digit=9, const std::string separation="\n"){
+  for ( size_t i = 0; i < Vin.size(); i++){
+    file << "\t" << std::setw(2) << i << " " << std::scientific << std::setprecision(digit) << Vin.at(i) << separation << std::flush;
+  }
+  file << "\n";
+}
 
 #endif//__EDTYPE_H__
