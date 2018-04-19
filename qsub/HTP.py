@@ -7,8 +7,8 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
-# Space = "R"
-Space = "K"
+Space = "R"
+# Space = "K"
 
 OLs = [(0.60,1.00), (0.70, 1.00), (0.80, 1.00),
        (0.60,1.10), (0.60, 0.90),]
@@ -19,14 +19,14 @@ APPs = []
 
 if Space == "R":
     TSteps = 30000
-    L = 3
-    Nh = 30 * L
-    # Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
-    # AlphaReal = np.random.normal(2., 0.2, L)
-    # AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
-    Prefix1 = "".join([ "L", str(L), "N", str(Nh), "D" ])
-    AlphaReal = np.array([2., 2., 2.])
-    AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
+    L = 4
+    Nh = 20 * L
+    Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
+    AlphaReal = np.random.normal(2., 0.2, L)
+    AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
+    # Prefix1 = "".join([ "L", str(L), "N", str(Nh), "D" ])
+    # AlphaReal = np.array([2., 2., 2.])
+    # AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
     APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z"))
 elif Space == "K":
     TSteps = 100000

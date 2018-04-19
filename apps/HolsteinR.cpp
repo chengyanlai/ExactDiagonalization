@@ -197,7 +197,7 @@ ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<Comple
     Eis.push_back(E0);
   }
   PrintVector(LogOut, Eis);
-  int index = std::distance(Eis.begin(), std::max_element(Eis.begin(), Eis.end()) );
+  int index = std::distance(Eis.begin(), std::min_element(Eis.begin(), Eis.end()) );
   return Vecs.at(index);
 }
 

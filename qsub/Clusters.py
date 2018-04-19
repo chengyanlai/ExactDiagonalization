@@ -31,6 +31,12 @@ if platform.system() == "Linux":
         MaxWallTime = '16:0:0'
         SrcDir = "/usr/projects/cint/cint_sces/ExactDiagonalization"
         ExecDir = "/net/scratch3/chengyanlai"
+    elif socket.gethostname()[:10] == 'tdiv-qspin':
+        Cluster = "QSpin"
+        MaxNumThreads = 32
+        MaxWallTime = '16:0:0'
+        SrcDir = "/home/chengyanlai/GitRepo/ExactDiagonalization"
+        ExecDir = "/home/chengyanlai/data"
 if platform.system() == "Darwin":
     if socket.gethostname() == 'pn1716764.lanl.gov':
         Cluster = "LANLMacPro"
