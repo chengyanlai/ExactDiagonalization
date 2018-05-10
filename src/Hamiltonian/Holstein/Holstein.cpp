@@ -188,11 +188,11 @@ void Holstein<Tnum>::PhononK( const int& KPoints, const RealType& W, const Basis
 }
 
 template<typename Tnum>
-void Holstein<Tnum>::FermionK( const int& KPoints, const RealType& J, const Basis& bs, const RealType& Phi){
+void Holstein<Tnum>::FermionK( const std::vector<int>& KPoints, const RealType& J, const Basis& bs, const RealType& Phi){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
-  for ( size_t j = 0; j < KPoints; j++ ){
-    RealType Kf = RealType(j) * PI / RealType(KPoints);
-    Tnum val = -2.0e0 * J * cos( (Kf + Phi) * PI );
+  for ( size_t j = 0; j < KPoints.size(); j++ ){
+    RealType Kf = KPoints.at(j) * PI / RealType(KPoints.size()/2);
+    Tnum val = -2.0e0 * J * cos( Kf + Phi * PI );
     for ( size_t cnt = 0; cnt < bs.GetHilbertSpace(); cnt++ ){
       size_t idx = this->DetermineTotalIndex( vec<size_t>(j, cnt) );
       MatElemts.push_back( std::make_tuple(idx, idx, val) );
@@ -207,8 +207,8 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Real
   int L = KPoints.size();
   for ( int Ki = 0; Ki < L; Ki++ ){
     int Kn = KPoints.at(Ki);
-    for ( int Qi = 0; Qi < L-1; Qi++ ){// from 1 due to the k=0 phonon mode
-      int Qn = KPoints.at( Qi + 1 );// +1 due to the k=0 phonon mode
+    for ( int Qi = 0; Qi < L-1; Qi++ ){// L-1 due to the k=0 phonon mode
+      int Qn = KPoints.at( Qi + 1 );// +1 due to the k=0 phonon mode ignore
       int Pn = Kn + Qn;
       FirstBZ(L, Pn);
       int Pi = KnToIndex(Pn);// this is index for KPoints not the phonon basis!!
