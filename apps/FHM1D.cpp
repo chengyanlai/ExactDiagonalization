@@ -239,12 +239,12 @@ void Equilibrium(const std::string prefix){
     H5::H5File::isHdf5("conf.h5");
     LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin);
   }catch(H5::FileIException){
-    L = 4;
+    L = 10;
     OBC = 1;
-    N1 = 1;
-    N2 = 1;
+    N1 = 5;
+    N2 = 5;
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
-    Uin = std::vector<RealType>(L, 0.0);
+    Uin = std::vector<RealType>(L, 9.0);
     Vin = std::vector<RealType>(L, 0.0);
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
@@ -731,15 +731,17 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
-    L = 12;
+    L = 10;
     OBC = 1;
-    N1 = 6;
-    N2 = 6;
+    N1 = 5;
+    N2 = 5;
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
-    Uch = std::vector<RealType>(L, 1.0);
+    Ueqm = std::vector<RealType>(L, 9.0);
+    Veqm = std::vector<RealType>(L, 0.0);
+    Uch = std::vector<RealType>(L, 9.0);
     Vch = std::vector<RealType>(L, 0.0);
-    CoreHole = 6;
-    Vch.at(CoreHole) = -3.0;
+    CoreHole = L/2;
+    Vch.at(CoreHole) = -12.0;
     TSteps = 3000;
     dt = 0.005;
     Species = 0;
@@ -882,7 +884,7 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 1 ){
     PumpDynamics("");
   }else if ( std::atoi(argv[1]) == 2 ){
-    XASDynamics("", 50, 50);
+    XASDynamics("", 20, 100);
   }else if ( std::atoi(argv[1]) == 3 ){
     StateDynamics("", 50, 50);
   }else if ( std::atoi(argv[1]) == 4 ){

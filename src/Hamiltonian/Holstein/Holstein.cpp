@@ -254,7 +254,7 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Real
 template<typename Tnum>
 void Holstein<Tnum>::HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax ){
   PhononK( KPoints.size(), W, bs.at(0) );
-  FermionK( KPoints.size(), J, bs.at(0) );
+  FermionK( KPoints, J, bs.at(0) );
   FermionPhononK( KPoints, G, bs.at(0), Nmax );
   /* Build H_total */
   this->H_total = H_Phonon + H_Kinetic + H_Couple;

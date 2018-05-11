@@ -27,7 +27,7 @@ public:
 
   void HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax );
   void PhononK( const int& KPoints, const RealType& W, const Basis& bs );
-  void FermionK( const int& KPoints, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);
+  void FermionK( const std::vector<int>& KPoints, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);
   void FermionPhononK( const std::vector<int>& KPoints, const RealType& G, const Basis& bs, const int& Nmax);
 
   inline arma::SpMat<Tnum> GetHKinetic()const{

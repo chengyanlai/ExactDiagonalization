@@ -353,8 +353,9 @@ int main(int argc, char *argv[]){
 #endif
   int world_size;
   int world_rank;
-  std::vector<std::string> MPIFolders = GetPrefix("MPIFolders");
+  std::vector<std::string> MPIFolders(1, "");
 #ifdef MPIPARALLEL
+  std::vector<std::string> MPIFolders = GetPrefix("MPIFolders");
   // Initialize MPI
   MPI_Init(NULL, NULL);
   // Get the number of processes
