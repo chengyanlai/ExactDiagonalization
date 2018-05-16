@@ -158,7 +158,7 @@ std::vector<RealType> LocalEnergy(ComplexVectorType& VecIn, const std::vector<Ba
   for ( size_t i = 0; i < L; i++ ){
     ComplexVectorType tmp(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
     for ( size_t j = 0; j < b.size(); j++ ){
-      size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(j, i) );
+      size_t idx = Ham0.DetermineTotalIndex( vec<size_t>(i, j) );
       tmp(idx) = VecIn(idx);
     }
     tmp = arma::normalise(tmp);

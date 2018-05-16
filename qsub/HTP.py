@@ -10,8 +10,8 @@ from Clusters import *
 Space = "R"
 # Space = "K"
 
-OLs = [(0.60,1.00), (0.70, 1.00), (0.80, 1.00),
-       (0.60,1.10), (0.60, 0.90),]
+OLs = [(0.20, 1.00), (0.30, 1.00), (0.40, 1.00),
+       (0.50, 1.00), (0.50, 1.10), (0.50, 1.20),]
 
 dt = 0.005
 
@@ -20,13 +20,13 @@ APPs = []
 if Space == "R":
     TSteps = 30000
     L = 4
-    Nh = 20 * L
-    Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
-    AlphaReal = np.random.normal(2., 0.2, L)
-    AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
-    # Prefix1 = "".join([ "L", str(L), "N", str(Nh), "D" ])
-    # AlphaReal = np.array([2., 2., 2.])
-    # AlphaPhase = np.array([0., 2./3.,-2./3.]) * np.pi
+    Nh = 15 * L
+    # Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
+    # AlphaReal = np.random.normal(2., 0.2, L)
+    # AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
+    Prefix1 = "".join([ "L", str(L), "N", str(Nh), "D" ])
+    AlphaReal = np.ones(L) * 8.0
+    AlphaPhase = np.array([0., 0.49, 1.01, 1.51]) * np.pi
     APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z"))
 elif Space == "K":
     TSteps = 100000
@@ -65,7 +65,7 @@ for (Omega, Lambda) in OLs:
 
     Filename = os.path.join(workdir, 'job')
     if Cluster == "Kagome":
-        sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+        sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=4, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "Merced":
         sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=20, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "LANL":
