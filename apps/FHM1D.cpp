@@ -239,12 +239,12 @@ void Equilibrium(const std::string prefix){
     H5::H5File::isHdf5("conf.h5");
     LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin);
   }catch(H5::FileIException){
-    L = 10;
+    L = 12;
     OBC = 1;
-    N1 = 5;
-    N2 = 5;
+    N1 = 6;
+    N2 = 6;
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
-    Uin = std::vector<RealType>(L, 9.0);
+    Uin = std::vector<RealType>(L, 12.0);
     Vin = std::vector<RealType>(L, 0.0);
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
@@ -731,17 +731,17 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
-    L = 10;
+    L = 12;
     OBC = 1;
-    N1 = 5;
-    N2 = 5;
+    N1 = 6;
+    N2 = 6;
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
-    Ueqm = std::vector<RealType>(L, 9.0);
+    Ueqm = std::vector<RealType>(L, 12.0);
     Veqm = std::vector<RealType>(L, 0.0);
-    Uch = std::vector<RealType>(L, 9.0);
+    Uch = std::vector<RealType>(L, 12.0);
     Vch = std::vector<RealType>(L, 0.0);
     CoreHole = L/2;
-    Vch.at(CoreHole) = -12.0;
+    // Vch.at(CoreHole) = -12.0;
     TSteps = 3000;
     dt = 0.005;
     Species = 0;
