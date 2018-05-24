@@ -65,6 +65,7 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
   size_t NewFupIdx, NewFdnIdx, OldFupIdx, OldFdnIdx;
   // int Update = false;
   for ( auto OldFupState : OldFup ){
+    RealType FermionSignUp = 1.0e0;
     if (Species == 1){
       NewFupIdx = NewFupTag.at(OldFupState);// Find their indices
       OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
@@ -72,6 +73,9 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       int NewFupState = ibset(OldFupState, CoreHole);
       NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
       OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
+      int NCross = 0;
+      for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);
+      // if ( NCross % 2 == 1 ) FermionSignUp = -1.0e0;
     }else if ( Species == 0 && Type == -1 && btest(OldFupState, CoreHole) ){// c_up
       int NewFupState = ibclr(OldFupState, CoreHole);
       NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
@@ -80,6 +84,7 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       continue;// next OldFupState
     }
     for ( auto OldFdnState : OldFdn ){
+      // RealType FermionSignDn = 1.0;
       if ( Species == 0 ){
         NewFdnIdx = NewFdnTag.at(OldFdnState);// Find their indices
         OldFdnIdx = OldFdnTag.at(OldFdnState);// Find their indices
@@ -103,7 +108,7 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       NewIdx.push_back(NewFdnIdx);
       size_t oid = OldHam.DetermineTotalIndex( OldIdx );
       size_t nid = NewHam.DetermineTotalIndex( NewIdx );
-      Vout(nid) = Vin(oid);
+      Vout(nid) = FermionSignUp * Vin(oid);
     }
   }
   return arma::normalise(Vout);
@@ -239,10 +244,10 @@ void Equilibrium(const std::string prefix){
     H5::H5File::isHdf5("conf.h5");
     LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin);
   }catch(H5::FileIException){
-    L = 12;
+    L = 8;
     OBC = 1;
-    N1 = 6;
-    N2 = 6;
+    N1 = 4;
+    N2 = 4;
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
     Uin = std::vector<RealType>(L, 12.0);
     Vin = std::vector<RealType>(L, 0.0);
@@ -731,10 +736,10 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
-    L = 12;
+    L = 8;
     OBC = 1;
-    N1 = 6;
-    N2 = 6;
+    N1 = 4;
+    N2 = 4;
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
     Ueqm = std::vector<RealType>(L, 12.0);
     Veqm = std::vector<RealType>(L, 0.0);
