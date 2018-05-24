@@ -81,7 +81,7 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
       Dmat(cnt,cnt) = exp( Prefactor * d[cnt] );
     }
     if(info != 0) {
-      std::cout <<"Lapack INFO = " << info << std::endl;
+      std::cout << "Lapack INFO = " << info << std::endl;
       RUNTIME_ERROR("Error in Lapack function 'dstev'");
     }
     /* NOTE: After Solving tri-diagonal matrix, we need Kmat and Dmat to proceed further. */
@@ -90,7 +90,7 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
       tmpKmat.t();
       std::cout << Kmat * Dmat * tmpKmat << std::endl;
     }
-    Vm.reshape( Vec.n_rows, Kused );
+    Vm.reshape( Vec.size(), Kused );
     ComplexMatrixType Otmp = Vm * Kmat;
     // ComplexMatrixType Otmp = Vm.submat( 0, 0, Vec.size(), Kused ) * Kmat;
     Vec = ( Otmp * Dmat ) * ( Otmp.t() * Vec );

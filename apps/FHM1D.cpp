@@ -24,6 +24,8 @@
 // #define DTV RealVectorType
 // #define DTM RealMatrixType
 
+// const RealType t = 1.0e0;
+
 void LoadEqmParameters( const std::string filename, int &L, int &OBC, int &N1, int &N2, std::vector<RealType> &Jls, std::vector<RealType> &Uls, std::vector<RealType> &Vls){
   HDF5IO file(filename);
   file.LoadNumber("Parameters", "L", L);
@@ -63,7 +65,6 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
   std::vector<size_t> NewFupTag = NewBases.at(0).GetFTags();
   std::vector<size_t> NewFdnTag = NewBases.at(1).GetFTags();
   size_t NewFupIdx, NewFdnIdx, OldFupIdx, OldFdnIdx;
-  // int Update = false;
   for ( auto OldFupState : OldFup ){
     RealType FermionSignUp = 1.0e0;
     if (Species == 1){
@@ -74,8 +75,9 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
       OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
       int NCross = 0;
-      for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);
-      // if ( NCross % 2 == 1 ) FermionSignUp = -1.0e0;
+      // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);
+      for ( int i = CoreHole+1; i < OldBases.at(0).GetL(); i++ ) NCross += btest(OldFupState, i);
+      if ( NCross % 2 == 1 ) FermionSignUp = -1.0e0;
     }else if ( Species == 0 && Type == -1 && btest(OldFupState, CoreHole) ){// c_up
       int NewFupState = ibclr(OldFupState, CoreHole);
       NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
@@ -244,10 +246,10 @@ void Equilibrium(const std::string prefix){
     H5::H5File::isHdf5("conf.h5");
     LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin);
   }catch(H5::FileIException){
-    L = 8;
+    L = 14;
     OBC = 1;
-    N1 = 4;
-    N2 = 4;
+    N1 = 7;
+    N2 = 7;
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
     Uin = std::vector<RealType>(L, 12.0);
     Vin = std::vector<RealType>(L, 0.0);
@@ -356,14 +358,14 @@ void Spectral(const std::string prefix){
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
-    L = 4;
+    L = 14;
     OBC = 1;
-    N1 = 2;
-    N2 = 2;
+    N1 = 7;
+    N2 = 7;
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
-    Ueqm = std::vector<RealType>(L, 0.0);
+    Ueqm = std::vector<RealType>(L,12.0);
     Veqm = std::vector<RealType>(L, 0.0);
-    Uch = std::vector<RealType>(L, 0.0);
+    Uch = std::vector<RealType>(L,12.0);
     Vch = std::vector<RealType>(L, 0.0);
     CoreHole = L / 2;
     Vch.at(CoreHole) = 0.0;
@@ -468,11 +470,11 @@ void Spectral(const std::string prefix){
   // CoreHoleHam.eigh(Vals, Vecs, MaxNumPeak, false);
   CoreHoleHam.HKrylov(Vals, Vecs, VecInit, MaxNumPeak);
   SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
+  LogOut << " Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::flush;
   LogOut << " DONE!" << std::endl;
   HDF5IO* file1 = new HDF5IO("Spectral.h5");
   file1->SaveStdVector("Iw", "ei", PeakLocations);
   file1->SaveStdVector("Iw", "wi", PeakWeights);
-  LogOut << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::endl;
   delete file1;
 }
 
@@ -616,10 +618,10 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
     int CoreHole, Species, Type;
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
-    L = 4;
+    L = 14;
     OBC = 1;
-    N1 = 2;
-    N2 = 2;
+    N1 = 7;
+    N2 = 7;
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
     Ueqm = std::vector<RealType>(L, 1.0);
     Veqm = std::vector<RealType>(L, 0.0);
@@ -736,10 +738,10 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm);
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
-    L = 8;
+    L = 14;
     OBC = 1;
-    N1 = 4;
-    N2 = 4;
+    N1 = 7;
+    N2 = 7;
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
     Ueqm = std::vector<RealType>(L, 12.0);
     Veqm = std::vector<RealType>(L, 0.0);
@@ -849,6 +851,7 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
   for (size_t cntT = 1; cntT <= TSteps; cntT++) {
     // Evolve the state
     CoreHoleHam.expH(Prefactor, VecXAS);
+    VecXAS = arma::normalise(VecXAS);/* NOTE: Does not change much. */
     if ( cntT % MeasureEvery == 0 ){
       file1 = new HDF5IO("XAS.h5");
       std::string gname = "Obs-";
