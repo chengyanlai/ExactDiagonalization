@@ -227,8 +227,10 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Real
         if ( std::accumulate(state.begin(), state.end(), 0) <= Nmax ){// state exist in basis
           RealType tg = BosonBasisTag(state);
           size_t cPid = bs.GetIndexFromTag(tg);
-          size_t rid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
-          size_t cid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          // size_t rid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
+          // size_t cid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          size_t rid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          size_t cid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
           RealType Np = RealType(state.at(cQi)) / RealType(L);
           MatElemts.push_back( std::make_tuple(rid, cid, -1.0e0 * (Tnum)G * sqrt(Np) ) );
         }
@@ -240,8 +242,10 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Real
           state.at(dQi) -= 1;
           RealType tg = BosonBasisTag(state);
           size_t cPid = bs.GetIndexFromTag(tg);
-          size_t rid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
-          size_t cid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          // size_t rid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
+          // size_t cid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          size_t rid = this->DetermineTotalIndex( vec<size_t>(Pi, cPid) );
+          size_t cid = this->DetermineTotalIndex( vec<size_t>(Ki, rPid) );
           MatElemts.push_back( std::make_tuple(rid, cid, -1.0e0 * (Tnum)G * sqrt(Np) ) );
         }
         rPid++;
