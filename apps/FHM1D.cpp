@@ -75,7 +75,7 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
       OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
       int NCross = 0;
-      // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);
+      // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);// Same as below
       for ( int i = CoreHole+1; i < OldBases.at(0).GetL(); i++ ) NCross += btest(OldFupState, i);
       if ( NCross % 2 == 1 ) FermionSignUp = -1.0e0;
     }else if ( Species == 0 && Type == -1 && btest(OldFupState, CoreHole) ){// c_up

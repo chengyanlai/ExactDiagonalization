@@ -63,6 +63,21 @@ ComplexMatrixType NFermion( const std::vector<Basis> &Bases, const ComplexVector
   return out;
 }
 
+ComplexVectorType JPsi( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
+  int L = Bases.at(0).GetL();
+  ComplexVectorType out(Vec.size(), arma::fill::zeros);
+  for ( size_t left = 0; left < L; left++ ){
+    size_t right = ( left == L -1 ) ? 0 : left + 1;
+    for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
+      size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(left, b) );
+      size_t idx2 = Ham.DetermineTotalIndex( vec<size_t>(right, b) );
+      out(idx1) += ComplexType(0.0, 1.0) * Vec(idx2);
+      out(idx2) += ComplexType(0.0,-1.0) * Vec(idx1);
+    }
+  }
+  return out;
+}
+
 void Equilibrium(const std::string prefix, int NEV){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.R.eqm", std::ios::app);
@@ -297,6 +312,10 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   std::string gname = "Obs-0/";
   ComplexType Lecho = arma::cdot(VecInit, VecDyn);
   file2->SaveNumber(gname, "F", Lecho);
+  ComplexVectorType JVec = JPsi(Bases, VecInit, Ham0);
+  ComplexVectorType JVecDyn = JPsi(Bases, VecDyn, Ham0);
+  ComplexType JJt = arma::cdot(JVecDyn, JVec);
+  file2->SaveNumber(gname, "JJt", JJt);
   ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
   file2->SaveVector(gname, "Phonon", Npi);
   ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
@@ -313,13 +332,18 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     // Evolve the state
     Ham0.expH(Prefactor, VecDyn);
     VecDyn = arma::normalise(VecDyn);
+    Ham0.expH(Prefactor, JVec);
+    JVec = arma::normalise(JVec);
     if ( cntP % MeasureEvery == 0 ){
       file2 = new HDF5IO(prefix + SaveFile + ".h5");
       std::string gname = "Obs-";
       gname.append( std::to_string((unsigned long long)cntP ));
       gname.append("/");
-      ComplexType Lecho = arma::cdot(VecInit, VecDyn);
+      Lecho = arma::cdot(VecInit, VecDyn);
       file2->SaveNumber(gname, "F", Lecho);
+      JVecDyn = JPsi(Bases, VecDyn, Ham0);
+      JJt = arma::cdot(JVecDyn, JVec);
+      file2->SaveNumber(gname, "JJt", JJt);
       ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
       file2->SaveVector(gname, "Phonon", Npi);
       ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
