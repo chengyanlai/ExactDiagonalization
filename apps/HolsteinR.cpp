@@ -67,7 +67,7 @@ ComplexVectorType JPsi( const std::vector<Basis> &Bases, const ComplexVectorType
   int L = Bases.at(0).GetL();
   ComplexVectorType out(Vec.size(), arma::fill::zeros);
   for ( size_t left = 0; left < L; left++ ){
-    size_t right = ( left == L -1 ) ? 0 : left + 1;
+    size_t right = ( left == L - 1 ) ? 0 : left + 1;
     for ( size_t b = 0; b < Bases.at(0).GetHilbertSpace(); b++ ){
       size_t idx1 = Ham.DetermineTotalIndex( vec<size_t>(left, b) );
       size_t idx2 = Ham.DetermineTotalIndex( vec<size_t>(right, b) );
