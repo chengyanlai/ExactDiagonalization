@@ -1,5 +1,6 @@
 #ifndef __HOLSTEIN_HPP__
 #define __HOLSTEIN_HPP__
+#include <algorithm>//* find, distance
 
 #include "src/Hamiltonian/Hamiltonian.hpp"
 
@@ -12,7 +13,7 @@ private:
 public:
   Holstein ():Hamiltonian<Tnum>(){};
   Holstein ( const std::vector<Basis> &bs ):Hamiltonian<Tnum>(bs){};
-  Holstein ( const int& KPoints, const std::vector<Basis> &bs ):Hamiltonian<Tnum>(KPoints, bs){};
+  Holstein ( const int Fi, const std::vector<Basis> &bs ):Hamiltonian<Tnum>(Fi, bs){};
   virtual ~Holstein (void){};
 
   void HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const RealType& Wloc, const RealType& Gloc );
@@ -25,10 +26,10 @@ public:
   void FermionR( const int& KPoints, const RealType& J, const Basis& bs );
   void FermionPhononR( const int& KPoints, const RealType& G, const Basis& bs);
 
-  void HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax );
-  void PhononK( const int& KPoints, const RealType& W, const Basis& bs );
-  void FermionK( const std::vector<int>& KPoints, const RealType& J, const Basis& bs, const RealType& Phi=0.0e0);
-  void FermionPhononK( const std::vector<int>& KPoints, const RealType& G, const Basis& bs, const int& Nmax);
+  void HolsteinModelK( const std::vector<int>& KPoints, const std::vector<Basis>& bs, const RealType& W, const RealType& G, const RealType& J, const int& Nmax, const int WithoutK0Phonon );
+  void PhononK( const Basis& bs, const RealType& W );
+  void FermionK( const std::vector<int>& KPoints, const Basis& bs, const RealType& J, const RealType& Phi=0.0e0);
+  void FermionPhononK( const std::vector<int>& KPoints, const Basis& bs, const RealType& G, const int& Nmax, const int WithoutK0Phonon);
 
   inline arma::SpMat<Tnum> GetHKinetic()const{
     return H_Kinetic;
@@ -38,27 +39,6 @@ public:
   };
   inline arma::SpMat<Tnum> GetHCouple()const{
     return H_Couple;
-  };
-
-  inline int KnToIndex( const int Kn )const{
-    if ( Kn < 0 ) return 2 * std::abs(Kn);
-    else if ( Kn > 0 ) return 2 * Kn - 1;
-    else return Kn;
-  };
-
-  inline int IndexToKn( const int Index )const{
-    if ( Index % 2 == 0 ){
-      return -1 * Index / 2;
-    }else{
-      return (Index + 1) / 2;
-    }
-  };
-
-  inline void FirstBZ( const int& L,  int& Kn )const{
-    assert( L % 2 == 0 );
-    while ( Kn > 0 && Kn > L/2 ) Kn -= L;
-    while ( Kn < 0 && Kn <= -L/2 ) Kn += L;
-    if ( Kn == - L / 2 ) Kn = L / 2;
   };
 };
 

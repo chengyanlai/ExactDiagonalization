@@ -26,9 +26,9 @@ public:
     size_t TotalDim = GetTotalHilbertSpace();
   };
 
-  Hamiltonian( const int& KPoints, const std::vector<Basis> &bs ){
+  Hamiltonian( const int& Fi, const std::vector<Basis> &bs ){
     HilbertSpaces.clear();
-    HilbertSpaces.push_back(KPoints);
+    HilbertSpaces.push_back(Fi);
     for ( auto &b : bs ){
       HilbertSpaces.push_back(b.GetHilbertSpace());
     }

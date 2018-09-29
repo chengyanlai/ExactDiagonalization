@@ -72,9 +72,9 @@ void HDF5IO::SaveRawBuffer(const std::string& GroupName, const std::string& SetN
       H5::DataSet dset = FG.createDataSet(SetName.c_str(), InputDataType, dataspace);
       dset.write(x, InputDataType);
     } catch( const H5::FileIException error){
-      error.printError();
+      error.printErrorStack();
     } catch( const H5::DataSetIException error){
-      error.printError();
+      error.printErrorStack();
     }
     FG.close();
   }catch ( const H5::Exception ) {
@@ -103,9 +103,9 @@ void HDF5IO::SaveRawBuffer(const std::string& GroupName, const std::string& SetN
       H5::DataSet dset = FG.createDataSet(SetName.c_str(), InputDataType, dataspace);
       dset.write(x, InputDataType);
     } catch( const H5::FileIException error){
-      error.printError();
+      error.printErrorStack();
     } catch( const H5::DataSetIException error){
-      error.printError();
+      error.printErrorStack();
     }
     FG.close();
   }catch ( const H5::Exception ) {
@@ -128,15 +128,15 @@ void HDF5IO::LoadRawBuffer(const std::string& GroupName, const std::string& SetN
       x = (T*)malloc( dim * sizeof(T) );
       DataSet.read(x, OutputDataType);
     } catch( const H5::DataSpaceIException error ){
-      error.printError();
+      error.printErrorStack();
     } catch( const H5::DataSetIException error){
-      error.printError();
+      error.printErrorStack();
     } catch( const H5::FileIException error){
-      error.printError();
+      error.printErrorStack();
     }
     FG.close();
   }catch ( const H5::Exception error ) {
-    error.printError();
+    error.printErrorStack();
     std::cout << "In Group - " << GroupName << ", and SetName is " << SetName << std::endl;
     throw std::runtime_error(" HDF5IO::LoadRawBuffer<T>. ");
   }
@@ -158,11 +158,11 @@ void HDF5IO::LoadRawBuffer(const std::string& GroupName, const std::string& SetN
       x = (unsigned long*)malloc( dim * sizeof(unsigned long) );
       DataSet.read(x, OutputDataType);
     } catch( const H5::DataSpaceIException error ){
-        error.printError();
+        error.printErrorStack();
     } catch( const H5::DataSetIException error){
-      error.printError();
+      error.printErrorStack();
     } catch( const H5::FileIException error){
-      error.printError();
+      error.printErrorStack();
     }
     FG.close();
   }catch ( const H5::Exception ) {

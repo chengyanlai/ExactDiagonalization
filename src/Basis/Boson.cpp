@@ -5,18 +5,18 @@
 #include "src/Basis/Basis.hpp"
 
 void Basis::Boson(){
-  /* This is boson basis with single U(1) sector */
+  //* This is boson basis with single U(1) sector */
   HaveU1 = true;
   assert( !(isFermion) );
   std::vector< std::vector<int> > work;
   int k, NWork;
   std::vector<int> Ivec(L, 0);
-  /* NOTE: Start with (N, 0, 0, 0, ...) */
+  //* NOTE: Start with (N, 0, 0, 0, ...) */
   Ivec.at(0) = N;
   work.push_back( Ivec );
   BTags.push_back( BosonBasisTag(Ivec) );
   while ( Ivec[L - 1] < N ) {
-    /* NOTE: Stop at (0, 0, 0, ..., N) */
+    //* NOTE: Stop at (0, 0, 0, ..., N) */
     for (ptrdiff_t cnt = L - 2; cnt > -1; cnt--) {
       if ( Ivec[cnt] != 0 ){
         k = cnt;
@@ -80,7 +80,7 @@ void Basis::Boson(){
   assert( BStates.size() == BTags.size() );
 }
 
-/* This has to be unique number to tag boson basis state. */
+//* This has to be unique number to tag boson basis state. */
 RealType BosonBasisTag( const std::vector<int> vec ){
   RealType tag = 0.0e0;
   int cnt = 0;

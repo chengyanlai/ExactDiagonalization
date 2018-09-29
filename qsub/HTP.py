@@ -10,8 +10,8 @@ from Clusters import *
 Space = "R"
 # Space = "K"
 
-OLs = [(0.40, 1.00), (0.50, 1.00), (0.70, 1.00),
-       (0.60, 1.00), (0.60, 1.10), (0.60, 1.20),]
+OLs = [(0.30, 1.00), (0.40, 1.00), (0.50, 1.00),
+       (0.60, 0.90), (0.60, 1.00), (0.60, 1.10),]
 
 dt = 0.005
 
@@ -25,10 +25,10 @@ if Space == "R":
     # AlphaReal = np.random.normal(2., 0.2, L)
     # AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
     Prefix1 = "".join([ "L", str(L), "N", str(Nh), "D" ])
-    AlphaReal = np.ones(L) * 2.0
-    # AlphaPhase = np.array([0., 0.49, 1.01, 1.51]) * np.pi
-    AlphaPhase = np.array([0., 2/3., 5/3.]) * np.pi
-    APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z"))
+    # AlphaReal = np.ones(L) * 3.0
+    AlphaReal = np.array([3.0, 2.8, 3.2])
+    AlphaPhase = np.array([0., 2/3., 4/3.]) * np.pi
+    APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z 3"))
 elif Space == "K":
     TSteps = 100000
     L = 4

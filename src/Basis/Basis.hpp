@@ -3,7 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <cassert>
-#include <algorithm>//sort, distance
+#include <algorithm>//* sort, distance
 #include "src/EDType.hpp"
 #include "src/bitwise.h"
 
@@ -55,33 +55,34 @@ public:
     return GetHilbertSpace();
   };
 
-  /* Fermion functions */
+  //* Fermion functions */
   void Fermion();
   void Fermion( const int IncludeAllU1 );// This has no U(1) symmetry.
-  /* Spin - 1/2, share the Fermion functions */
+  //* Spin - 1/2, share the Fermion functions */
   void SpinOneHalf();
   void TIsing();
 
   inline std::vector<int> GetFStates()const{
     return FStates;
-  };//for Fermion and SpinOneHalf
+  };//* for Fermion and SpinOneHalf
 
   inline std::vector<size_t> GetFTags()const{
     return FTags;
-  };//for Fermion and SpinOneHalf
+  };//* for Fermion and SpinOneHalf
 
   inline int GetNfTotal(const size_t idx)const{
     return NTotal.at(idx);
-  };// for fermion without U(1)
+  };//* for fermion without U(1)
 
   inline int GetSzTotal(const size_t idx)const{
     return NTotal.at(idx);
-  };// for Transverse Ising spin
+  };//* for Transverse Ising spin
 
-  /* Boson functions */
+  //* Boson functions */
   void Boson();
   void PhononLFS();
-  void Phonon();
+  void PhononR();
+  void PhononK(const std::vector<int> Kn, const int TargetK, const int WithoutK0Phonon = 1 );//! First element indicates the electron momentum
   inline std::vector< std::vector<int> > GetBStates()const{
     return BStates;
   };
@@ -94,16 +95,13 @@ public:
     assert( !(isFermion) );
     auto it = binary_locate(BTags.begin(), BTags.end(), tg);
     size_t idx = std::distance(BTags.begin(), it);
-    // if ( std::abs(BTags.at(idx) - tg) < 1.0e-12 ){
-      return idx;
-    // } else{
-    //   return GetHilbertSpace() - 1;// To be a valid index
-    // }
+    return idx;
   };
 
-  /* Holstein Phonon - Limited functional space */
+  //* Phonon functions */
   RealType CreatePhonon( std::vector<int>& state, const int site=0 )const;
   RealType DestroyPhonon( std::vector<int>& state, const int site=0 )const;
+  //* Holstein Phonon - Limited functional space */
   RealType FermionJumpRight( std::vector<int>& state, const int NumJumps = 1 )const;
   RealType FermionJumpLeft( std::vector<int>& state, const int NumJumps = 1 )const;
 
@@ -129,4 +127,13 @@ RealType BosonBasisTag( const std::vector<int> vec );
 template<typename T>
   std::vector<std::vector<int> > SortBTags( const std::vector<std::vector<int> >& st, std::vector<T> &v );
 
+//* Used by PhononK
+inline int DeltaKIndex( int& DeltaK, const std::vector<int>& KPoints ){
+  if ( std::abs(DeltaK) == 2 * KPoints.at(KPoints.size()-1) ) DeltaK = 0;
+  while ( DeltaK > KPoints.at(KPoints.size()-1) ) DeltaK -= 2*KPoints.at(KPoints.size()-1);
+  while ( std::abs(DeltaK) >= KPoints.at(KPoints.size()-1) && DeltaK < 0 ) DeltaK += 2*KPoints.at(KPoints.size()-1);
+  size_t index = std::distance(KPoints.begin(), std::find(KPoints.begin(), KPoints.end(), DeltaK));
+  // assert( index >= 0 );
+  return index;
+};
 #endif//__BASIS_HPP__

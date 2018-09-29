@@ -96,8 +96,8 @@ void Equilibrium(const std::string prefix, int NEV){
   }
 
   LogOut << "Build Basis - max. phonon quanta = " << N << ", ends up with Phonon Hilbert space = " << std::flush;
-  Basis P1(L, N);// Get rid og k=0 phonon mode, so using L - 1!!
-  P1.Phonon();
+  Basis P1(L, N);
+  P1.PhononR();
   LogOut << P1.GetHilbertSpace() << std::flush;
   // LogOut << P1 << std::endl;
   std::vector<Basis> Bases;
@@ -241,7 +241,7 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
 
   LogOut << "Build Basis - max. phonon quanta = " << N << ", ends up with Phonon Hilbert space = " << std::flush;
   Basis P1(L, N);// Get rid og k=0 phonon mode, so using L - 1!!
-  P1.Phonon();
+  P1.PhononR();
   LogOut << P1.GetHilbertSpace() << std::flush;
   std::vector<Basis> Bases;
   Bases.push_back(P1);
@@ -280,7 +280,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       RUNTIME_ERROR("Can not load eigensate from file - HolsteinR.h5. ");
     }
   }else if ( InitialState == "Z" ){
-    SaveFile.append( "-Z" );
+    SaveFile.append( "-Z-" );
+    SaveFile.append( std::to_string(S1) );
     /* Target phonon mode - coherent state */
     std::vector<ComplexType> alphas;
     try{
