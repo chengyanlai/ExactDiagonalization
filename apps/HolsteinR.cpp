@@ -431,7 +431,7 @@ int main(int argc, char *argv[]){
     Equilibrium("", NEV);
   }else if ( std::atoi(argv[1]) == 1 ){
     std::string InitialState = "R";
-    int S1 = -1, S2 = -1;
+    int S1 = 0, S2 = -1;
     int SaveWFEvery = 100, MeasureEvery = 20;
     if ( argc > 2 ) InitialState = argv[2];
     if ( argc > 4 ){

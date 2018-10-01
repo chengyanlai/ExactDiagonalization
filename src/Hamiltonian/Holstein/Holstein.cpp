@@ -45,9 +45,9 @@ void Holstein<Tnum>::FermionPhononCoupling( const RealType& Gloc, const Basis& b
   H_Couple = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
-template<typename Tnum>
-void Holstein<Tnum>::FermionNNHopping( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi){
-  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+template<>
+void Holstein<ComplexType>::FermionNNHopping( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi){
+  std::vector<std::tuple<int, int, ComplexType> > MatElemts;
   int id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
     std::vector<int> state = b;
@@ -70,13 +70,12 @@ void Holstein<Tnum>::FermionNNHopping( const RealType& k, const RealType& J, con
   H_Kinetic = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
-template<typename Tnum>
-void Holstein<Tnum>::HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const RealType& Wloc, const RealType& Gloc ){
-  // Both species live in the same lattice and the same happing amplitudes
+template<>
+void Holstein<ComplexType>::HolsteinModel( const std::vector<Basis>& bs, const RealType& k, const RealType& J, const RealType& Wloc, const RealType& Gloc ){
   PhononLocal( Wloc, bs.at(0) );
   FermionPhononCoupling( Gloc, bs.at(0) );
   FermionNNHopping( k, J, bs.at(0) );
-  /* Build H_total */
+  //* Build H_total
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
 }
 
@@ -207,10 +206,10 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Basi
     int Kfi = b.at(0);
     for ( int Ki = 0; Ki < KPoints.size(); Ki++ ){
       if ( Kfi == Ki ) continue;//! No momentum changes
+      // Create -q phonon
       int DeltaK = KPoints.at(Kfi) - KPoints.at(Ki);//* This is -q
       int DeltaKi = DeltaKIndex( DeltaK, KPoints );
       int Idx = DeltaKi+1-WithoutK0Phonon;//! The index in the basis vector
-      // Create -q phonon
       std::vector<int> state = b;
       state.at(0) = Ki;//* Fermion from k to k+q
       state.at(Idx) += 1;
@@ -218,6 +217,7 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Basi
         // //std::cout << "\tCreate -q  " << std::flush;
         // //PrintVector(state, 3, " ");
         RealType tg = BosonBasisTag(state);
+        if ( !(bs.DummyCheckState(tg, state)) ) throw std::runtime_error("State is not match!");//! Dummy check
         size_t rid = bs.GetIndexFromTag(tg);
         // //std::cout << "\tFrom Tag -q" << std::flush;
         // //PrintVector(bs.BStates.at(rid), 3, " ");
@@ -236,6 +236,7 @@ void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Basi
         // //std::cout << "\tDestory +q " << std::flush;
         // //PrintVector(state, 3, " ");
         RealType tg = BosonBasisTag(state);
+        if ( !(bs.DummyCheckState(tg, state)) ) throw std::runtime_error("State is not match!");//! Dummy check
         size_t rid = bs.GetIndexFromTag(tg);
         // //std::cout << "\tFrom Tag +q" << std::flush;
         // //PrintVector(bs.BStates.at(rid), 3, " ");
@@ -256,4 +257,5 @@ void Holstein<Tnum>::HolsteinModelK( const std::vector<int>& KPoints, const std:
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
 }
 
+template class Holstein<RealType>;
 template class Holstein<ComplexType>;

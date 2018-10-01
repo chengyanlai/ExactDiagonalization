@@ -16,9 +16,11 @@
   #include "mkl.h"
 #endif
 
+//? cSpell:words eigenstate phonon Diagonalize
+
 const int WithoutK0Phonon = 1;
 int L = 2;
-int N = 10 * L;
+int N = 5 * L;
 const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
@@ -37,35 +39,89 @@ void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G,
   else if ( Mid == 1 ) Method = "LR";
 }
 
-ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
+ComplexVectorType NPhonon( const std::vector<Basis> &Bases, const ComplexVectorType &Vec){
   int L = Bases.at(0).GetL();
   ComplexVectorType out(L-1, arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() == Vec.size() );
-  int coff = 0;
+  int cnt = 0;
   for ( auto &nbi : b ){
     for (size_t cnt2 = 0; cnt2 < L-1; cnt2++) {//* Phonon k
-      out.at(cnt2) += (RealType)nbi.at(cnt2+WithoutK0Phonon) * std::pow(std::abs(Vec(coff)), 2);
+      out.at(cnt2) += (RealType)nbi.at(cnt2+WithoutK0Phonon) * std::pow(std::abs(Vec(cnt)), 2);
     }
-    coff++;
+    cnt++;
   }
   return out;
 }
 
-ComplexVectorType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec, const Holstein<ComplexType>& Ham){
+ComplexVectorType NFermion( const std::vector<Basis> &Bases, const ComplexVectorType &Vec){
   int L = Bases.at(0).GetL();
   ComplexVectorType out(L, arma::fill::zeros);
   std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
   assert( b.size() == Vec.size() );
-  int coff = 0;
+  int cnt = 0;
   for ( auto &nbi : b ){
-    out.at(nbi.at(0)) += std::pow(std::abs(Vec(coff)), 2);
-    coff++;
+    out.at(nbi.at(0)) += std::pow(std::abs(Vec(cnt)), 2);
+    cnt++;
   }
   return out;
 }
 
-void Equilibrium(const std::string prefix, int NEV){
+std::vector<int> CkCq( const std::vector<int> &Kn, const std::map<int, std::vector<Basis> > BasisMap, const int ki, const int qi, const int Kti, int &Kfi){//! <c^\dagger_k c_q>
+  std::vector<int> out;
+  assert( ki != qi );
+  Basis Bk = BasisMap.at(Kti).at(0);
+  int Kf = Kn.at(Kti) + Kn.at(ki) - Kn.at(qi);
+  Kfi = DeltaKIndex( Kf, Kn );
+  Basis Bq = BasisMap.at(Kfi).at(0);
+  std::vector< std::vector<int> > b = Bk.GetBStates();
+  int cnt = 0;
+  for ( auto &nbi : b ){
+    if ( nbi.at(0) == qi ){
+      std::vector<int> wb = nbi;
+      wb.at(0) = ki;//* c^\dagger_k c_q |KetState>
+      double wb_tag = BosonBasisTag(wb);
+      size_t index = Bq.GetIndexFromTag( wb_tag );//* This is the index for BraState
+      if ( !(Bq.DummyCheckState(wb_tag, wb)) ) throw std::runtime_error("States mismatch in CkCq");
+      out.push_back(index);
+    }else{
+      out.push_back(-1);
+    }
+    cnt++;
+  }
+  return out;
+}
+
+ComplexVectorType Jq0State(const std::vector<Basis> &Bases, const std::vector<int> &Kn, const ComplexVectorType &Vec){
+  int L = Bases.at(0).GetL();
+  std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
+  ComplexVectorType out = Vec;
+  assert( b.size() == Vec.size() );
+  assert( b.size() == out.size() );
+  int cnt = 0;
+  for ( auto &nbi : b ){
+    int Kfi = Kn.at(nbi.at(0));
+    RealType Kf = Kfi * PI / RealType(L);
+    out(cnt) = sin(Kf) * Vec(cnt);
+    cnt++;
+  }
+  return out;
+}
+
+void SpectralPeaks( const double Eg, const ComplexVectorType AS, const RealVectorType &EigVal, const ComplexMatrixType &EigVec,
+  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight, const int MaxNumPeak){
+  PeakLocation.clear();
+  PeakWeight.clear();
+  for ( size_t i = 0; i < EigVec.n_cols; i++){
+    PeakLocation.push_back(EigVal(i) - Eg);
+    ComplexType val = arma::cdot(EigVec.col(i), AS);
+    PeakWeight.push_back( (val * conj(val)).real() );
+    if ( i > MaxNumPeak ) break;
+  }
+  assert( PeakLocation.size() == PeakWeight.size() );
+}
+
+void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.K.eqm", std::ios::app);
   RealType EShift = 0;
@@ -94,16 +150,19 @@ void Equilibrium(const std::string prefix, int NEV){
   assert( Kn.size() == L );
   LogOut << Kn.size() << " k-points DONE!" << std::endl;
 
+  std::map<int, std::vector<Basis> > BasisSets;
   for ( size_t k = 0; k < Kn.size(); k++ ){
+    bool FullSpectrum = false;
     int TargetK = Kn.at(k);
     LogOut << "Build Basis - max. phonon quanta = " << N << " with target total momentum K = " << double(TargetK) << ", ends up with Hilbert space = " << std::flush;
-    Basis P1(L, N);//! Get rid og k=0 phonon mode, so using L - 1!!
+    Basis P1(L, N);
     P1.PhononK(Kn, TargetK, WithoutK0Phonon);
     LogOut << P1.GetHilbertSpace() << std::flush;
     // //std::cout << TargetK << std::endl;
     // //std::cout << P1 << std::endl;
     std::vector<Basis> Bases;
     Bases.push_back(P1);
+    BasisSets[k] = Bases;
     LogOut << " DONE!" << std::endl;
 
     LogOut << "Build Hamiltonian - " << std::flush;
@@ -118,6 +177,7 @@ void Equilibrium(const std::string prefix, int NEV){
     }else{
       Ham0.diag(Vals, Vecs);//* Full spectrum
       NEV = Ham0.GetTotalHilbertSpace();
+      FullSpectrum = true;
     }
     LogOut << "DONE!" << std::endl;
     LogOut << "\tEnergy 0 : " << std::setprecision(12) << Vals[0] << std::endl;
@@ -136,20 +196,56 @@ void Equilibrium(const std::string prefix, int NEV){
       file->SaveNumber(gname, "EVal", Vals[i]);
       ComplexVectorType Vec = Vecs.col(i);
       file->SaveVector(gname, "EVec", Vec);
-      ComplexVectorType Npi = NPhonon( Bases, Vec, Ham0);
+      ComplexVectorType Npi = NPhonon( Bases, Vec);
       file->SaveVector(gname, "Phonon", Npi);
-      ComplexVectorType Nfi = NFermion( Bases, Vec, Ham0);
+      ComplexVectorType Nfi = NFermion( Bases, Vec);
       file->SaveVector(gname, "Fermion", Nfi);
       LogOut << std::setw(3) << i << ": E = " << std::setprecision(12) << std::setw(15) << Vals[i] << ", Np = " << std::setw(14) << arma::accu(Npi).real() << ", Nf = [" << std::flush;
       for ( size_t j = 0; j < L; j++) LogOut << std::setw(16) << Nfi.at(j).real() << ", " << std::flush;
       LogOut << "], Total = " << arma::accu(Nfi).real() << std::endl;
+      if ( NumPeaks ){
+        std::vector<double> PeakLocation;
+        std::vector<double> PeakWeight;
+        RealVectorType wVals(NumPeaks, arma::fill::zeros);
+        ComplexMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
+        ComplexVectorType JVec = Jq0State(Bases, Kn, Vec);
+        if ( !(FullSpectrum) ){
+          wVecs.col(0) = JVec;
+          Ham0.eigh(wVals, wVecs, NumPeaks, false);
+          SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
+        }else{
+          SpectralPeaks(Vals[i], JVec, Vals, Vecs, PeakLocation, PeakWeight, NumPeaks);
+        }
+        file->SaveStdVector(gname, "JJw", PeakLocation);
+        file->SaveStdVector(gname, "JJh", PeakWeight);
+        double Wt = std::accumulate(PeakWeight.begin(), PeakWeight.end(), 0.0);
+        file->SaveNumber(gname, "Wt", Wt);
+      }
     }
     delete file;
   }
+  for ( int ki = 0; ki < L; ki++){
+    for ( int qi = 0; qi < L; qi++){
+      if ( ki == qi ) continue;//* No momentum change - diagonal!
+      for ( int PsiK = 0; PsiK < L; PsiK++){
+        int PsiB;
+        std::vector<int> CkCqIndex = CkCq( Kn, BasisSets, ki, qi, PsiK, PsiB);
+        HDF5IO* file = new HDF5IO(prefix + "Holstein.K.h5");
+        std::string gname = "S";
+        gname.append( std::to_string( (unsigned long)PsiB) );
+        gname.append( "-Cd" );
+        gname.append( std::to_string( (unsigned long)ki) );
+        gname.append( "C" );
+        gname.append( std::to_string( (unsigned long)qi) );
+        gname.append( "-S" );
+        gname.append( std::to_string( (unsigned long)PsiK) );
+        file->SaveStdVector("CkCqMap", gname, CkCqIndex);
+        delete file;
+      }
+    }
+  }
   LogOut.close();
 }
-
-void Spectral();
 
 void LoadDynParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W, int& TSteps, RealType& dt){
   HDF5IO h5f(filename);
@@ -217,7 +313,7 @@ void Dynamics(const std::string prefix, const int TargetKIdx, const std::string 
     VecInit = ( V1 + V2 );
     LogOut << "<" << S1 << "|" << S2 << "> = " << arma::cdot(V1, V2) << " DONE." << std::endl;
   }catch(H5::FileIException){
-    RUNTIME_ERROR("Can not load eigensate from file - Holstein.K.h5. ");
+    RUNTIME_ERROR("Can not load eigenstate from file - Holstein.K.h5. ");
   }
   VecInit = arma::normalise(VecInit);
 
@@ -227,9 +323,9 @@ void Dynamics(const std::string prefix, const int TargetKIdx, const std::string 
   std::string gname = "Obs-0/";
   ComplexType Lecho = arma::cdot(VecInit, VecDyn);
   file2->SaveNumber(gname, "F", Lecho);
-  ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
+  ComplexVectorType Npi = NPhonon( Bases, VecDyn);
   file2->SaveVector(gname, "Phonon", Npi);
-  ComplexVectorType Nfi = NFermion( Bases, VecDyn, Ham0);
+  ComplexVectorType Nfi = NFermion( Bases, VecDyn);
   file2->SaveVector(gname, "Fermion", Nfi);
   delete file2;
   HDF5IO* file3 = new HDF5IO(prefix + SaveFile + "-WF.h5");
@@ -248,9 +344,9 @@ void Dynamics(const std::string prefix, const int TargetKIdx, const std::string 
       gname.append("/");
       ComplexType Lecho = arma::cdot(VecInit, VecDyn);
       file2->SaveNumber(gname, "F", Lecho);
-      ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
+      ComplexVectorType Npi = NPhonon( Bases, VecDyn);
       file2->SaveVector(gname, "Phonon", Npi);
-      ComplexVectorType Nfi = NFermion( Bases, VecDyn, Ham0);
+      ComplexVectorType Nfi = NFermion( Bases, VecDyn);
       file2->SaveVector(gname, "Fermion", Nfi);
       delete file2;
     }
@@ -281,7 +377,9 @@ int main(int argc, char *argv[]){
   if ( std::atoi(argv[1]) == 0 ){
     int NEV = 40;
     if ( argc > 2 ) NEV = std::atoi(argv[2]);
-    Equilibrium("", NEV);
+    int NumPeaks = 0;
+    if ( argc > 3 ) NumPeaks = std::atoi(argv[3]);
+    Equilibrium("", NEV, NumPeaks);
   }else if ( std::atoi(argv[1]) == 1 ){
     int TargetKIdx = std::atoi(argv[2]);
     std::string S1 = argv[3];

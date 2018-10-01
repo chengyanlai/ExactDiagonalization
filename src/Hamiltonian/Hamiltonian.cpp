@@ -16,9 +16,9 @@ void Hamiltonian<Tnum>::eigh( RealVectorType &Vals, MatrixType &Vecs, const int 
 template<typename Tnum>
 void Hamiltonian<Tnum>::diag( RealVectorType &Vals, MatrixType &Vecs)const{
   size_t dim = GetTotalHilbertSpace();
-  // convert H_total to dense matrix
+  //* convert H_total to dense matrix
   MatrixType Mat(H_total);
-  // working space
+  //* working space
   Tnum* EigVec = (Tnum*)malloc( dim * dim * sizeof(Tnum) );
   RealType* Eig = (RealType*)malloc( dim * sizeof(RealType) );
   syDiag(Mat.memptr(), dim, Eig, EigVec);

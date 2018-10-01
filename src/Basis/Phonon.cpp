@@ -4,14 +4,7 @@
 #include "src/EDType.hpp"
 #include "src/Basis/Basis.hpp"
 
-//* DEBUG use */
-static void PrintBosonBasis( const std::vector<int> state ){
-  typename std::vector<int>::const_iterator it = state.begin();
-  for (;it != state.end(); ++it ){
-    std::cout << *it << ", " << std::flush;
-  }
-  std::cout << std::endl;
-};
+//? cSpell:words translational phonon fermion
 
 RealType Basis::CreatePhonon( std::vector<int>& state, const int site )const{
   if ( std::accumulate(state.begin(), state.end(), 0) < N ){
@@ -55,20 +48,6 @@ RealType Basis::FermionJumpLeft( std::vector<int>& state, const int NumJumps )co
   return BosonBasisTag(state);
 }
 
-void Basis::DummyCheckState(){
-  for (size_t i1 = 0; i1 < BStates.size(); i1++){
-    std::vector<int> st = BStates.at(i1);
-    for (size_t cp = 0; cp < BStates.size(); cp ++){
-      if ( st == BStates.at(cp) && i1 != cp ){
-        std::cout << i1 <<  " " << BTags.at(i1) << " " << cp << " " << BTags.at(cp) << std::endl;
-        PrintBosonBasis(st);
-        PrintBosonBasis(BStates.at(cp));
-        std::cin.get();
-      }
-    }
-  }
-}
-
 //! This is specifically for Limited functional space which applies translational invariant
 std::vector<std::vector<int> > Basis::ApplyOffdiagonal( const std::vector<std::vector<int> >& InputStates ){
   //* States has phonon configurations with fermion at site-0
@@ -107,7 +86,7 @@ std::vector<std::vector<int> > Basis::ApplyOffdiagonal( const std::vector<std::v
         BStates.insert( BStates.begin() + Idx, State );
       }
     }
-    //* Fermiom jump left
+    //* Fermion jump left
     State = *it;
     tg = FermionJumpLeft( State );
     assert( State.size() == L );
@@ -135,13 +114,13 @@ void Basis::PhononLFS(){
   std::vector<int> State(L, 0);
   std::vector<std::vector<int> > NewStates;
   NewStates.push_back( State );
-  BStates.push_back( State );// add this vacuum state
-  BTags.push_back( BosonBasisTag(State) );// 0
+  BStates.push_back( State );//* add this vacuum state
+  BTags.push_back( BosonBasisTag(State) );//* 0
   for ( int cnt = 0; cnt < N; cnt++ ){
     NewStates = ApplyOffdiagonal( NewStates );
     std::cout << "N_h = " << cnt << " finished, and number of basis = " << BTags.size() << std::endl;
   }
-  // DummyCheckState();
+  //* DummyCheckState();
   assert( BStates.size() == BTags.size() );
 }
 
@@ -195,11 +174,11 @@ void Basis::PhononK(const std::vector<int> Kn, const int TargetK, const int With
       Ivec.at(0) = Np;
       int KTotal = Kn.at(Kf);
       for ( int kpi = 0; kpi < Ivec.size(); kpi++ ) KTotal += Kn.at(kpi+WithoutK0Phonon) * Ivec.at(kpi);//* If WithoutK0Phono, skip k=0
-      // std::cout << Kf << " " << std::flush;
-      // PrintVector(Ivec, 2, " ");
-      // std::cout << "Kt = " << KTotal << std::flush;
+      // //std::cout << Kf << " " << std::flush;
+      // //PrintVector(Ivec, 2, " ");
+      // //std::cout << "Kt = " << KTotal << std::flush;
       int KIndex = DeltaKIndex( KTotal, Kn );//* FBZ
-      // std::cout << " to " << KTotal << std::endl;
+      // //std::cout << " to " << KTotal << std::endl;
       if ( KTotal == TargetK ){
         std::vector<int> tmp = Ivec;
         std::vector<int>::iterator it = tmp.begin();
@@ -207,7 +186,6 @@ void Basis::PhononK(const std::vector<int> Kn, const int TargetK, const int With
         assert( tmp.size() == L + 1 - WithoutK0Phonon );
         work.push_back( tmp );
         BTags.push_back( BosonBasisTag(tmp) );
-        // PrintVector(tmp, 3, " ");
       }
       while ( Ivec[L - WithoutK0Phonon - 1] < Np ) {//* Go over all possible phonon configurations in Np phonon sector
         //? For instance, L = 4, N = 2
@@ -227,7 +205,6 @@ void Basis::PhononK(const std::vector<int> Kn, const int TargetK, const int With
             break;
           }
         }
-        ////std::cout << "IdxK=" << IdxK << std::endl;
         Ivec[IdxK] = Ivec[IdxK] - 1;
         NWork = std::accumulate(Ivec.begin(), Ivec.begin() + IdxK + 1, 0);
         Ivec.at(IdxK+1) = (int)(Np - NWork);
@@ -236,7 +213,6 @@ void Basis::PhononK(const std::vector<int> Kn, const int TargetK, const int With
             Ivec.at(cnt) = 0;
           }
         }
-        ////std::cout << Kn.size() << " " << Ivec.size() << std::endl;
         NWork = std::accumulate(Ivec.begin(), Ivec.end(), 0);
         assert( Np == NWork );
         KTotal = Kn.at(Kf);
@@ -249,7 +225,6 @@ void Basis::PhononK(const std::vector<int> Kn, const int TargetK, const int With
           assert( tmp.size() == L - WithoutK0Phonon + 1 );
           work.push_back( tmp );
           BTags.push_back( BosonBasisTag(tmp) );
-          // PrintVector(tmp, 3, " ");
         }
       }
     }

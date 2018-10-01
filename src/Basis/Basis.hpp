@@ -55,10 +55,10 @@ public:
     return GetHilbertSpace();
   };
 
-  //* Fermion functions */
+  //* Fermion functions
   void Fermion();
   void Fermion( const int IncludeAllU1 );// This has no U(1) symmetry.
-  //* Spin - 1/2, share the Fermion functions */
+  //* Spin - 1/2, share the Fermion functions
   void SpinOneHalf();
   void TIsing();
 
@@ -78,7 +78,7 @@ public:
     return NTotal.at(idx);
   };//* for Transverse Ising spin
 
-  //* Boson functions */
+  //* Boson functions
   void Boson();
   void PhononLFS();
   void PhononR();
@@ -98,12 +98,30 @@ public:
     return idx;
   };
 
-  //* Phonon functions */
+  //* Phonon functions
   RealType CreatePhonon( std::vector<int>& state, const int site=0 )const;
   RealType DestroyPhonon( std::vector<int>& state, const int site=0 )const;
-  //* Holstein Phonon - Limited functional space */
+  //* Holstein Phonon - Limited functional space
   RealType FermionJumpRight( std::vector<int>& state, const int NumJumps = 1 )const;
   RealType FermionJumpLeft( std::vector<int>& state, const int NumJumps = 1 )const;
+  std::vector<std::vector<int> > ApplyOffdiagonal( const std::vector<std::vector<int> >& InputStates );
+
+  //*DEBUG use
+  inline bool DummyCheckState(const RealType _BTag, const std::vector<int> _State)const{
+    size_t index = GetIndexFromTag(_BTag);
+    std::vector<int> BState = BStates.at(index);
+    assert( _State.size() == BState.size() );
+    for ( size_t i = 0; i< BState.size(); i++ ){
+      if ( _State.at(i) != BState.at(i) ){
+        std::cout << "Input state   : " << std::flush;
+        PrintVector(_State, 3, " ");
+        std::cout << "State from tag: " << std::flush;
+        PrintVector(BState, 3, " ");
+        return false;
+      }
+    }
+    return true;
+  };
 
   friend std::ostream& operator<<(std::ostream& os, const Basis& st);
 private:
@@ -111,16 +129,11 @@ private:
   size_t N;
   bool isFermion;
   bool HaveU1;
-  std::vector< std::vector<int> > BStates;//for Boson
-  std::vector<RealType> BTags;//for Boson
-  std::vector<int> FStates;//for Fermion, and SpinOneHalf.
-  std::vector<size_t> FTags;//for Fermion, and SpinOneHalf.
-  std::vector<int> NTotal;//for Fermion without U(1).
-
-  /* Holstein Phonon */
-  std::vector<std::vector<int> > ApplyOffdiagonal( const std::vector<std::vector<int> >& InputStates );
-  void DummyCheckState();
-
+  std::vector< std::vector<int> > BStates;//! Boson
+  std::vector<RealType> BTags;//! Boson
+  std::vector<int> FStates;//! Fermion, and SpinOneHalf.
+  std::vector<size_t> FTags;//! Fermion, and SpinOneHalf.
+  std::vector<int> NTotal;//! Fermion without U(1).
 };
 
 RealType BosonBasisTag( const std::vector<int> vec );
