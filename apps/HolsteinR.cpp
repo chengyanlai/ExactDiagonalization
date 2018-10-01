@@ -197,10 +197,8 @@ ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<Comple
       int Nbj = nb.at(j);
       ComplexType CoffTmp(1.0e0, 0.0e0);
       for ( size_t k = 1; k <= Nbj; k++ ){
-        // Check this
         ComplexType tmp = alphas.at(j) / std::sqrt(RealType(k));
         CoffTmp *= tmp;
-        // if ( std::abs(tmp) < 1.0e-10 ) break;
       }
       if ( j == 0 ) Coff = CoffTmp;
       else Coff *= CoffTmp;
@@ -214,7 +212,7 @@ ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<Comple
   RealMatrixType ME(L, L, arma::fill::zeros);
   for ( size_t i = 0; i < L; i++ ){
     Vecs.at(i) = arma::normalise(Vecs.at(i));
-    RealType E0 = RealPart( arma::cdot(Vecs.at(i), Ham0.GetTotalHamiltonian() * Vecs.at(i)) );
+    RealType E0 = RealPart( arma::cdot(Vecs.at(i), Ham0.GetHCouple() * Vecs.at(i)) );
     Eis.push_back(E0);
     ME.at(i,i) = E0;
     if ( i == L - 1 ){

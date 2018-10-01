@@ -29,8 +29,10 @@ void FHM<Tnum>::LocalPotential( const size_t spin1, const std::vector<Tnum> &Vlo
     state_id++;
   }
   if (spin1 == 0) {
+    H_Vup.zeros();
     H_Vup = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
   } else if (spin1 == 1){
+    H_Vdn.zeros();
     H_Vdn = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
   } else{
     RUNTIME_ERROR("Not support more than 2 species fermion yet!");
@@ -94,6 +96,7 @@ void FHM<Tnum>::HubbardInteraction( const std::vector<Tnum> &Uloc, const std::ve
       }
     }
   }
+  H_U.zeros();
   H_U = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
@@ -156,8 +159,10 @@ void FHM<Tnum>::NNHopping( const size_t spin1, const std::vector< Node<Tnum>* > 
     }
   }
   if (spin1 == 0) {
+    H_Jup.zeros();
     H_Jup = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
   } else if (spin1 == 1){
+    H_Jdn.zeros();
     H_Jdn = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
   }
 }

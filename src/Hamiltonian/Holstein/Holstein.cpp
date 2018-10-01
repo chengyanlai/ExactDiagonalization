@@ -7,6 +7,7 @@
 //* The following function designed to work with Holstein model in limited functional space - thermodynamic limit. */
 template<typename Tnum>
 void Holstein<Tnum>::PhononLocal( const RealType& Wloc, const Basis& bs ){
+  H_Phonon.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int state_id = 0;
@@ -21,6 +22,7 @@ void Holstein<Tnum>::PhononLocal( const RealType& Wloc, const Basis& bs ){
 
 template<typename Tnum>
 void Holstein<Tnum>::FermionPhononCoupling( const RealType& Gloc, const Basis& bs){
+  H_Couple.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   std::vector< std::vector<int> > States = bs.BStates;
   size_t rid = 0;
@@ -47,6 +49,7 @@ void Holstein<Tnum>::FermionPhononCoupling( const RealType& Gloc, const Basis& b
 
 template<>
 void Holstein<ComplexType>::FermionNNHopping( const RealType& k, const RealType& J, const Basis& bs, const RealType& Phi){
+  H_Kinetic.zeros();
   std::vector<std::tuple<int, int, ComplexType> > MatElemts;
   int id1 = 0;
   for ( std::vector<int> b : bs.BStates ){
@@ -83,6 +86,7 @@ void Holstein<ComplexType>::HolsteinModel( const std::vector<Basis>& bs, const R
 //* The following function designed to work with Holstein model in real space. */
 template<typename Tnum>
 void Holstein<Tnum>::PhononR( const int& RPoints, const RealType& W, const Basis& bs ){
+  H_Phonon.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int state_id = 0;
@@ -100,6 +104,7 @@ void Holstein<Tnum>::PhononR( const int& RPoints, const RealType& W, const Basis
 
 template<typename Tnum>
 void Holstein<Tnum>::FermionR( const int& RPoints, const RealType& J, const Basis& bs ){
+  H_Kinetic.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   for ( size_t j = 0; j < RPoints; j++ ){
     size_t jp = (j == RPoints - 1) ? 0 : j + 1;
@@ -116,6 +121,7 @@ void Holstein<Tnum>::FermionR( const int& RPoints, const RealType& J, const Basi
 
 template<typename Tnum>
 void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, const Basis& bs ){
+  H_Couple.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   std::vector< std::vector<int> > States = bs.BStates;
   size_t rid = 0;
@@ -157,17 +163,15 @@ void Holstein<Tnum>::HolsteinModelR( const int& RPoints, const std::vector<Basis
   PhononR( RPoints, W, bs.at(0) );
   FermionR( RPoints, J, bs.at(0) );
   FermionPhononR( RPoints, G, bs.at(0) );
-  /* Build H_total */
+  //* Build H_total */
   this->H_total = H_Phonon + H_Kinetic + H_Couple;
-  H_Phonon.set_size(0,0);
-  H_Kinetic.set_size(0,0);
-  H_Couple.set_size(0,0);
 }
 
 
 //* The following function designed to work with Holstein model in momentum space. */
 template<typename Tnum>
 void Holstein<Tnum>::PhononK( const Basis& bs, const RealType& W ){
+  H_Phonon.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int state_id = 0;
@@ -182,6 +186,7 @@ void Holstein<Tnum>::PhononK( const Basis& bs, const RealType& W ){
 
 template<typename Tnum>
 void Holstein<Tnum>::FermionK( const std::vector<int>& KPoints, const Basis& bs, const RealType& J, const RealType& Phi){
+  H_Kinetic.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int state_id = 0;
@@ -196,6 +201,7 @@ void Holstein<Tnum>::FermionK( const std::vector<int>& KPoints, const Basis& bs,
 
 template<typename Tnum>
 void Holstein<Tnum>::FermionPhononK( const std::vector<int>& KPoints, const Basis& bs, const RealType& G, const int& Nmax, const int WithoutK0Phonon){
+  H_Couple.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
   int L = bs.GetL();

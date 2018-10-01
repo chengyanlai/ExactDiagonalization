@@ -20,7 +20,7 @@
 
 const int WithoutK0Phonon = 1;
 int L = 2;
-int N = 5 * L;
+int N = 10 * L;
 const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
