@@ -31,10 +31,10 @@ if Space == "R":
     APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z 3"))
 elif Space == "K":
     TSteps = 100000
-    L = 2
+    L = 4
     Nh = 15 * L
     Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
-    APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 100 0"))
+    APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 400 0"))
 
 APPs.append("/bin/touch DONE")
 DataDir = os.path.join(ExecDir, "ED", "HTP-"+Space, Prefix1)

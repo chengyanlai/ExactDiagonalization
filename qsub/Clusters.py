@@ -29,8 +29,8 @@ if platform.system() == "Linux":
         if socket.gethostname()[:2] == "gr" or socket.gethostname()[:2] == "ba":
             MaxNumThreads = 18
         MaxWallTime = '16:0:0'
-        SrcDir = "/usr/projects/cint/cint_sces/ExactDiagonalization"
-        ExecDir = "/net/scratch3/chengyanlai"
+        SrcDir = "/users/chengyanlai/GitRepo/ExactDiagonalization"
+        ExecDir = "/net/scratch4/chengyanlai"
     elif socket.gethostname()[:10] == 'tdiv-qspin':
         Cluster = "QSpin"
         MaxNumThreads = 32
