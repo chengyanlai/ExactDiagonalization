@@ -211,14 +211,29 @@ ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<Comple
     }
   }
   std::vector<RealType> Eis;
+  RealMatrixType ME(L, L, arma::fill::zeros);
   for ( size_t i = 0; i < L; i++ ){
     Vecs.at(i) = arma::normalise(Vecs.at(i));
     RealType E0 = RealPart( arma::cdot(Vecs.at(i), Ham0.GetTotalHamiltonian() * Vecs.at(i)) );
     Eis.push_back(E0);
+    ME.at(i,i) = E0;
+    if ( i == L - 1 ){
+      ME.at(0, i) = -1.0;
+      ME.at(i, 0) = -1.0;
+    }else{
+      ME.at(i+1, i) = -1.0;
+      ME.at(i, i+1) = -1.0;
+    }
   }
   PrintVector(LogOut, Eis);
-  int index = std::distance(Eis.begin(), std::min_element(Eis.begin(), Eis.end()) );
-  return Vecs.at(index);
+  RealVectorType eigval;
+  RealMatrixType eigvec;
+  arma::eig_sym(eigval, eigvec, ME);
+  ComplexVectorType out(Ham0.GetTotalHilbertSpace(), arma::fill::zeros);
+  for ( size_t i = 0; i < L; i++ ) out += eigvec.col(0)[i] * Vecs.at(i);
+  return arma::normalise(out);
+  // int index = std::distance(Eis.begin(), std::min_element(Eis.begin(), Eis.end()) );
+  // return Vecs.at(index);
 }
 
 void Dynamics(const std::string prefix, const std::string InitialState, const int S1, const int S2, const int MeasureEvery, const int SaveWFEvery ){
