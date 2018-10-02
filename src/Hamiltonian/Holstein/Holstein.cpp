@@ -4,7 +4,7 @@
 #include <numeric>
 #include "src/Hamiltonian/Holstein/Holstein.hpp"
 
-//* The following function designed to work with Holstein model in limited functional space - thermodynamic limit. */
+//* The following function designed to work with Holstein model in limited functional space - thermodynamic limit.
 template<typename Tnum>
 void Holstein<Tnum>::PhononLocal( const RealType& Wloc, const Basis& bs ){
   H_Phonon.zeros();
@@ -83,7 +83,7 @@ void Holstein<ComplexType>::HolsteinModel( const std::vector<Basis>& bs, const R
 }
 
 
-//* The following function designed to work with Holstein model in real space. */
+//* The following function designed to work with Holstein model in real space.
 template<typename Tnum>
 void Holstein<Tnum>::PhononR( const int& RPoints, const RealType& W, const Basis& bs ){
   H_Phonon.zeros();
@@ -168,7 +168,7 @@ void Holstein<Tnum>::HolsteinModelR( const int& RPoints, const std::vector<Basis
 }
 
 
-//* The following function designed to work with Holstein model in momentum space. */
+//* The following function designed to work with Holstein model in momentum space.
 template<typename Tnum>
 void Holstein<Tnum>::PhononK( const Basis& bs, const RealType& W ){
   H_Phonon.zeros();
