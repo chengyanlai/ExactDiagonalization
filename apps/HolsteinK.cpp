@@ -227,7 +227,6 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
           RealMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
           wVecs.col(0) = JVec;
           Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
-          Ham0.eigh(wVals, wVecs, NumPeaks, false);
           SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
         }else{
           SpectralPeaks(Vals[i], JVec, Vals, Vecs, PeakLocation, PeakWeight, NumPeaks);
