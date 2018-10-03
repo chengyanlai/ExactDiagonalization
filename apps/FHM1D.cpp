@@ -247,11 +247,11 @@ void Equilibrium(const std::string prefix){
     LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin);
   }catch(H5::FileIException){
     L = 14;
-    OBC = 1;
-    N1 = 7;
-    N2 = 7;
-    Jin = std::vector<RealType>(L-1, 1.0);// OBC
-    Uin = std::vector<RealType>(L, 12.0);
+    OBC = 0;
+    N1 = 2;
+    N2 = 2;
+    Jin = std::vector<RealType>(L, 1.0);// OBC
+    Uin = std::vector<RealType>(L, 0.0);
     Vin = std::vector<RealType>(L, 0.0);
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
@@ -359,16 +359,16 @@ void Spectral(const std::string prefix){
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
     L = 14;
-    OBC = 1;
-    N1 = 7;
-    N2 = 7;
-    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
-    Ueqm = std::vector<RealType>(L,12.0);
+    OBC = 0;
+    N1 = 2;
+    N2 = 2;
+    Jeqm = std::vector<RealType>(L, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 0.0);
     Veqm = std::vector<RealType>(L, 0.0);
-    Uch = std::vector<RealType>(L,12.0);
+    Uch = std::vector<RealType>(L, 0.0);
     Vch = std::vector<RealType>(L, 0.0);
     CoreHole = L / 2;
-    Vch.at(CoreHole) = -20.0;
+    Vch.at(CoreHole) = -5.0;
     Species = 0;
     Type = 1;
   }
@@ -731,16 +731,16 @@ void XASDynamics(const std::string prefix, const int MeasureEvery = 2, const int
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
     L = 14;
-    OBC = 1;
-    N1 = 7;
-    N2 = 7;
-    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
-    Ueqm = std::vector<RealType>(L, 12.0);
+    OBC = 0;
+    N1 = 2;
+    N2 = 2;
+    Jeqm = std::vector<RealType>(L, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 0.0);
     Veqm = std::vector<RealType>(L, 0.0);
-    Uch = std::vector<RealType>(L, 12.0);
+    Uch = std::vector<RealType>(L, 0.0);
     Vch = std::vector<RealType>(L, 0.0);
     CoreHole = L/2;
-    // Vch.at(CoreHole) = -12.0;
+    Vch.at(CoreHole) = -5.0;
     TSteps = 3000;
     dt = 0.005;
     Species = 0;
