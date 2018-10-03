@@ -368,11 +368,11 @@ void Spectral(const std::string prefix){
     Uch = std::vector<RealType>(L,12.0);
     Vch = std::vector<RealType>(L, 0.0);
     CoreHole = L / 2;
-    Vch.at(CoreHole) = 0.0;
+    Vch.at(CoreHole) = -20.0;
     Species = 0;
     Type = 1;
   }
-  /* Eqm or Pump */
+  //* Eqm or Pump
   LogOut << "Build Eqm/Pump Basis - " << std::flush;
   Basis F1EQM(L, N1, true);
   F1EQM.Fermion();
@@ -388,15 +388,15 @@ void Spectral(const std::string prefix){
   LogOut << "DONE!" << std::endl;
   LogOut << "Build Eqm Hamiltonian - " << std::flush;
   FHM<ComplexType> EqmHam( EqmBases );
-  // Potential
+  //* Potential
   std::vector<ComplexType> Vw(Veqm.begin(), Veqm.end());
   std::vector< std::vector<ComplexType> > EqmVloc = vec(Vw, Vw);
-  // Interaction
+  //* Interaction
   std::vector<ComplexType> EqmUloc(Ueqm.begin(), Ueqm.end());
   EqmHam.FermiHubbardModel(EqmBases, Lattice, EqmVloc, EqmUloc);
   LogOut << "Hermitian = " << EqmHam.CheckHermitian() << ", Hilbert space = " << EqmHam.GetTotalHilbertSpace() << ", DONE!" << std::endl;
-  /* Core Hole */
-  LogOut << "Build Core Hole Basis - " << std::flush;
+  //* Create excitation
+  LogOut << "Build Excited Basis - " << std::flush;
   int N1CH, N2CH;
   if ( Species == 0 ){
     if ( Type == 1 ) N1CH = N1 + 1;
@@ -415,7 +415,7 @@ void Spectral(const std::string prefix){
   CoreHoleBases.push_back(F1CH);
   CoreHoleBases.push_back(F2CH);
   LogOut << "DONE!" << std::endl;
-  LogOut << "Build Core Hole Hamiltonian - " << std::flush;
+  LogOut << "Build Excited Hamiltonian - " << std::flush;
   FHM<ComplexType> CoreHoleHam( CoreHoleBases );
   // Potential
   std::vector<ComplexType> CoreHoleVw(Vch.begin(), Vch.end());
@@ -425,7 +425,7 @@ void Spectral(const std::string prefix){
   CoreHoleHam.FermiHubbardModel(CoreHoleBases, Lattice, CoreHoleVloc, CoreHoleUloc);
   LogOut << "Hermitian = " << CoreHoleHam.CheckHermitian() << ", Hilbert space = " << CoreHoleHam.GetTotalHilbertSpace() << ", DONE!" << std::endl;
 
-  // Load Wavefunction
+  //* Load Wavefunction
   RealVectorType ValInput;
   ComplexVectorType VecInput;
   try{
@@ -434,7 +434,6 @@ void Spectral(const std::string prefix){
     LogOut << "Load Pump Wavefunction - " << std::flush;
     HDF5IO *WFFile = new HDF5IO(prefix + "PumpWF.h5");
     WFFile->LoadVector("WF", "Vec", VecInput);
-    // WFFile->LoadNumber("WF", "Energy", E0);
     delete WFFile;
   }catch(H5::FileIException){
     try{
@@ -450,13 +449,8 @@ void Spectral(const std::string prefix){
     }
   }
   LogOut << VecInput.n_rows << " DONE!" << std::endl;
-  // Create Core Hole on wf
-  LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
+  LogOut << "Operate on Wave function on site @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
   ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
-  // HDF5IO* file2 = new HDF5IO("SpectralWF.h5");
-  // std::string gname = "WF-0";
-  // file2->SaveVector(gname, "Vec", VecInit);
-  // delete file2;
   LogOut << ", DONE!" << std::endl;
 
 
@@ -466,9 +460,7 @@ void Spectral(const std::string prefix){
   std::vector<double> PeakLocations, PeakWeights;
   DTM Vecs(VecInit.n_rows, MaxNumPeak);
   RealVectorType Vals;
-  // Vecs.col(0) = VecInit;
-  // CoreHoleHam.eigh(Vals, Vecs, MaxNumPeak, false);
-  CoreHoleHam.HKrylov(Vals, Vecs, VecInit, MaxNumPeak);
+  CoreHoleHam.SpectralH(Vals, Vecs, VecInit, MaxNumPeak);
   SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
   LogOut << " Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::flush;
   LogOut << " DONE!" << std::endl;

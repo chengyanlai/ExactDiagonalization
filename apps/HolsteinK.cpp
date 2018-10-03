@@ -19,8 +19,8 @@
 //? cSpell:words eigenstate phonon Diagonalize
 
 const int WithoutK0Phonon = 1;
-int L = 2;
-int N = 20 * L;
+int L = 4;
+int N = 5 * L;
 const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
@@ -101,9 +101,21 @@ RealVectorType Jq0State(const std::vector<Basis> &Bases, const std::vector<int> 
   int cnt = 0;
   for ( auto &nbi : b ){
     int Kfi = Kn.at(nbi.at(0));
-    RealType Kf = Kfi * PI / RealType(L);
+    RealType Kf = Kfi * PI / RealType(L/2);
     out(cnt) = sin(Kf) * Vec(cnt);
     cnt++;
+  }
+  return out;
+}
+
+RealMatrixType Jq0Vecs(const std::vector<Basis> &Bases, const std::vector<int> &Kn, const RealMatrixType &Vecs){
+  int L = Bases.at(0).GetL();
+  std::vector< std::vector<int> > b = Bases.at(0).GetBStates();
+  RealMatrixType out(Vecs.n_rows, Vecs.n_cols, arma::fill::zeros);
+  for ( size_t i = 0; i < Vecs.n_cols; i++ ){
+    RealVectorType vec = Vecs.col(i);
+    RealVectorType J0vec = Jq0State(Bases, Kn, vec);
+    out.col(i) = J0vec;
   }
   return out;
 }
@@ -189,6 +201,9 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     HDF5IO* file = new HDF5IO(prefix + "Holstein.K.h5");
     std::string gnameK = std::to_string( (unsigned long) k );
     file->SaveNumber(gnameK, "K", TargetK);
+    RealMatrixType JVecs = Jq0Vecs(Bases, Kn, Vecs);
+    RealMatrixType Jmn = Vecs.t() * JVecs;
+    file->SaveMatrix(gnameK, "Jmn", Jmn);
     for ( size_t i = 0; i < NEV; i++ ){
       std::string gname = gnameK;
       gname.append("/S-");
@@ -206,11 +221,12 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
       if ( NumPeaks ){
         std::vector<double> PeakLocation;
         std::vector<double> PeakWeight;
-        RealVectorType wVals(NumPeaks, arma::fill::zeros);
-        RealMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
         RealVectorType JVec = Jq0State(Bases, Kn, Vec);
         if ( !(FullSpectrum) ){
+          RealVectorType wVals(NumPeaks, arma::fill::zeros);
+          RealMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
           wVecs.col(0) = JVec;
+          Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
           Ham0.eigh(wVals, wVecs, NumPeaks, false);
           SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
         }else{

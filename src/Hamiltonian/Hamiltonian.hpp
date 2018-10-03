@@ -73,8 +73,7 @@ public:
   void eigh( RealVectorType &Vals, MatrixType &Vecs, const int nev=4, const bool randomInitial=true, const std::string Target="SR")const;
   void diag( RealVectorType &Vals, MatrixType &Vec)const;
   void expH( const ComplexType Prefactor, ComplexVectorType &Vec, const size_t Kmax = 20 )const;
-  void HKrylov( RealVectorType &Vals, ComplexMatrixType &Vecs, const ComplexVectorType& Vec, const size_t Kmax )const;
-  // //RealVectorType expVals( const RealType Prefactor, const RealVectorType Vec);
+  void SpectralH( RealVectorType &Vals, MatrixType &Vecs, const VectorType &Vec, const size_t Kmax )const;
 
 protected:
   SparseMatrixType H_total;

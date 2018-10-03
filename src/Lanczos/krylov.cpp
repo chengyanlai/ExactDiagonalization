@@ -12,19 +12,17 @@
 #endif
 
 void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const ComplexType Prefactor, const size_t Kmax, const double threshNorm){
-#if defined(MKL)
-  mkl_set_num_threads(NumCores);
-#endif
+  #if defined(MKL)
+    mkl_set_num_threads(NumCores);
+  #endif
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
-  // ComplexMatrixType Vm = ComplexMatrixType::Zero(Vec.size(), Kmax);
   ComplexMatrixType Vm(Vec.size(), Kmax, arma::fill::zeros);
   std::vector<RealType> Alphas;
   std::vector<RealType> Betas;
   int cntK = 0;
-  //NOTE: normalized Vec
-  // Vec.normalize();
+  //* Normalized Vec
   Vm.col(cntK) = arma::normalise(Vec);
   while ( cntK < Kmax ) {
     ComplexVectorType work = A * Vm.col(cntK);
@@ -62,18 +60,17 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
   }
   int Kused = cntK;
   if ( Kused == 1 ){
-    /* NOTE: This is a special case that input vector is eigenvector */
+    //* NOTE: This is a special case that input vector is eigenvector
     Vec = exp(Prefactor * Alphas.at(0)) * Vec;
   } else{
-    /* NOTE: The floowing codes use MKL Lapack to solve the tri-diagonal matrix */
+    //* NOTE: The floowing codes use MKL Lapack to solve the tri-diagonal matrix
     RealType* d = &Alphas[0];
     RealType* e = &Betas[0];
     RealType* z = (RealType*)malloc(Kused * Kused * sizeof(RealType));
     RealType* work = (RealType*)malloc(4 * Kused * sizeof(RealType));
     int info;
-    //dstev - LAPACK
+    //* dstev - LAPACK
     dstev((char*)"V", &Kused, d, e, z, &Kused, work, &info);
-    // Eigen::Map<RealMatrixType> Kmat(z, Kused, Kused);
     RealMatrixType Kmat(z, Kused, Kused);
     Kmat.t();
     ComplexMatrixType Dmat(Kused, Kused, arma::fill::zeros);
@@ -84,7 +81,7 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
       std::cout << "Lapack INFO = " << info << std::endl;
       RUNTIME_ERROR("Error in Lapack function 'dstev'");
     }
-    /* NOTE: After Solving tri-diagonal matrix, we need Kmat and Dmat to proceed further. */
+    //* NOTE: After Solving tri-diagonal matrix, we need Kmat and Dmat to proceed further.
     if ( DEBUG > 4 ) {
       RealMatrixType tmpKmat = Kmat;
       tmpKmat.t();
@@ -92,29 +89,29 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
     }
     Vm.reshape( Vec.size(), Kused );
     ComplexMatrixType Otmp = Vm * Kmat;
-    // ComplexMatrixType Otmp = Vm.submat( 0, 0, Vec.size(), Kused ) * Kmat;
     Vec = ( Otmp * Dmat ) * ( Otmp.t() * Vec );
   }
 }
 
-void krylov(const ComplexSparseMatrixType &A, const ComplexVectorType &Vec, ComplexMatrixType& OTrans, RealVectorType& Dvec, const size_t Kmax, const double threshNorm){
-#if defined(MKL)
-  mkl_set_num_threads(NumCores);
-#endif
+template<typename Tnum>
+void krylov(const arma::SpMat<Tnum> &A, const arma::Col<Tnum> &Vec, arma::Mat<Tnum> &OTrans, RealVectorType &Dvec, const size_t Kmax, const double threshNorm){
+  #if defined(MKL)
+    mkl_set_num_threads(NumCores);
+  #endif
   if (DEBUG) assert( Kmax > 2 );
   RealType alpha;
   RealType beta = 1.0;
-  ComplexMatrixType Vm(Vec.size(), Kmax, arma::fill::zeros);
+  arma::Mat<Tnum> Vm(Vec.size(), Kmax, arma::fill::zeros);
   std::vector<RealType> Alphas;
   std::vector<RealType> Betas;
   int cntK = 0;
-  //NOTE: normalized Vec
+  //* NOTE: normalized Vec
   Vm.col(cntK) = arma::normalise(Vec);
   while ( cntK < Kmax ) {
-    ComplexVectorType work = A * Vm.col(cntK);
+    arma::Col<Tnum> work = A * Vm.col(cntK);
     if( cntK > 0 ) work -= beta * Vm.col(cntK-1);
-    ComplexType alpha_c = arma::cdot( work,  Vm.col(cntK) );
-    alpha = alpha_c.real();
+    Tnum alpha_c = arma::cdot( work,  Vm.col(cntK) );
+    alpha = RealPart(alpha_c);
     work -= alpha * Vm.col(cntK);
     beta = arma::norm(work);
     Alphas.push_back(alpha);
@@ -122,7 +119,6 @@ void krylov(const ComplexSparseMatrixType &A, const ComplexVectorType &Vec, Comp
       std::cout <<"@ " << cntK << " alpha is " << alpha << " beta is " << beta << std::endl;
     }
     if( beta > threshNorm ){
-      // work.normalize();
       if( cntK+1 < Kmax ) {
         Vm.col(cntK+1) = arma::normalise(work);
         Betas.push_back(beta);
@@ -138,8 +134,7 @@ void krylov(const ComplexSparseMatrixType &A, const ComplexVectorType &Vec, Comp
     assert( Alphas.size() == cntK );
     assert( Betas.size() == cntK - 1 );
     if ( DEBUG > 5 ) {
-      ComplexMatrixType tmpVm = Vm;
-      // tmpVm.adjointInPlace();
+      arma::Mat<Tnum> tmpVm = Vm;
       tmpVm.t();
       std::cout << "Vm^H * Vm " << std::endl << tmpVm * Vm << std::endl;
     }
@@ -150,15 +145,14 @@ void krylov(const ComplexSparseMatrixType &A, const ComplexVectorType &Vec, Comp
     OTrans = Vm;
     Dvec = RealVectorType(Kused, arma::fill::ones);
   }else{
-    /* NOTE: The floowing codes use MKL Lapack to solve the tri-diagonal matrix */
+    //* NOTE: The floowing codes use MKL Lapack to solve the tri-diagonal matrix
     RealType* d = &Alphas[0];
     RealType* e = &Betas[0];
     RealType* z = (RealType*)malloc(Kused * Kused * sizeof(RealType));
     RealType* work = (RealType*)malloc(4 * Kused * sizeof(RealType));
     int info;
-    //dstev - LAPACK
+    //* dstev - LAPACK
     dstev((char*)"V", &Kused, d, e, z, &Kused, work, &info);
-    // Eigen::Map<RealMatrixType> Kmat(z, Kused, Kused);
     RealMatrixType Kmat(z, Kused, Kused);
     Kmat.t();
     Dvec = RealVectorType(Kused, arma::fill::zeros);
@@ -173,3 +167,5 @@ void krylov(const ComplexSparseMatrixType &A, const ComplexVectorType &Vec, Comp
     OTrans = Vm * Kmat;
   }
 }
+template void krylov(const arma::SpMat<RealType> &A, const arma::Col<RealType> &Vec, arma::Mat<RealType> &OTrans, RealVectorType &Dvec, const size_t Kmax, const double threshNorm);
+template void krylov(const arma::SpMat<ComplexType> &A, const arma::Col<ComplexType> &Vec, arma::Mat<ComplexType> &OTrans, RealVectorType &Dvec, const size_t Kmax, const double threshNorm);

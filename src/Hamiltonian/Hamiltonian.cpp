@@ -31,9 +31,9 @@ void Hamiltonian<ComplexType>::expH( const ComplexType Prefactor, ComplexVectorT
   krylovEXP(H_total, Vec, Prefactor, Kmax);
 }
 
-template<>
-void Hamiltonian<ComplexType>::HKrylov( RealVectorType &Vals, ComplexMatrixType &Vecs, const ComplexVectorType& Vec, const size_t Kmax )const{
-  krylov(H_total, Vec, Vecs, Vals, Kmax);
+template<typename Tnum>
+void Hamiltonian<Tnum>::SpectralH( RealVectorType &Eshift, MatrixType &Vecs, const VectorType &Vec, const size_t Kmax )const{
+  krylov(H_total, Vec, Vecs, Eshift, Kmax);
 }
 
 /* Matrix vector product with MomHamiltonian: y = H_total * x + alpha * y
