@@ -17,6 +17,10 @@
   #include "mkl.h"
 #endif
 
+#if not defined(NumCores)
+  #define NumCores 16
+#endif
+
 #ifdef MPIPARALLEL
   #include <mpi.h>
 #endif

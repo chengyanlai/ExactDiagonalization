@@ -16,11 +16,15 @@
   #include "mkl.h"
 #endif
 
+#if not defined(NumCores)
+  #define NumCores 16
+#endif
+
 //? cSpell:words eigenstate phonon Diagonalize
 
 const int WithoutK0Phonon = 1;
 int L = 4;
-int N = 5 * L;
+int N = 4 * L;
 const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
@@ -220,17 +224,23 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
       LogOut << "], Total = " << RealPart(arma::accu(Nfi)) << std::endl;
       if ( NumPeaks ){
         std::vector<double> PeakLocation;
+        PeakLocation.clear();
         std::vector<double> PeakWeight;
+        PeakWeight.clear();
         RealVectorType JVec = Jq0State(Bases, Kn, Vec);
+        RealVectorType wVals(NumPeaks, arma::fill::zeros);
+        RealMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
         if ( !(FullSpectrum) ){
-          RealVectorType wVals(NumPeaks, arma::fill::zeros);
-          RealMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
           wVecs.col(0) = JVec;
           Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
-          SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
         }else{
-          SpectralPeaks(Vals[i], JVec, Vals, Vecs, PeakLocation, PeakWeight, NumPeaks);
+          NumPeaks = Vecs.n_cols;
+          wVals = Vals;
+          wVecs = Vecs;
+          // //wVecs.col(0) = JVec;
+          // //Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
         }
+        SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
         file->SaveStdVector(gname, "JJw", PeakLocation);
         file->SaveStdVector(gname, "JJh", PeakWeight);
         double Wt = std::accumulate(PeakWeight.begin(), PeakWeight.end(), 0.0);
@@ -265,9 +275,9 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
 //* main program
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
-#ifdef MKL
-  mkl_set_num_threads(NumCores);
-#endif
+  #ifdef MKL
+    mkl_set_num_threads(NumCores);
+  #endif
   if ( std::atoi(argv[1]) == 0 ){
     int NEV = 40;
     if ( argc > 2 ) NEV = std::atoi(argv[2]);
