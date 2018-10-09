@@ -330,10 +330,10 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
   std::string gname = "Obs-0/";
   ComplexType Lecho = arma::cdot(VecInit, VecDyn);
   file2->SaveNumber(gname, "F", Lecho);
-  ComplexVectorType JVec = JPsi(Bases, VecInit, Ham0);
-  ComplexVectorType JVecDyn = JPsi(Bases, VecDyn, Ham0);
-  ComplexType JJt = arma::cdot(JVecDyn, JVec);
-  file2->SaveNumber(gname, "JJt", JJt);
+  // ComplexVectorType JVec = JPsi(Bases, VecInit, Ham0);
+  // ComplexVectorType JVecDyn = JPsi(Bases, VecDyn, Ham0);
+  // ComplexType JJt = arma::cdot(JVecDyn, JVec);
+  // file2->SaveNumber(gname, "JJt", JJt);
   ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
   file2->SaveVector(gname, "Phonon", Npi);
   ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);
@@ -350,8 +350,8 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
     // Evolve the state
     Ham0.expH(Prefactor, VecDyn);
     VecDyn = arma::normalise(VecDyn);
-    Ham0.expH(Prefactor, JVec);
-    JVec = arma::normalise(JVec);
+    // Ham0.expH(Prefactor, JVec);
+    // JVec = arma::normalise(JVec);
     if ( cntP % MeasureEvery == 0 ){
       file2 = new HDF5IO(prefix + SaveFile + ".h5");
       std::string gname = "Obs-";
@@ -359,9 +359,9 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
       gname.append("/");
       Lecho = arma::cdot(VecInit, VecDyn);
       file2->SaveNumber(gname, "F", Lecho);
-      JVecDyn = JPsi(Bases, VecDyn, Ham0);
-      JJt = arma::cdot(JVecDyn, JVec);
-      file2->SaveNumber(gname, "JJt", JJt);
+      // JVecDyn = JPsi(Bases, VecDyn, Ham0);
+      // JJt = arma::cdot(JVecDyn, JVec);
+      // file2->SaveNumber(gname, "JJt", JJt);
       ComplexVectorType Npi = NPhonon( Bases, VecDyn, Ham0);
       file2->SaveVector(gname, "Phonon", Npi);
       ComplexMatrixType Nfi = NFermion( Bases, VecDyn, Ham0);

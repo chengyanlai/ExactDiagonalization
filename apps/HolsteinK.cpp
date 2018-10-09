@@ -24,7 +24,7 @@
 
 const int WithoutK0Phonon = 1;
 int L = 4;
-int N = 4 * L;
+int N = 5 * L;
 const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
@@ -106,7 +106,7 @@ RealVectorType Jq0State(const std::vector<Basis> &Bases, const std::vector<int> 
   for ( auto &nbi : b ){
     int Kfi = Kn.at(nbi.at(0));
     RealType Kf = Kfi * PI / RealType(L/2);
-    out(cnt) = sin(Kf) * Vec(cnt);
+    out(cnt) = sin(Kf) * Vec(cnt);//! No normalizaztion
     cnt++;
   }
   return out;
@@ -188,7 +188,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
     RealVectorType Vals;
     RealMatrixType Vecs;
-    if ( Ham0.GetTotalHilbertSpace() > 1200 ){
+    if ( Ham0.GetTotalHilbertSpace() > 2100 ){
       Ham0.eigh(Vals, Vecs, NEV, true, Target);//* ARPACK
     }else{
       Ham0.diag(Vals, Vecs);//* Full spectrum
@@ -206,7 +206,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     std::string gnameK = std::to_string( (unsigned long) k );
     file->SaveNumber(gnameK, "K", TargetK);
     RealMatrixType JVecs = Jq0Vecs(Bases, Kn, Vecs);
-    RealMatrixType Jmn = Vecs.t() * JVecs;
+    RealMatrixType Jmn = Vecs.t() * JVecs;//* <m| j |n>
     file->SaveMatrix(gnameK, "Jmn", Jmn);
     for ( size_t i = 0; i < NEV; i++ ){
       std::string gname = gnameK;
@@ -231,7 +231,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
         RealVectorType wVals(NumPeaks, arma::fill::zeros);
         RealMatrixType wVecs(Ham0.GetTotalHilbertSpace(), NumPeaks, arma::fill::zeros);
         if ( !(FullSpectrum) ){
-          wVecs.col(0) = JVec;
+          wVecs.col(0) = JVec;//* It got normalized inside SpectralH.
           Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
         }else{
           NumPeaks = Vecs.n_cols;
@@ -240,6 +240,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
           // //wVecs.col(0) = JVec;
           // //Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
         }
+        // JVec = arma::normalise(JVec);//! Check this to be 1
         SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
         file->SaveStdVector(gname, "JJw", PeakLocation);
         file->SaveStdVector(gname, "JJh", PeakWeight);
