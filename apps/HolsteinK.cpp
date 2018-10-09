@@ -24,9 +24,9 @@
 
 const int WithoutK0Phonon = 1;
 int L = 4;
-int N = 5 * L;
+int N = 2 * L;
 const RealType Jin = 1.0;
-RealType Win = 0.50;
+RealType Win = 0.40;
 RealType Gin = 1.00;
 int Arpack = 0;
 
@@ -134,6 +134,7 @@ void SpectralPeaks( const double Eg, const RealVectorType AS, const RealVectorTy
 }
 
 void Equilibrium(const std::string prefix, int NumPeaks){
+  int NEV;
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.K.eqm", std::ios::app);
   const std::string Target = "SR";
@@ -177,13 +178,14 @@ void Equilibrium(const std::string prefix, int NumPeaks){
     LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
     RealVectorType Vals;
     RealMatrixType Vecs;
-    if ( Arpack || Ham0.GetTotalHilbertSpace() > 100000 ){
+    if ( Arpack || Ham0.GetTotalHilbertSpace() > 40000 ){
       LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
-      Ham0.eigh(Vals, Vecs, Arpack, true, Target);//* ARPACK
+      NEV = Arpack;
+      Ham0.eigh(Vals, Vecs, NEV, true, Target);//* ARPACK
     }else{
       LogOut << "Diagonalize Hamiltonian to obtain full spectrum - " << std::flush;
+      NEV = Ham0.GetTotalHilbertSpace();
       Ham0.diag(Vals, Vecs);//* Full spectrum
-      Arpack = Ham0.GetTotalHilbertSpace();
       FullSpectrum = true;
     }
     LogOut << "DONE!" << std::endl;
@@ -202,7 +204,7 @@ void Equilibrium(const std::string prefix, int NumPeaks){
     RealVectorType Jmm = arma::diagvec(Jmn);
     file->SaveVector(gnameK, "Jmm", Jmm);
     file->SaveVector(gnameK, "Em", Vals);
-    for ( size_t i = 0; i < Arpack; i++ ){
+    for ( size_t i = 0; i < NEV; i++ ){
       std::string gname = gnameK;
       gname.append("/S-");
       gname.append( std::to_string( (unsigned long)i) );
@@ -273,7 +275,7 @@ int main(int argc, char *argv[]){
   #endif
   if ( std::atoi(argv[1]) == 0 ){
     int NumPeaks = 0;
-    if ( argc > 2 ) NumPeaks = std::atoi(argv[3]);
+    if ( argc > 2 ) NumPeaks = std::atoi(argv[2]);
     Equilibrium("", NumPeaks);
   }
   return 0;
