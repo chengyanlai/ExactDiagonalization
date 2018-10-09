@@ -134,18 +134,22 @@ void SpectralPeaks( const double Eg, const RealVectorType AS, const RealVectorTy
 }
 
 void Equilibrium(const std::string prefix, int NumPeaks){
-  int NEV;
-  std::ofstream LogOut;
-  LogOut.open(prefix + "Holstein.K.eqm", std::ios::app);
-  const std::string Target = "SR";
-
   try{
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
     LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win, Arpack);
   }catch(H5::FileIException){
-    LogOut << "Use default settings." << std::endl;
+    std::cout << "Use default settings." << std::endl;
   }
+
+  int NEV;
+  const std::string Target = "SR";
+
+  std::string filename = "Holstein.K";
+  if ( Arpack ) filename.append( std::to_string((unsigned long)Arpack));
+  std::ofstream LogOut;
+  LogOut.open(prefix + filename + ".eqm", std::ios::app);
+
   //* k points */
   LogOut << "Build k-point - " << std::flush;
   std::vector<int> Kn;
@@ -195,7 +199,7 @@ void Equilibrium(const std::string prefix, int NumPeaks){
     LogOut << "\tEnergy 3 : " << std::setprecision(12) << Vals[3] << std::endl;
     LogOut << "\tEnergy 4 : " << std::setprecision(12) << Vals[4] << std::endl;
     LogOut << "\tEnergy 5 : " << std::setprecision(12) << Vals[5] << std::endl;
-    HDF5IO* file = new HDF5IO(prefix + "Holstein.K.h5");
+    HDF5IO* file = new HDF5IO(prefix + filename + ".h5");
     std::string gnameK = std::to_string( (unsigned long) k );
     file->SaveNumber(gnameK, "K", TargetK);
     RealMatrixType JVecs = Jq0Vecs(Bases, Kn, Vecs);
@@ -217,7 +221,7 @@ void Equilibrium(const std::string prefix, int NumPeaks){
       file->SaveVector(gname, "Fermion", Nfi);
       // LogOut << std::setw(3) << i << ": E = " << std::setprecision(12) << std::setw(15) << Vals[i] << ", Np = " << std::setw(14) << RealPart(arma::accu(Npi)) << ", Nf = [" << std::flush;
       // for ( size_t j = 0; j < L; j++) LogOut << std::setw(16) << RealPart(Nfi.at(j)) << ", " << std::flush;
-      LogOut << "], Total = " << RealPart(arma::accu(Nfi)) << std::endl;
+      // LogOut << "], Total = " << RealPart(arma::accu(Nfi)) << std::endl;
       if ( NumPeaks ){
         std::vector<double> PeakLocation;
         PeakLocation.clear();
