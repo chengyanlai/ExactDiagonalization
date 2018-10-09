@@ -215,8 +215,8 @@ void Equilibrium(const std::string prefix, int NumPeaks){
       file->SaveVector(gname, "Phonon", Npi);
       RealVectorType Nfi = NFermion( Bases, Vec);
       file->SaveVector(gname, "Fermion", Nfi);
-      LogOut << std::setw(3) << i << ": E = " << std::setprecision(12) << std::setw(15) << Vals[i] << ", Np = " << std::setw(14) << RealPart(arma::accu(Npi)) << ", Nf = [" << std::flush;
-      for ( size_t j = 0; j < L; j++) LogOut << std::setw(16) << RealPart(Nfi.at(j)) << ", " << std::flush;
+      // LogOut << std::setw(3) << i << ": E = " << std::setprecision(12) << std::setw(15) << Vals[i] << ", Np = " << std::setw(14) << RealPart(arma::accu(Npi)) << ", Nf = [" << std::flush;
+      // for ( size_t j = 0; j < L; j++) LogOut << std::setw(16) << RealPart(Nfi.at(j)) << ", " << std::flush;
       LogOut << "], Total = " << RealPart(arma::accu(Nfi)) << std::endl;
       if ( NumPeaks ){
         std::vector<double> PeakLocation;
