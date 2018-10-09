@@ -27,7 +27,7 @@ if platform.system() == "Linux":
         Project = "s17_cint"
         MaxNumThreads = 16
         if socket.gethostname()[:2] == "gr" or socket.gethostname()[:2] == "ba":
-            MaxNumThreads = 18
+            MaxNumThreads = 36
         MaxWallTime = '16:0:0'
         SrcDir = "/users/chengyanlai/GitRepo/ExactDiagonalization"
         ExecDir = "/net/scratch4/chengyanlai"
