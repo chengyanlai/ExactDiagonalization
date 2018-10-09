@@ -173,12 +173,13 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     Holstein<RealType> Ham0( Bases );
     Ham0.HolsteinModelK(Kn, Bases, Win, Gin, Jin, N, WithoutK0Phonon);
     LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
-    LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
     RealVectorType Vals;
     RealMatrixType Vecs;
     if ( Ham0.GetTotalHilbertSpace() > 48000 ){
+      LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
       Ham0.eigh(Vals, Vecs, NEV, true, Target);//* ARPACK
     }else{
+      LogOut << "Diagonalize Hamiltonian to obtain full spectrum - " << std::flush;
       Ham0.diag(Vals, Vecs);//* Full spectrum
       NEV = Ham0.GetTotalHilbertSpace();
       FullSpectrum = true;
