@@ -22,6 +22,7 @@ APPs = []
 
 if Space == "R":
     TSteps = 30000
+    Arpack = 1000#* No use
     L = 3
     Nh = 20 * L
     Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
@@ -34,10 +35,11 @@ if Space == "R":
     APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z 3"))
 elif Space == "K":
     TSteps = 0
+    Arpack = 0
     L = 4
-    Nh = 12 * L
+    Nh = 16 * L
     Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
-    APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 2 0"))
+    APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 0 0"))
 
 APPs.append("/bin/touch DONE")
 DataDir = os.path.join(ExecDir, "ED", "HTP-"+Space, Prefix1)
@@ -56,8 +58,7 @@ for (Omega, Lambda) in OLs:
     dset = g.create_dataset("N", data=Nh)
     dset = g.create_dataset("W", data=Omega)
     dset = g.create_dataset("G", data=Lambda)
-    dset = g.create_dataset("EShift", data=0)
-    dset = g.create_dataset("Method", data=0)
+    dset = g.create_dataset("ARPACK", data=Arpack)
     if Space == "R":
         dset = g.create_dataset("AlphaReal", data=AlphaReal)
         dset = g.create_dataset("AlphaPhase", data=AlphaPhase)

@@ -16,7 +16,6 @@ Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 Omega, Lambda = 0.4, 1.0
 Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]) ])
 
-
 APPs = []
 APPs.append(os.path.join(SrcDir, "build", "holstein.r 1 Z 0"))
 APPs.append("/bin/touch DONE")
@@ -36,8 +35,6 @@ for cnt in range(1, 40, 1):
     dset = g.create_dataset("N", data=Nh)
     dset = g.create_dataset("W", data=Omega)
     dset = g.create_dataset("G", data=Lambda)
-    dset = g.create_dataset("EShift", data=0)
-    dset = g.create_dataset("Method", data=0)
     AlphaReal = np.random.normal(2., 0.2, L)
     AlphaPhase = np.random.uniform(-np.pi, np.pi, L)
     dset = g.create_dataset("AlphaReal", data=AlphaReal)

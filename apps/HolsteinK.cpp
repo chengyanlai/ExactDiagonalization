@@ -28,13 +28,15 @@ int N = 5 * L;
 const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
+int Arpack = 0;
 
-void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W){
+void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W, int& Arpack){
   HDF5IO h5f(filename);
   h5f.LoadNumber("Parameters", "L", L);
   h5f.LoadNumber("Parameters", "N", N);
   h5f.LoadNumber("Parameters", "G", G);
   h5f.LoadNumber("Parameters", "W", W);
+  h5f.LoadNumber("Parameters", "ARPACK", Arpack);
 }
 
 RealVectorType NPhonon( const std::vector<Basis> &Bases, const RealVectorType &Vec){
@@ -131,7 +133,7 @@ void SpectralPeaks( const double Eg, const RealVectorType AS, const RealVectorTy
   assert( PeakLocation.size() == PeakWeight.size() );
 }
 
-void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
+void Equilibrium(const std::string prefix, int NumPeaks){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.K.eqm", std::ios::app);
   const std::string Target = "SR";
@@ -139,7 +141,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
   try{
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
-    LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win);
+    LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win, Arpack);
   }catch(H5::FileIException){
     LogOut << "Use default settings." << std::endl;
   }
@@ -175,13 +177,13 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
     RealVectorType Vals;
     RealMatrixType Vecs;
-    if ( Ham0.GetTotalHilbertSpace() > 48000 ){
+    if ( Arpack || Ham0.GetTotalHilbertSpace() > 100000 ){
       LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
-      Ham0.eigh(Vals, Vecs, NEV, true, Target);//* ARPACK
+      Ham0.eigh(Vals, Vecs, Arpack, true, Target);//* ARPACK
     }else{
       LogOut << "Diagonalize Hamiltonian to obtain full spectrum - " << std::flush;
       Ham0.diag(Vals, Vecs);//* Full spectrum
-      NEV = Ham0.GetTotalHilbertSpace();
+      Arpack = Ham0.GetTotalHilbertSpace();
       FullSpectrum = true;
     }
     LogOut << "DONE!" << std::endl;
@@ -200,7 +202,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     RealVectorType Jmm = arma::diagvec(Jmn);
     file->SaveVector(gnameK, "Jmm", Jmm);
     file->SaveVector(gnameK, "Em", Vals);
-    for ( size_t i = 0; i < NEV; i++ ){
+    for ( size_t i = 0; i < Arpack; i++ ){
       std::string gname = gnameK;
       gname.append("/S-");
       gname.append( std::to_string( (unsigned long)i) );
@@ -270,11 +272,9 @@ int main(int argc, char *argv[]){
     mkl_set_num_threads(NumCores);
   #endif
   if ( std::atoi(argv[1]) == 0 ){
-    int NEV = 40;
-    if ( argc > 2 ) NEV = std::atoi(argv[2]);
     int NumPeaks = 0;
-    if ( argc > 3 ) NumPeaks = std::atoi(argv[3]);
-    Equilibrium("", NEV, NumPeaks);
+    if ( argc > 2 ) NumPeaks = std::atoi(argv[3]);
+    Equilibrium("", NumPeaks);
   }
   return 0;
 }
