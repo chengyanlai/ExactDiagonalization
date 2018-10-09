@@ -29,18 +29,12 @@ const RealType Jin = 1.0;
 RealType Win = 0.50;
 RealType Gin = 1.00;
 
-void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W, RealType& EShift, std::string& Method){
+void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W){
   HDF5IO h5f(filename);
   h5f.LoadNumber("Parameters", "L", L);
   h5f.LoadNumber("Parameters", "N", N);
   h5f.LoadNumber("Parameters", "G", G);
   h5f.LoadNumber("Parameters", "W", W);
-  h5f.LoadNumber("Parameters", "EShift", EShift);
-  int Mid = 0;
-  h5f.LoadNumber("Parameters", "Method", Mid);
-  if ( Mid == 0 ) Method = "SR";
-  else if ( Mid == 2 ) Method = "SM";
-  else if ( Mid == 1 ) Method = "LR";
 }
 
 RealVectorType NPhonon( const std::vector<Basis> &Bases, const RealVectorType &Vec){
@@ -140,15 +134,12 @@ void SpectralPeaks( const double Eg, const RealVectorType AS, const RealVectorTy
 void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
   std::ofstream LogOut;
   LogOut.open(prefix + "Holstein.K.eqm", std::ios::app);
-  RealType EShift = 0;
-  std::string Target;
-  if ( std::abs(EShift) > 1.0e-5 ) Target = "SM";
-  else Target = "SR";
+  const std::string Target = "SR";
 
   try{
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
-    LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win, EShift, Target);
+    LoadEqmParameters( prefix + "conf.h5", L, N, Gin, Win);
   }catch(H5::FileIException){
     LogOut << "Use default settings." << std::endl;
   }
@@ -162,7 +153,6 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     Kn.push_back(-n);
   }
   Kn.push_back(L/2);
-  // //PrintVector(Kn, 3, " ");
   assert( Kn.size() == L );
   LogOut << Kn.size() << " k-points DONE!" << std::endl;
 
@@ -174,8 +164,6 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     Basis P1(L, N);
     P1.PhononK(Kn, TargetK, WithoutK0Phonon);
     LogOut << P1.GetHilbertSpace() << std::flush;
-    // //std::cout << TargetK << std::endl;
-    // //std::cout << P1 << std::endl;
     std::vector<Basis> Bases;
     Bases.push_back(P1);
     BasisSets[k] = Bases;
@@ -188,7 +176,7 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
     RealVectorType Vals;
     RealMatrixType Vecs;
-    if ( Ham0.GetTotalHilbertSpace() > 2100 ){
+    if ( Ham0.GetTotalHilbertSpace() > 48000 ){
       Ham0.eigh(Vals, Vecs, NEV, true, Target);//* ARPACK
     }else{
       Ham0.diag(Vals, Vecs);//* Full spectrum
@@ -208,6 +196,9 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
     RealMatrixType JVecs = Jq0Vecs(Bases, Kn, Vecs);
     RealMatrixType Jmn = Vecs.t() * JVecs;//* <m| j |n>
     file->SaveMatrix(gnameK, "Jmn", Jmn);
+    RealVectorType Jmm = arma::diagvec(Jmn);
+    file->SaveVector(gnameK, "Jmm", Jmm);
+    file->SaveVector(gnameK, "Em", Vals);
     for ( size_t i = 0; i < NEV; i++ ){
       std::string gname = gnameK;
       gname.append("/S-");
@@ -237,8 +228,6 @@ void Equilibrium(const std::string prefix, int NEV, int NumPeaks){
           NumPeaks = Vecs.n_cols;
           wVals = Vals;
           wVecs = Vecs;
-          // //wVecs.col(0) = JVec;
-          // //Ham0.SpectralH( wVals, wVecs, JVec, NumPeaks );
         }
         // JVec = arma::normalise(JVec);//! Check this to be 1
         SpectralPeaks(Vals[i], JVec, wVals, wVecs, PeakLocation, PeakWeight, NumPeaks);
