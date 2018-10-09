@@ -24,11 +24,11 @@
 
 const int WithoutK0Phonon = 1;
 int L = 4;
-int N = 2 * L;
+int N = 6 * L;
 const RealType Jin = 1.0;
-RealType Win = 0.40;
-RealType Gin = 1.00;
-int Arpack = 0;
+RealType Win = 0.80;
+RealType Gin = 0.80;
+int Arpack = 1;
 
 void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W, int& Arpack){
   HDF5IO h5f(filename);
@@ -184,7 +184,7 @@ void Equilibrium(const std::string prefix, int NumPeaks){
     RealMatrixType Vecs;
     if ( Arpack || Ham0.GetTotalHilbertSpace() > 40000 ){
       LogOut << "Diagonalize Hamiltonian to find - " << Target << " - " << std::flush;
-      NEV = Arpack;
+      NEV = Ham0.GetTotalHilbertSpace() / 3;
       Ham0.eigh(Vals, Vecs, NEV, true, Target);//* ARPACK
     }else{
       LogOut << "Diagonalize Hamiltonian to obtain full spectrum - " << std::flush;
