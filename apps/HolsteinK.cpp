@@ -20,6 +20,10 @@
   #define NumCores 16
 #endif
 
+#ifdef MPIPARALLEL
+  #include <mpi.h>
+#endif
+
 //? cSpell:words eigenstate phonon Diagonalize
 
 const int WithoutK0Phonon = 1;
@@ -29,6 +33,16 @@ const RealType Jin = 1.0;
 RealType Win = 0.80;
 RealType Gin = 0.80;
 int Arpack = 1;
+
+std::vector<std::string> GetPrefix(const std::string FileName){
+  std::ifstream file(FileName);
+  std::vector<std::string> out;
+  std::string s;
+  while (std::getline(file, s)){
+    out.push_back(s + "/");
+  }
+  return out;
+}
 
 void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W, int& Arpack){
   HDF5IO h5f(filename);
@@ -254,7 +268,7 @@ void Equilibrium(const std::string prefix, int NumPeaks){
       for ( int PsiK = 0; PsiK < L; PsiK++){
         int PsiB;
         std::vector<int> CkCqIndex = CkCq( Kn, BasisSets, ki, qi, PsiK, PsiB);
-        HDF5IO* file = new HDF5IO(prefix + "Holstein.K.h5");
+        HDF5IO* file = new HDF5IO(prefix + filename + ".h5");
         std::string gname = "S";
         gname.append( std::to_string( (unsigned long)PsiB) );
         gname.append( "-Cd" );
@@ -277,10 +291,30 @@ int main(int argc, char *argv[]){
   #ifdef MKL
     mkl_set_num_threads(NumCores);
   #endif
-  if ( std::atoi(argv[1]) == 0 ){
-    int NumPeaks = 0;
-    if ( argc > 2 ) NumPeaks = std::atoi(argv[2]);
-    Equilibrium("", NumPeaks);
-  }
+  int world_size;
+  int world_rank;
+  std::vector<std::string> MPIFolders(1, "");
+  #ifdef MPIPARALLEL
+    MPIFolders = GetPrefix("MPIFolders");
+    // Initialize MPI
+    MPI_Init(NULL, NULL);
+    // Get the number of processes
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    // Get the rank of the process
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    assert ( MPIFolders.size() == world_size );
+    if ( std::atoi(argv[1]) == 0 ){
+      int NumPeaks = 0;
+      if ( argc > 2 ) NumPeaks = std::atoi(argv[2]);
+      Equilibrium(MPIFolders.at(world_rank), NumPeaks);
+    }
+    MPI_Finalize();
+  #else
+    if ( std::atoi(argv[1]) == 0 ){
+      int NumPeaks = 0;
+      if ( argc > 2 ) NumPeaks = std::atoi(argv[2]);
+      Equilibrium(MPIFolders.at(0), NumPeaks);
+    }
+  #endif
   return 0;
 }

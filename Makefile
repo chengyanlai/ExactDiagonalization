@@ -43,7 +43,7 @@ endef
 
 define make-goal-mpi
 $1/%.mpio: %.cpp
-    $(MPICC) $(INCLUDES) -c $$< -o $$@
+	$(MPICC) $(INCLUDES) -c $$< -o $$@
 endef
 
 .PHONY: all mpi checkdirs clean
@@ -76,9 +76,12 @@ build/holstein.r: build/apps/HolsteinR.o $(OBJ) $(Holstein_OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 
-mpi: checkdir build/holstein.k.mpi
+mpi: checkdirs build/holstein.k.mpi build/holstein.r.mpi
 
 build/holstein.k.mpi: build/apps/HolsteinK.mpio $(OBJ) $(Holstein_OBJ)
+	$(MPICC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
+
+build/holstein.r.mpi: build/apps/HolsteinR.mpio $(OBJ) $(Holstein_OBJ)
 	$(MPICC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
 

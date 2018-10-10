@@ -25,6 +25,16 @@
   #include <mpi.h>
 #endif
 
+std::vector<std::string> GetPrefix(const std::string FileName){
+  std::ifstream file(FileName);
+  std::vector<std::string> out;
+  std::string s;
+  while (std::getline(file, s)){
+    out.push_back(s + "/");
+  }
+  return out;
+}
+
 void LoadEqmParameters( const std::string filename, int& L, int& N, RealType& G, RealType& W){
   HDF5IO h5f(filename);
   h5f.LoadNumber("Parameters", "L", L);
@@ -391,59 +401,59 @@ void Dynamics(const std::string prefix, const std::string InitialState, const in
 /* main program */
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
-#ifdef MKL
-  mkl_set_num_threads(NumCores);
-#endif
-  int world_size;
-  int world_rank;
-  std::vector<std::string> MPIFolders(1, "");
-#ifdef MPIPARALLEL
-  std::vector<std::string> MPIFolders = GetPrefix("MPIFolders");
-  // Initialize MPI
-  MPI_Init(NULL, NULL);
-  // Get the number of processes
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-  // Get the rank of the process
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  assert ( MPIFolders.size() == world_size );
-  if ( std::atoi(argv[1]) == 0 ){
-    int NEV = 40;
-    if ( argc > 2 ) NEV = std::atoi(argv[2]);
-    Equilibrium("", NEV);
-  }else if ( std::atoi(argv[1]) == 1 ){
-    std::string InitialState = "R";
-    int S1 = -1, S2 = -1;
-    int SaveWFEvery = 100, MeasureEvery = 20;
-    if ( argc > 2 ) InitialState = argv[2];
-    if ( argc > 4 ){
-      S1 = std::atoi(argv[3]);
-      S2 = std::atoi(argv[4]);
+  #ifdef MKL
+    mkl_set_num_threads(NumCores);
+  #endif
+    int world_size;
+    int world_rank;
+    std::vector<std::string> MPIFolders(1, "");
+  #ifdef MPIPARALLEL
+    MPIFolders = GetPrefix("MPIFolders");
+    // Initialize MPI
+    MPI_Init(NULL, NULL);
+    // Get the number of processes
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    // Get the rank of the process
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+    assert ( MPIFolders.size() == world_size );
+    if ( std::atoi(argv[1]) == 0 ){
+      int NEV = 40;
+      if ( argc > 2 ) NEV = std::atoi(argv[2]);
+      Equilibrium(MPIFolders.at(world_rank), NEV);
+    }else if ( std::atoi(argv[1]) == 1 ){
+      std::string InitialState = "R";
+      int S1 = 0, S2 = -1;
+      int SaveWFEvery = 100, MeasureEvery = 20;
+      if ( argc > 2 ) InitialState = argv[2];
+      if ( argc > 4 ){
+        S1 = std::atoi(argv[3]);
+        S2 = std::atoi(argv[4]);
+      }
+      if ( argc > 5 ) SaveWFEvery = std::atoi(argv[5]);
+      if ( argc > 6 ) MeasureEvery = std::atoi(argv[6]);
+      Dynamics(MPIFolders.at(world_rank), InitialState, S1, S2, MeasureEvery, SaveWFEvery);
     }
-    if ( argc > 5 ) SaveWFEvery = std::atoi(argv[5]);
-    if ( argc > 6 ) MeasureEvery = std::atoi(argv[6]);
-    Dynamics(MPIFolders.at(world_rank), InitialState, S1, S2, MeasureEvery, SaveWFEvery);
-  }
-  MPI_Finalize();
-#else
-  world_size = MPIFolders.size();
-  world_rank = 0;
-  if ( std::atoi(argv[1]) == 0 ){
-    int NEV = 40;
-    if ( argc > 2 ) NEV = std::atoi(argv[2]);
-    Equilibrium("", NEV);
-  }else if ( std::atoi(argv[1]) == 1 ){
-    std::string InitialState = "R";
-    int S1 = 0, S2 = -1;
-    int SaveWFEvery = 100, MeasureEvery = 20;
-    if ( argc > 2 ) InitialState = argv[2];
-    if ( argc > 4 ){
-      S1 = std::atoi(argv[3]);
-      S2 = std::atoi(argv[4]);
+    MPI_Finalize();
+  #else
+    world_size = MPIFolders.size();
+    world_rank = 0;
+    if ( std::atoi(argv[1]) == 0 ){
+      int NEV = 40;
+      if ( argc > 2 ) NEV = std::atoi(argv[2]);
+      Equilibrium(MPIFolders.at(world_rank), NEV);
+    }else if ( std::atoi(argv[1]) == 1 ){
+      std::string InitialState = "R";
+      int S1 = 0, S2 = -1;
+      int SaveWFEvery = 100, MeasureEvery = 20;
+      if ( argc > 2 ) InitialState = argv[2];
+      if ( argc > 4 ){
+        S1 = std::atoi(argv[3]);
+        S2 = std::atoi(argv[4]);
+      }
+      if ( argc > 5 ) SaveWFEvery = std::atoi(argv[5]);
+      if ( argc > 6 ) MeasureEvery = std::atoi(argv[6]);
+      Dynamics(MPIFolders.at(world_rank), InitialState, S1, S2, MeasureEvery, SaveWFEvery);
     }
-    if ( argc > 5 ) SaveWFEvery = std::atoi(argv[5]);
-    if ( argc > 6 ) MeasureEvery = std::atoi(argv[6]);
-    Dynamics(MPIFolders.at(world_rank), InitialState, S1, S2, MeasureEvery, SaveWFEvery);
-  }
-#endif
+  #endif
   return 0;
 }
