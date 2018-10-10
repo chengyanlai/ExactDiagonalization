@@ -37,8 +37,8 @@ if Space == "R":
     APPs.append(os.path.join(SrcDir, "build", "holstein." + Space.lower() + " 1 Z 3"))
 elif Space == "K":
     TSteps = 0
-    Arpack = 0
-    # Arpack = 1#? Calculate 1/3 of total spectrum
+    # Arpack = 0
+    Arpack = 1#? Calculate 1/3 of total spectrum
     L = 4
     Nh = 12 * L
     Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])

@@ -41,12 +41,15 @@ $1/%.o: %.cpp
 	$(CC) $(INCLUDES) -c $$< -o $$@
 endef
 
-.PHONY: all checkdirs clean
+define make-goal-mpi
+$1/%.mpio: %.cpp
+    $(MPICC) $(INCLUDES) -c $$< -o $$@
+endef
+
+.PHONY: all mpi checkdirs clean
 
 all: checkdirs build/fhm.1d build/bhm.1d build/tqdm build/qds build/holstein.lfs build/holstein.k build/holstein.r
 # all: checkdirs build/holstein.k
-
-mpi: checkdirs build/plex.mpi build/rixs.mpi
 
 build/apps/%.o: apps/%.cpp
 	$(CC) $(INCLUDES) -c $< -o $@
@@ -72,6 +75,13 @@ build/holstein.k: build/apps/HolsteinK.o $(OBJ) $(Holstein_OBJ)
 build/holstein.r: build/apps/HolsteinR.o $(OBJ) $(Holstein_OBJ)
 	$(CC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
 
+
+mpi: checkdir build/holstein.k.mpi
+
+build/holstein.k.mpi: build/apps/HolsteinK.mpio $(OBJ) $(Holstein_OBJ)
+	$(MPICC) $^ -o $@ $(ARMADILLO) $(LAPACK) $(ARPACK) $(HDF5LIB)
+
+
 checkdirs: $(BUILD_DIR)
 
 $(BUILD_DIR):
@@ -81,3 +91,5 @@ clean:
 	@rm -rf $(BUILD_DIR) build/*.o
 
 $(foreach bdir,$(BUILD_DIR),$(eval $(call make-goal,$(bdir))))
+$(foreach bdir,$(BUILD_DIR),$(eval $(call make-goal-mpi,$(bdir))))
+
