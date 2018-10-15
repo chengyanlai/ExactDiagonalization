@@ -13,24 +13,28 @@ def main(filename, prefix):
     Jf1 = []
     Jf2 = []
     Jf3 = []
-    for i in f.keys():
-        try:
-            Fmn = f[i]["Fermion"]["Elem"][:]
-            Nf1.append( Fmn[0,0].real )
-            Nf2.append( Fmn[1,1].real )
-            Nf3.append( Fmn[2,2].real )
-            Jf1.append( Fmn[0,1].imag )
-            Jf2.append( Fmn[1,2].imag )
-            Jf3.append( Fmn[0,2].imag )
-        except:
-            pass
+    cnt = 0
+    gname = "Obs-" + str(cnt)
+    e = gname in f.keys()
+    while e:
+        Fmn = f[gname]["Fermion"]["Elem"]["real"][:] + 1.0j * f[gname]["Fermion"]["Elem"]["imag"][:]
+        Fmn = np.reshape(Fmn, (L,L))
+        Nf1.append( Fmn[0,0].real )
+        Nf2.append( Fmn[1,1].real )
+        Nf3.append( Fmn[2,2].real )
+        Jf1.append( Fmn[0,1].imag )
+        Jf2.append( Fmn[1,2].imag )
+        Jf3.append( Fmn[2,0].imag )
+        cnt += 20
+        gname = "Obs-" + str(cnt)
+        e = gname in f.keys()
     Nf1 = np.array( Nf1 )
     Nf2 = np.array( Nf2 )
     Nf3 = np.array( Nf3 )
     Jf1 = np.array( Jf1 )
     Jf2 = np.array( Jf2 )
     Jf3 = np.array( Jf3 )
-    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf1, Nf3, Jf1, Jf2, Jf3]).T )
+    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3]).T )
     f.close()
 
 if __name__ == '__main__':
@@ -40,4 +44,6 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--input', default='QuenchState-Z-0.h5', help='Filename.')
     parser.add_argument('-o', '--output', default='Jtot', help='Filename Prefix.')
     args = vars(parser.parse_args())
-    main(args["input"], args["output"])
+    for i in range(1, 71, 1):
+        prefix = "S"+str(i).zfill(4)
+        main(prefix+"/"+args["input"], prefix+"/"+args["output"])
