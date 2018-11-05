@@ -13,6 +13,7 @@ def main(filename, prefix):
     Jf1 = []
     Jf2 = []
     Jf3 = []
+    AvP = []
     cnt = 0
     gname = "Obs-" + str(cnt)
     e = gname in f.keys()
@@ -25,6 +26,8 @@ def main(filename, prefix):
         Jf1.append( Fmn[0,1].imag )
         Jf2.append( Fmn[1,2].imag )
         Jf3.append( Fmn[2,0].imag )
+        Pm = f[gname]["Phonon"]["Elem"]["real"][:]
+        AvP.append( np.average(Pm) )
         cnt += 20
         gname = "Obs-" + str(cnt)
         e = gname in f.keys()
@@ -34,7 +37,8 @@ def main(filename, prefix):
     Jf1 = np.array( Jf1 )
     Jf2 = np.array( Jf2 )
     Jf3 = np.array( Jf3 )
-    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3]).T )
+    AvP = np.array( AvP )
+    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3, AvP]).T )
     f.close()
 
 if __name__ == '__main__':
@@ -43,7 +47,9 @@ if __name__ == '__main__':
                                      epilog="All's well that ends well.")
     parser.add_argument('-i', '--input', default='QuenchState-Z-0.h5', help='Filename.')
     parser.add_argument('-o', '--output', default='Jtot', help='Filename Prefix.')
+    parser.add_argument('--from', type=int, default=0, help='subfolder sequence.')
+    parser.add_argument('--to', type=int, default=1000, help='subfolder sequence.')
     args = vars(parser.parse_args())
-    for i in range(1, 71, 1):
+    for i in range(args["from"], args["to"], 1):
         prefix = "S"+str(i).zfill(4)
         main(prefix+"/"+args["input"], prefix+"/"+args["output"])
