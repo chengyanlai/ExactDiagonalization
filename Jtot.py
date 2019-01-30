@@ -13,7 +13,12 @@ def main(filename, prefix):
     Jf1 = []
     Jf2 = []
     Jf3 = []
-    AvP = []
+    Np1 = []
+    Np2 = []
+    Np3 = []
+    Xp1 = []
+    Xp2 = []
+    Xp3 = []
     cnt = 0
     gname = "Obs-" + str(cnt)
     e = gname in f.keys()
@@ -27,7 +32,13 @@ def main(filename, prefix):
         Jf2.append( Fmn[1,2].imag )
         Jf3.append( Fmn[2,0].imag )
         Pm = f[gname]["Phonon"]["Elem"]["real"][:]
-        AvP.append( np.average(Pm) )
+        Np1.append( Pm[0] )
+        Np2.append( Pm[1] )
+        Np3.append( Pm[2] )
+        Xm = f[gname]["Ei"][:]
+        Xp1.append( Xm[0] )
+        Xp2.append( Xm[1] )
+        Xp3.append( Xm[2] )
         cnt += 20
         gname = "Obs-" + str(cnt)
         e = gname in f.keys()
@@ -38,7 +49,7 @@ def main(filename, prefix):
     Jf2 = np.array( Jf2 )
     Jf3 = np.array( Jf3 )
     AvP = np.array( AvP )
-    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3, AvP]).T )
+    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3, Np1, Np2, Np3, Xp1, Xp2, Xp3]).T )
     f.close()
 
 if __name__ == '__main__':

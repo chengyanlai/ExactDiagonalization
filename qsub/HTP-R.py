@@ -8,12 +8,12 @@ import ScriptGenerator as sg
 from Clusters import *
 
 dt = 0.005
-TSteps = 30000
 L = 3
 Nh = 20 * L
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 
 Omega, Lambda = 0.4, 1.0
+TSteps = np.int(200 * 6.5 * 10 / Omega)# Roughly 10 Phonon Period as 6.5 > 2 * pi
 Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]) ])
 
 APPs = []
