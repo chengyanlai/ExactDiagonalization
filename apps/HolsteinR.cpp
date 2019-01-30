@@ -191,7 +191,7 @@ std::vector<RealType> LocalEnergy(ComplexVectorType& VecIn, const std::vector<Ba
       tmp(idx) = VecIn(idx);
     }
     tmp = arma::normalise(tmp);
-    RealType E0 = RealPart( arma::cdot(tmp, Ham0.GetTotalHamiltonian() * tmp) );
+    RealType E0 = RealPart( arma::cdot(tmp, Ham0.GetHCouple() * tmp) );
     Eis.push_back(E0);
   }
   return Eis;
