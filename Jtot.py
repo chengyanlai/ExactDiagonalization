@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 import numpy as np
 import h5py
+import os
 import argparse
 
 L = 3
 
-def main(filename, prefix):
-    f = h5py.File(filename, "r")
+def main(InputFile, OutputFile, Prefix):
+    f = h5py.File(os.path.join(Prefix, InputFile), "r")
     Nf1 = []
     Nf2 = []
     Nf3 = []
@@ -49,7 +50,7 @@ def main(filename, prefix):
     Jf2 = np.array( Jf2 )
     Jf3 = np.array( Jf3 )
     AvP = np.array( AvP )
-    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3, Np1, Np2, Np3, Xp1, Xp2, Xp3]).T )
+    np.savetxt(os.path.join(Prefix, OutputFile + ".txt"), np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3, Np1, Np2, Np3, Xp1, Xp2, Xp3]).T )
     f.close()
 
 if __name__ == '__main__':
@@ -63,4 +64,4 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
     for i in range(args["from"], args["to"], 1):
         prefix = "S"+str(i).zfill(4)
-        main(prefix+"/"+args["input"], prefix+"/"+args["output"])
+        main(args["input"], args["output"], prefix)
