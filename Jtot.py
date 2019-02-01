@@ -49,7 +49,12 @@ def main(InputFile, OutputFile, Prefix):
     Jf1 = np.array( Jf1 )
     Jf2 = np.array( Jf2 )
     Jf3 = np.array( Jf3 )
-    AvP = np.array( AvP )
+    Np1 = np.array( Np1 )
+    Np2 = np.array( Np2 )
+    Np3 = np.array( Np3 )
+    Xp1 = np.array( Xp1 )
+    Xp2 = np.array( Xp2 )
+    Xp3 = np.array( Xp3 )
     np.savetxt(os.path.join(Prefix, OutputFile + ".txt"), np.vstack([Nf1, Nf2, Nf3, Jf1, Jf2, Jf3, Np1, Np2, Np3, Xp1, Xp2, Xp3]).T )
     f.close()
 
