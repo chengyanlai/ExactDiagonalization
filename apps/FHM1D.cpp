@@ -936,16 +936,16 @@ int main(int argc, char *argv[]){
     }
   }else if ( std::atoi(argv[1]) == 3210 ){
     Equilibrium("");
-    PumpDynamics("");
+    PumpDynamics("", 20, 20);
     #pragma omp parallel sections // starts a new team
     {
       #pragma omp section
       {
-        StateDynamics("", 20, 20);
+        StateDynamics("", 40, 40);
       }
       #pragma omp section
       {
-        SpectralDynamics("", 20, 20);
+        SpectralDynamics("", 40, 40);
       }
     }
   }

@@ -10,9 +10,9 @@ from Clusters import *
 # Get all platform settings
 from Clusters import *
 
-L = 14
+L = 12
 OBC = 0# 1:True
-N1 = 7
+N1 = 6
 N2 = N1
 Uinit = 6
 Winit = 3
