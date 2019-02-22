@@ -124,7 +124,7 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
   H_Couple.zeros();
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   std::vector< std::vector<int> > States = bs.BStates;
-  size_t rid = 0;
+  size_t cid = 0;
   typename std::vector< std::vector<int> >::const_iterator it = States.begin();
   for (; it != States.end(); ++it ){
     for ( int Floc = 0; Floc< RPoints; Floc++ ){
@@ -132,7 +132,7 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
       RealType tg = bs.CreatePhonon(state, Floc);
       RealType Npf = state.at(Floc);
       if ( tg > -1.0e-5 ){
-        size_t cid = bs.GetIndexFromTag(tg);
+        size_t rid = bs.GetIndexFromTag(tg);
         if ( state == bs.BStates.at(cid) ){
           size_t ridx = this->DetermineTotalIndex( vec<size_t>(Floc, rid) );
           size_t cidx = this->DetermineTotalIndex( vec<size_t>(Floc, cid) );
@@ -144,7 +144,7 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
         RealType Npi = state.at(Floc);
         tg = bs.DestroyPhonon(state, Floc);
         if ( tg > -1.0e-5 ){
-          size_t cid = bs.GetIndexFromTag(tg);
+          size_t rid = bs.GetIndexFromTag(tg);
           if ( state == bs.BStates.at(cid) ) {
             size_t ridx = this->DetermineTotalIndex( vec<size_t>(Floc, rid) );
             size_t cidx = this->DetermineTotalIndex( vec<size_t>(Floc, cid) );
@@ -153,7 +153,7 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
         }
       }
     }
-    rid++;
+    cid++;
   }
   H_Couple = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }

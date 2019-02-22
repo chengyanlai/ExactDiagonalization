@@ -11,10 +11,11 @@ from Clusters import *
 from Clusters import *
 
 L = 14
-OBC = 1# 1:True
+OBC = 0# 1:True
 N1 = 7
 N2 = N1
-Uinit = 0
+Uinit = 6
+Winit = 3
 
 # ARPES Parameters
 OpSites = range(L)
@@ -24,19 +25,21 @@ Tsteps = 4000
 dt = 0.005
 
 # For pumping pulse
+def GetAt(tlist, td, tau=2, W=3, A0=1, phi=0):
+    p = []
+    for t in tlist:
+        val = A0 * np.exp( -(t - td) * (t - td) / (2. * tau * tau) ) * np.cos(W * (t - td) + np.pi * phi)
+        p.append(val)
+    return np.array(p)
+
 A0 = 0.1
-Tau = 2
-W0 = 3
-def getAt(tlist, td, tau=12, W=3, A0=1):
-  p = []
-  for t in tlist:
-      val = A0 * np.exp( -(t - td) * (t - td) / (2. * tau * tau) ) * np.cos(W * (t - td))
-      p.append(val)
-  return np.array(p)
+Tau = 1
+Omega = 4
+Td = 4
+Phi = 0
 if A0:
-  Td = np.int(Tau * np.rint(np.sqrt(2. * np.log(100 * A0))) )
-  tl = np.arange(0, 2*Td, dt)
-  At = getAt(tl, td=Td, tau=Tau, W=W0, A0=A0)
+  tl = np.arange(0, 2*Td+dt, dt)
+  At = GetAt(tl, td=Td, tau=Tau, W=Omega, A0=A0, phi=Phi)
 else:
   At = np.array([])
 
@@ -56,7 +59,7 @@ DataDir = os.path.join(ExecDir, "ED", Prefix1, Prefix2)
 
 for OpSite in OpSites:
   if A0:
-    Pump = "".join(["T",str(Tau), "W", str(W0), "A", str(A0)])
+    Pump = "".join(["T",str(Tau), "W", str(Omega), "A", str(A0)])
   else:
     Pump = "NP"
   OPSite = "".join(["OP", str(OpSite), "T", str(Type)])
@@ -77,6 +80,8 @@ for OpSite in OpSites:
   dset = para.create_dataset("U", data=Uls)
   Vls = np.zeros(L, dtype=np.float64)
   dset = para.create_dataset("V", data=Vls)
+  Wls = np.ones(L, dtype=np.float64) * np.float64(Winit)
+  dset = para.create_dataset("W", data=Wls)
   # Pump
   dset = para.create_dataset("At", data=At)
   dset = para.create_dataset("TStepsA", data=At.shape[0])
