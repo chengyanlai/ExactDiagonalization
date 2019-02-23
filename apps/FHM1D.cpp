@@ -892,6 +892,112 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   LogOut.close();
 }
 
+void CalculateAt(const std::string prefix, const int Every){
+  std::ofstream LogOut;
+  LogOut.open(prefix + "At.log", std::ios::app);
+  int L;
+  int OBC;
+  int N1, N2;
+  std::vector<RealType> Jeqm, Ueqm, Veqm, Weqm, Uch, Vch;
+  int TSteps;
+  RealType dt;
+  int CoreHole, Species, Type;
+  try{
+    /* Load parameters from file */
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "conf.h5");
+    LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+  }catch(H5::FileIException){
+    L = 12;
+    OBC = 0;
+    N1 = 6;
+    N2 = 6;
+    Jeqm = std::vector<RealType>(L, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 6.0);
+    Veqm = std::vector<RealType>(L, 0.0);
+    Weqm = std::vector<RealType>(L, 3.0);
+    Uch = std::vector<RealType>(L, 0.0);
+    Vch = std::vector<RealType>(L, 0.0);
+    CoreHole = L/2;
+    // Vch.at(CoreHole) = -5.0;
+    TSteps = 3000;
+    dt = 0.005;
+    Species = 0;
+    Type = 1;
+  }
+  LogOut << "Build Eqm/Pump Basis - " << std::flush;
+  Basis F1EQM(L, N1, true);
+  F1EQM.Fermion();
+  Basis F2EQM(L, N2, true);
+  F2EQM.Fermion();
+  std::vector<Basis> EqmBases;
+  EqmBases.push_back(F1EQM);
+  EqmBases.push_back(F2EQM);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Eqm Lattice (shared with core Hole) - " << std::flush;
+  std::vector<ComplexType> J(Jeqm.begin(), Jeqm.end());
+  std::vector< Node<ComplexType>* > Lattice = NN_1D_Chain(L, J, OBC);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Eqm Hamiltonian - " << std::flush;
+  FHM<ComplexType> EqmHam( EqmBases );
+  LogOut << " (only for determine index) DONE!" << std::endl;
+  LogOut << "Build Core Hole Basis - " << std::flush;
+  int N1CH, N2CH;
+  if ( Species == 0 ){
+    if ( Type == 1 ) N1CH = N1 + 1;
+    else if ( Type == -1 ) N1CH = N1 - 1;
+    N2CH = N2;
+  }else if ( Species == 1 ){
+    N1CH = N1;
+    if ( Type == 1 ) N2CH = N2 + 1;
+    else if ( Type == -1 ) N2CH = N2 - 1;
+  }
+  Basis F1CH(L, N1CH, true);
+  F1CH.Fermion();
+  Basis F2CH(L, N2CH, true);
+  F2CH.Fermion();
+  std::vector<Basis> CoreHoleBases;
+  CoreHoleBases.push_back(F1CH);
+  CoreHoleBases.push_back(F2CH);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Core Hole Hamiltonian - " << std::flush;
+  FHM<ComplexType> CoreHoleHam( CoreHoleBases );
+  LogOut << " (only for determine index) DONE!" << std::endl;
+
+  for ( int cntL = 0; cntL < L; cntL++ ){
+    ComplexVectorType BraState, KetState, OpKetState;
+    std::vector<ComplexType> At;
+    At.clear();
+    for (size_t cnt = 0; cnt <= TSteps; cnt += Every) {
+      HDF5IO* file1 = new HDF5IO("SpectralDWF.h5");
+      HDF5IO* file2 = new HDF5IO("QuenchStateWF.h5");
+      std::string gname = "WF-";
+      gname.append( std::to_string((unsigned long long)cnt ));
+      gname.append("/");
+      file1->LoadVector(gname, "Vec", BraState);
+      if ( cnt == 0 ){
+        OpKetState = BraState;
+      }else{
+        file2->LoadVector(gname, "Vec", KetState);
+        OpKetState = Operate( KetState, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+      }
+      ComplexType val = arma::cdot(OpKetState, BraState);
+      At.push_back(val);
+      delete file2;
+      delete file1;
+    }
+    HDF5IO* file3 = new HDF5IO("At.h5");
+    std::string name = "CH";
+    name.append( std::to_string((unsigned long long)cntL ));
+    name.append("/");
+    file3->SaveStdVector(name, "At", At);
+    delete file3;
+  }
+  LogOut << "Finished calculating At!!" << std::endl;
+  LogOut.close();
+}
+
 /* main program */
 int main(int argc, char *argv[]){
   if ( argc < 2 ) RUNTIME_ERROR(" Need at least one argument to run program. Use 0 to run Equilibrium.");
@@ -903,11 +1009,13 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 1 ){
     PumpDynamics("");
   }else if ( std::atoi(argv[1]) == 2 ){
-    SpectralDynamics("", 20, 100);
+    SpectralDynamics("", 20, 20);
   }else if ( std::atoi(argv[1]) == 3 ){
-    StateDynamics("", 50, 50);
+    StateDynamics("", 20, 20);
   }else if ( std::atoi(argv[1]) == 4 ){
     Spectral("");
+  }else if ( std::atoi(argv[1]) == 5 ) {
+    CalculateAt("", 40);
   }else if ( std::atoi(argv[1]) == 10 ){
     Equilibrium("");
     PumpDynamics("");
