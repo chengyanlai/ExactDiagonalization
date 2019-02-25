@@ -960,6 +960,7 @@ void CalculateObs(const std::string prefix, const int Every){
     delete file1;
     LogOut << cnt << ", " << std::flush;
   }
+  LogOut << "DONE." << std::endl;
   LogOut.close();
 }
 
