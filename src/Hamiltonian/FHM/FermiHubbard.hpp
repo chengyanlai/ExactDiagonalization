@@ -20,6 +20,11 @@ public:
   void ExtendedHubbardInteraction( const size_t spin1, const std::vector<Tnum> &Wloc, const Basis &bs);
   void HubbardInteraction( const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs );
   void NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs );
+
+  inline arma::SpMat<Tnum> GetHoppingHamiltonian(const size_t species_id){
+    if( species_id == 0 ) return H_Jup;
+    else if( species_id == 1 ) return H_Jdn;
+  };
 };
 
 #endif	/* end of include guard: __FERMI_HUBBARD_HPP__ */

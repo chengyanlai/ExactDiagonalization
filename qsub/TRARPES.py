@@ -45,8 +45,9 @@ else:
 
 APPs = []
 if A0:
-  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 2"))
-  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3"))
+  # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 2"))
+  # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3"))
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 5"))
 else:
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 20"))
 APPs.append("/bin/touch DONE")
@@ -101,7 +102,7 @@ for OpSite in OpSites:
 
   Filename = os.path.join(workdir, 'job')
   if Cluster == "Kagome":
-    sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
+    sg.GenerateScript("PBS", Filename, JobName, APPs, workdir, Nodes=1, NumCore=4, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
   elif Cluster == "Merced":
     sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=2, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
   elif Cluster == "LANL":

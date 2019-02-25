@@ -892,6 +892,77 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   LogOut.close();
 }
 
+void CalculateObs(const std::string prefix, const int Every){
+  std::ofstream LogOut;
+  LogOut.open(prefix + "Obs.log", std::ios::app);
+  int L;
+  int OBC;
+  int N1, N2;
+  std::vector<RealType> Jeqm, Ueqm, Veqm, Weqm, At;
+  int TSteps;
+  RealType dt;
+  try{
+    /* Load parameters from file */
+    H5::Exception::dontPrint();
+    H5::H5File::isHdf5(prefix + "conf.h5");
+    LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
+    LoadPumpParameters( "conf.h5", At, TSteps, dt);
+  }catch(H5::FileIException){
+    L = 12;
+    OBC = 0;
+    N1 = 6;
+    N2 = 6;
+    Jeqm = std::vector<RealType>(L, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 6.0);
+    Veqm = std::vector<RealType>(L, 0.0);
+    Weqm = std::vector<RealType>(L, 3.0);
+    TSteps = 3000;
+    dt = 0.005;
+  }
+  LogOut << "Build Eqm/Pump Basis - " << std::flush;
+  Basis F1EQM(L, N1, true);
+  F1EQM.Fermion();
+  Basis F2EQM(L, N2, true);
+  F2EQM.Fermion();
+  std::vector<Basis> EqmBases;
+  EqmBases.push_back(F1EQM);
+  EqmBases.push_back(F2EQM);
+  LogOut << "DONE!" << std::endl;
+  LogOut << "Build Eqm Hamiltonian - " << std::flush;
+  FHM<ComplexType> EqmHam( EqmBases );
+  LogOut << " (only for determine index) DONE!" << std::endl;
+  ComplexVectorType Vec;
+  for (size_t cnt = Every; cnt <= TSteps; cnt += Every) {
+    HDF5IO* file1 = new HDF5IO(prefix + "PumpWF.h5");
+    std::string gname = "WF-";
+    gname.append( std::to_string((unsigned long long)cnt ));
+    gname.append("/");
+    file1->LoadVector(gname, "Vec", Vec);
+    std::vector<RealVectorType> Nfi = Ni( EqmBases, Vec, EqmHam );
+    RealMatrixType NupNdn = NiNj( EqmBases, Vec, EqmHam, 0, 1 );
+    RealMatrixType NdnNup = NiNj( EqmBases, Vec, EqmHam, 1, 0 );
+    RealMatrixType NupNup = NiNj( EqmBases, Vec, EqmHam, 0, 0 );
+    RealMatrixType NdnNdn = NiNj( EqmBases, Vec, EqmHam, 1, 1 );
+    ComplexMatrixType CMUp = SingleParticleDensityMatrix( 0, EqmBases, Vec, EqmHam );
+    ComplexMatrixType CMDn = SingleParticleDensityMatrix( 1, EqmBases, Vec, EqmHam );
+    HDF5IO* file2 = new HDF5IO(prefix + "PumpObs.h5");
+    gname = "obs-";
+    gname.append( std::to_string((unsigned long long)cnt ));
+    file2->SaveVector(gname, "Nup", Nfi.at(0));
+    file2->SaveVector(gname, "Ndn", Nfi.at(1));
+    file2->SaveMatrix(gname, "NupNdn", NupNdn);
+    file2->SaveMatrix(gname, "NdnNup", NdnNup);
+    file2->SaveMatrix(gname, "NupNup", NupNup);
+    file2->SaveMatrix(gname, "NdnNdn", NdnNdn);
+    file2->SaveMatrix(gname, "CMUp", CMUp);
+    file2->SaveMatrix(gname, "CMDn", CMDn);
+    delete file2;
+    delete file1;
+    LogOut << cnt << ", " << std::flush;
+  }
+  LogOut.close();
+}
+
 void CalculateAt(const std::string prefix, const int Every){
   std::ofstream LogOut;
   LogOut.open(prefix + "At.log", std::ios::app);
@@ -935,10 +1006,10 @@ void CalculateAt(const std::string prefix, const int Every){
   EqmBases.push_back(F1EQM);
   EqmBases.push_back(F2EQM);
   LogOut << "DONE!" << std::endl;
-  LogOut << "Build Eqm Lattice (shared with core Hole) - " << std::flush;
-  std::vector<ComplexType> J(Jeqm.begin(), Jeqm.end());
-  std::vector< Node<ComplexType>* > Lattice = NN_1D_Chain(L, J, OBC);
-  LogOut << "DONE!" << std::endl;
+  // LogOut << "Build Eqm Lattice (shared with core Hole) - " << std::flush;
+  // std::vector<ComplexType> J(Jeqm.begin(), Jeqm.end());
+  // std::vector< Node<ComplexType>* > Lattice = NN_1D_Chain(L, J, OBC);
+  // LogOut << "DONE!" << std::endl;
   LogOut << "Build Eqm Hamiltonian - " << std::flush;
   FHM<ComplexType> EqmHam( EqmBases );
   LogOut << " (only for determine index) DONE!" << std::endl;
@@ -1007,7 +1078,7 @@ int main(int argc, char *argv[]){
   if ( std::atoi(argv[1]) == 0 ){
     Equilibrium("");
   }else if ( std::atoi(argv[1]) == 1 ){
-    PumpDynamics("");
+    PumpDynamics("", 20, 20);
   }else if ( std::atoi(argv[1]) == 2 ){
     SpectralDynamics("", 40, 40);
   }else if ( std::atoi(argv[1]) == 3 ){
@@ -1016,6 +1087,8 @@ int main(int argc, char *argv[]){
     Spectral("");
   }else if ( std::atoi(argv[1]) == 5 ) {
     CalculateAt("", 40);
+  }else if ( std::atoi(argv[1]) == 6 ) {
+    CalculateObs("", 20);
   }else if ( std::atoi(argv[1]) == 10 ){
     Equilibrium("");
     PumpDynamics("");
