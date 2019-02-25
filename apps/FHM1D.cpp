@@ -1009,9 +1009,9 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 1 ){
     PumpDynamics("");
   }else if ( std::atoi(argv[1]) == 2 ){
-    SpectralDynamics("", 20, 20);
+    SpectralDynamics("", 40, 40);
   }else if ( std::atoi(argv[1]) == 3 ){
-    StateDynamics("", 20, 20);
+    StateDynamics("", 40, 40);
   }else if ( std::atoi(argv[1]) == 4 ){
     Spectral("");
   }else if ( std::atoi(argv[1]) == 5 ) {

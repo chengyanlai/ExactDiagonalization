@@ -44,8 +44,11 @@ else:
   At = np.array([])
 
 APPs = []
-if A0: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3210"))
-else: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 20"))
+if A0:
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 2"))
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3"))
+else:
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 20"))
 APPs.append("/bin/touch DONE")
 
 if OBC:
