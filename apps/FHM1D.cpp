@@ -179,10 +179,8 @@ std::vector<RealVectorType> Ni( const std::vector<Basis> &Bases, const DTV &Vec,
       ids.at(0) = f1id;
       size_t id = Ham0.DetermineTotalIndex(ids);
       for (size_t cnt = 0; cnt < Bases.at(0).GetL(); cnt++) {
-        if ( btest(nf1, cnt) ) tmp1(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
-      }
-      for (size_t cnt = 0; cnt < Bases.at(1).GetL(); cnt++) {
-        if ( btest(nf2, cnt) ) tmp2(cnt) += std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
+        if ( btest(nf1, cnt) ) tmp1(cnt) += Vec(id) * std::conj( Vec(id) );
+        if ( btest(nf2, cnt) ) tmp2(cnt) += Vec(id) * std::conj( Vec(id) );
       }
       f1id++;
     }
@@ -499,10 +497,10 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
     LoadPumpParameters( "conf.h5", At, TSteps, dt);
   }catch(H5::FileIException){
     L = 4;
-    OBC = 1;
+    OBC = 0;
     N1 = 2;
     N2 = 2;
-    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
+    Jeqm = std::vector<RealType>(L, 1.0);// PBC
     Ueqm = std::vector<RealType>(L, 6.0);
     Veqm = std::vector<RealType>(L, 0.0);
     Weqm = std::vector<RealType>(L-1, 3.0);
