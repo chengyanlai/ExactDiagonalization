@@ -565,7 +565,10 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
     Ham0.ExtendedFermiHubbardModel(Bases, PLattice, Vloc, Uloc, Wloc);
     if ( !(Ham0.CheckHermitian()) ) LogOut << "non-Hermitian Hamiltonian at PStep = " << cntP << std::endl;
     // Evolve the state
+    // std::cout << cntP << " " << Ham0.CheckHermitian() << " " << arma::norm(VecPump) << std::flush;
     Ham0.expH(Prefactor, VecPump);
+    // std::cout << " " << arma::norm(VecPump) << std::endl;
+    VecPump = arma::normalise(VecPump);
     if ( cntP % MeasureEvery == 0 ){
       file2 = new HDF5IO("Pump.h5");
       std::string gname = "Obs-";

@@ -53,9 +53,7 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
     assert( Betas.size() == cntK - 1 );
     if ( DEBUG > 5 ) {
       ComplexMatrixType tmpVm = Vm;
-      // tmpVm.adjointInPlace();
-      tmpVm.t();
-      std::cout << "Vm^H * Vm " << std::endl << tmpVm * Vm << std::endl;
+      std::cout << "Vm^H * Vm " << std::endl << tmpVm.t() * Vm << std::endl;
     }
   }
   int Kused = cntK;
@@ -72,10 +70,10 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
     //* dstev - LAPACK
     dstev((char*)"V", &Kused, d, e, z, &Kused, work, &info);
     RealMatrixType Kmat(z, Kused, Kused);
-    Kmat.t();
     ComplexMatrixType Dmat(Kused, Kused, arma::fill::zeros);
     for (size_t cnt = 0; cnt < Kused; cnt++) {
       Dmat(cnt,cnt) = exp( Prefactor * d[cnt] );
+      // Dmat(cnt,cnt) = d[cnt];
     }
     if(info != 0) {
       std::cout << "Lapack INFO = " << info << std::endl;
@@ -83,9 +81,10 @@ void krylovEXP(const ComplexSparseMatrixType &A, ComplexVectorType &Vec, const C
     }
     //* NOTE: After Solving tri-diagonal matrix, we need Kmat and Dmat to proceed further.
     if ( DEBUG > 4 ) {
+      std::cout << Kused << std::endl;
       RealMatrixType tmpKmat = Kmat;
-      tmpKmat.t();
-      std::cout << Kmat * Dmat * tmpKmat << std::endl;
+      std::cout << "To tri-diagonal" << std::endl << Kmat * Dmat * tmpKmat.t() << std::endl;
+      std::cout << "To Identity" << std::endl << Kmat * tmpKmat.t() << std::endl;
     }
     Vm.reshape( Vec.size(), Kused );
     ComplexMatrixType Otmp = Vm * Kmat;
