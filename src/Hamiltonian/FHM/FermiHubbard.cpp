@@ -40,40 +40,39 @@ void FHM<Tnum>::LocalPotential( const size_t spin1, const std::vector<Tnum> &Vlo
 }
 
 template<typename Tnum>
-void FHM<Tnum>::ExtendedHubbardInteraction( const size_t spin1, const std::vector<Tnum> &Wloc, const Basis &bs){
+void FHM<Tnum>::ExtendedHubbardInteraction( const std::vector<Tnum> &Wloc, const std::vector<Basis> &bs ){
   std::vector<std::tuple<int, int, Tnum> > MatElemts;
   MatElemts.clear();
-  int spin2 = (spin1 == 0)?  1 : 0;
-  int state_id = 0;
-  for ( int b : bs.FStates ){
-    Tnum val = (Tnum)0.0;
-    for (size_t loc = 0; loc < bs.GetL()-1; loc++) {
-      if ( btest(b, loc) && btest(b, loc+1) ){
-        val += Wloc.at(loc);
+  std::vector<int> f1 = bs.at(0).GetFStates();
+  std::vector<int> f2 = bs.at(1).GetFStates();
+  size_t f1id = 0, f2id = 0;
+  for ( int &nf2 : f2 ){
+    std::vector<size_t> ids(2,f2id);
+    f1id = 0;
+    for ( int &nf1 : f1 ){
+      ids.at(0) = f1id;
+      size_t idx = this->DetermineTotalIndex( ids );
+      Tnum val = (Tnum)0.0;
+      for ( int cntL = 0; cntL < bs.at(0).GetL(); cntL++ ){
+        if ( cntL ==  bs.at(0).GetL() - 1 ){
+          if ( btest(nf1, cntL) && btest(nf1, 0) ) val += Wloc.at(cntL);
+          if ( btest(nf2, cntL) && btest(nf2, 0) ) val += Wloc.at(cntL);
+          if ( btest(nf2, cntL) && btest(nf1, 0) ) val += Wloc.at(cntL);
+          if ( btest(nf1, cntL) && btest(nf2, 0) ) val += Wloc.at(cntL);
+        }else{
+          if ( btest(nf1, cntL) && btest(nf1, cntL+1) ) val += Wloc.at(cntL);
+          if ( btest(nf2, cntL) && btest(nf2, cntL+1) ) val += Wloc.at(cntL);
+          if ( btest(nf2, cntL) && btest(nf1, cntL+1) ) val += Wloc.at(cntL);
+          if ( btest(nf1, cntL) && btest(nf2, cntL+1) ) val += Wloc.at(cntL);
+        }
       }
+      MatElemts.push_back(std::make_tuple(idx, idx, val));
+      f1id++;
     }
-    if ( Wloc.size() == bs.GetL() ){
-      if( btest(b, 0) && btest(b, bs.GetL()-1) ) val += Wloc.at(bs.GetL()-1);// PBC
-    }
-    if ( std::abs(val) > 1.0e-12 ){
-      std::vector<size_t> ids(2, state_id);
-      for (size_t id2 = 0; id2 < this->HilbertSpaces.at(spin2); id2++) {
-        ids.at(spin2) = id2;
-        size_t idx = this->DetermineTotalIndex( ids );
-        MatElemts.push_back(std::make_tuple(idx, idx, val));
-      }
-    }
-    state_id++;
+    f2id++;
   }
-  if (spin1 == 0) {
-    H_Wup.zeros();
-    H_Wup = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
-  } else if (spin1 == 1){
-    H_Wdn.zeros();
-    H_Wdn = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
-  } else{
-    RUNTIME_ERROR("Not support more than 2 species fermion yet!");
-  }
+  H_W.zeros();
+  H_W = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
 }
 
 template<typename Tnum>
@@ -227,7 +226,7 @@ void FHM<Tnum>::FermiHubbardModel( const std::vector<Basis>& bs, const std::vect
 }
 
 template<typename Tnum>
-void FHM<Tnum>::ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc, const std::vector< std::vector<Tnum> >& Wloc ){
+void FHM<Tnum>::ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc, const std::vector<Tnum>& Wloc ){
   // Both species live in the same lattice and the same happing amplitudes
   assert( bs.size() == 2 );//NOTE: Only support two or one species right now.
   assert( Vloc.size() == bs.size() );
@@ -238,17 +237,17 @@ void FHM<Tnum>::ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const s
     assert( b.GetL() == Vloc.at(cnt).size() );
     assert( b.GetL() == Uloc.size() );
     LocalPotential( cnt, Vloc.at(cnt), b );
-    /* For intra-species NN coupling */
-    ExtendedHubbardInteraction( cnt, Wloc.at(cnt), b);
     /* For intra-species N-N hopping */
     assert( b.GetL() == lattice.size() );
     NNHopping( cnt, lattice, b );
     cnt++;
   }
+  /* For intra-species NN coupling: extended hubbard W */
+  ExtendedHubbardInteraction(Wloc, bs);
   /* For inter-species local terms: Hubbard U */
   HubbardInteraction(Uloc, bs);
   /* Build H_total */
-  this->H_total = H_Jup + H_Jdn + H_Vup + H_Vdn + H_U + H_Wup + H_Wdn;
+  this->H_total = H_Jup + H_Jdn + H_Vup + H_Vdn + H_U + H_W;
 }
 
 template class FHM<RealType>;

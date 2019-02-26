@@ -283,8 +283,7 @@ void Equilibrium(const std::string prefix){
   std::vector<DT> Uloc(Uin.begin(), Uin.end());
   // Ham0.FermiHubbardModel(Bases, lattice, Vloc, Uloc);
   // Exntended Hubbard
-  std::vector<DT> Wtmp(Win.begin(), Win.end());
-  std::vector< std::vector<DT> > Wloc = vec(Wtmp, Wtmp);
+  std::vector<DT> Wloc(Win.begin(), Win.end());
   Ham0.ExtendedFermiHubbardModel(Bases, lattice, Vloc, Uloc, Wloc);
   Ham0.CheckHermitian();
   LogOut << Ham0.GetTotalHilbertSpace() << " DONE!" << std::endl;
@@ -400,8 +399,7 @@ void Spectral(const std::string prefix){
   std::vector<ComplexType> EqmUloc(Ueqm.begin(), Ueqm.end());
   // EqmHam.FermiHubbardModel(EqmBases, Lattice, EqmVloc, EqmUloc);
   //* Exntended Hubbard
-  std::vector<ComplexType> Ww(Weqm.begin(), Weqm.end());
-  std::vector< std::vector<ComplexType> > EqmWloc = vec(Ww, Ww);
+  std::vector<ComplexType> EqmWloc(Weqm.begin(), Weqm.end());
   EqmHam.ExtendedFermiHubbardModel(EqmBases, Lattice, EqmVloc, EqmUloc, EqmWloc);
   LogOut << "Hermitian = " << EqmHam.CheckHermitian() << ", Hilbert space = " << EqmHam.GetTotalHilbertSpace() << ", DONE!" << std::endl;
   //* Create excitation
@@ -530,8 +528,7 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
   std::vector<ComplexType> Uloc(Ueqm.begin(), Ueqm.end());
   // Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
   //* Exntended Hubbard
-  std::vector<ComplexType> Ww(Weqm.begin(), Weqm.end());
-  std::vector< std::vector<ComplexType> > Wloc = vec(Ww, Ww);
+  std::vector<ComplexType> Wloc(Weqm.begin(), Weqm.end());
   Ham0.ExtendedFermiHubbardModel(Bases, EqmLattice, Vloc, Uloc, Wloc);
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
   // Load Wavefunction
@@ -653,7 +650,10 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
   std::vector< std::vector<ComplexType> > Vloc = vec(Vtmp, Vtmp);
   // Interaction
   std::vector<ComplexType> Uloc(Ueqm.begin(), Ueqm.end());
-  Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
+  // Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
+  //* Exntended Hubbard
+  std::vector<ComplexType> Wloc(Weqm.begin(), Weqm.end());
+  Ham0.ExtendedFermiHubbardModel(Bases, EqmLattice, Vloc, Uloc, Wloc);
   LogOut << "Hermitian = " << Ham0.CheckHermitian() << ", Hilbert space = " << Ham0.GetTotalHilbertSpace() << ", DONE!" << std::endl;
   // Load Wavefunction
   ComplexVectorType VecInit;
@@ -714,7 +714,8 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
       delete file3;
     }
   }
-  Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
+  // Ham0.FermiHubbardModel(Bases, EqmLattice, Vloc, Uloc);
+  Ham0.ExtendedFermiHubbardModel(Bases, EqmLattice, Vloc, Uloc, Wloc);
   ComplexSparseMatrixType H0 = Ham0.GetTotalHamiltonian();
   ComplexType Energy = arma::cdot(VecDyn, H0 * VecDyn);
   HDF5IO* file3 = new HDF5IO("QuenchStateWF.h5");
@@ -784,8 +785,7 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   //* Hubbard
   // EqmHam.FermiHubbardModel(EqmBases, Lattice, EqmVloc, EqmUloc);
   //* Exntended Hubbard
-  std::vector<ComplexType> Ww(Weqm.begin(), Weqm.end());
-  std::vector< std::vector<ComplexType> > EqmWloc = vec(Ww, Ww);
+  std::vector<ComplexType> EqmWloc(Weqm.begin(), Weqm.end());
   EqmHam.ExtendedFermiHubbardModel(EqmBases, Lattice, EqmVloc, EqmUloc, EqmWloc);
   LogOut << "Hermitian = " << EqmHam.CheckHermitian() << ", Hilbert space = " << EqmHam.GetTotalHilbertSpace() << ", DONE!" << std::endl;
   /* Core Hole */
