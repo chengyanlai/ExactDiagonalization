@@ -207,7 +207,7 @@ RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonia
       for (size_t cnt1 = 0; cnt1 < Bases.at(0).GetL(); cnt1++) {
         for (size_t cnt2 = 0; cnt2 < Bases.at(1).GetL(); cnt2++) {
           if ( btest(Ns1, cnt1) && btest(Ns2, cnt2) ) {
-            out(cnt1, cnt2) +=  std::pow(std::abs(Vec(id)), 2);//Vec(id) * std::conj( Vec(id) );
+            out(cnt1, cnt2) +=  RealPart( Vec(id) * std::conj( Vec(id) ) );
           }
         }
       }
