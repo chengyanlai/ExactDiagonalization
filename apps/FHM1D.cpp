@@ -202,8 +202,8 @@ RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonia
     for ( int &nf1 : f1 ){
       ids.at(0) = f1id;
       size_t id = Ham0.DetermineTotalIndex(ids);
-      int Ns1 = (species1 == 1)? nf1 : nf2;
-      int Ns2 = (species2 == 1)? nf1 : nf2;
+      int Ns1 = (species1 == 0)? nf1 : nf2;
+      int Ns2 = (species2 == 0)? nf1 : nf2;
       for (size_t cnt1 = 0; cnt1 < Bases.at(0).GetL(); cnt1++) {
         for (size_t cnt2 = 0; cnt2 < Bases.at(1).GetL(); cnt2++) {
           if ( btest(Ns1, cnt1) && btest(Ns2, cnt2) ) {
