@@ -54,7 +54,7 @@ void FHM<Tnum>::ExtendedHubbardInteraction( const std::vector<Tnum> &Wloc, const
       size_t idx = this->DetermineTotalIndex( ids );
       Tnum val = (Tnum)0.0;
       for ( int cntL = 0; cntL < bs.at(0).GetL(); cntL++ ){
-        if ( cntL ==  bs.at(0).GetL() - 1 ){
+        if ( cntL ==  bs.at(0).GetL() - 1 ){//* PBC
           if ( btest(nf1, cntL) && btest(nf1, 0) ) val += Wloc.at(cntL);
           if ( btest(nf2, cntL) && btest(nf2, 0) ) val += Wloc.at(cntL);
           if ( btest(nf2, cntL) && btest(nf1, 0) ) val += Wloc.at(cntL);
@@ -230,7 +230,6 @@ void FHM<Tnum>::ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const s
   // Both species live in the same lattice and the same happing amplitudes
   assert( bs.size() == 2 );//NOTE: Only support two or one species right now.
   assert( Vloc.size() == bs.size() );
-  assert( Wloc.size() == bs.size() );
   int cnt = 0;
   for ( auto &b : bs ){
     /* For intra-species local terms: Potential */
@@ -248,6 +247,59 @@ void FHM<Tnum>::ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const s
   HubbardInteraction(Uloc, bs);
   /* Build H_total */
   this->H_total = H_Jup + H_Jdn + H_Vup + H_Vdn + H_U + H_W;
+}
+
+template<typename Tnum>
+std::vector<arma::SpMat<Tnum> > FHM<Tnum>::NNHoppingOp( const size_t spin1, const Basis &bs )const{
+  std::vector<arma::SpMat<Tnum>> out;
+  std::vector<std::tuple<int, int, Tnum> > MatElemts;
+  size_t L = bs.GetL();
+  int spin2 = (spin1 == 0)?  1 : 0;
+  size_t bid = 0, pid = 0;//l and p's index
+  for ( int site_i = 0; site_i < L; site_i++ ){
+    int site_j = (site_i == L -1)? 0 : site_i + 1;//* PBC assumed
+    MatElemts.clear();
+    for ( int b : bs.FStates ){
+      /* see if hopping exist */
+      if ( btest(b, site_j) && !(btest(b, site_i)) ) {
+        /* if yes, no particle in i and one particle in j. */
+        int CrossFermionNumber = 0;
+        Tnum tsign = (Tnum)(1.0e0);
+        // possible cross fermions and sign change.
+        if ( std::labs(site_i - site_j) > 1 ){
+          if ( site_i > site_j ){
+            for ( int k = site_j+1; k < site_i; k++){
+              CrossFermionNumber += btest(b, k);
+            }
+          }else if ( site_i < site_j ){
+            for ( int k = site_i+1; k < site_j; k++){
+              CrossFermionNumber += btest(b, k);
+            }
+          }else{
+            std::cout << "Something wrong in hopping sign......" << std::endl;
+          }
+        }
+        if (CrossFermionNumber % 2 == 1) tsign = (Tnum)(-1.0e0);
+        size_t p = ibset(b, site_i);
+        p = ibclr(p, site_j);//* c^dagger_i c_j
+        bid = bs.FTags.at(b);// Find their indices
+        pid = bs.FTags.at(p);// Find their indices
+        std::vector<size_t> rids(2, bid);
+        std::vector<size_t> cids(2, pid);
+        for (size_t loop_id = 0; loop_id < this->HilbertSpaces.at(spin2); loop_id++) {
+          rids.at(spin2) = loop_id;
+          cids.at(spin2) = loop_id;
+          size_t rid = this->DetermineTotalIndex( rids );
+          size_t cid = this->DetermineTotalIndex( cids );
+          MatElemts.push_back( std::make_tuple( rid, cid, tsign) );
+          MatElemts.push_back( std::make_tuple( cid, rid, tsign) );//* Hermitian conjugate
+        }
+      }
+    }
+    arma::SpMat<Tnum> tmp = BuildSparseHamiltonian( this->GetTotalHilbertSpace(), MatElemts );
+    out.push_back(tmp);
+  }
+  return out;
 }
 
 template class FHM<RealType>;

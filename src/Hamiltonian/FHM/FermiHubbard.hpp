@@ -16,15 +16,13 @@ public:
 
   void FermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc );
   void ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const std::vector< Node<Tnum>* >& lattice, const std::vector< std::vector<Tnum> >& Vloc, const std::vector<Tnum>& Uloc, const std::vector<Tnum>& Wloc );
+
   void LocalPotential( const size_t species_id, const std::vector<Tnum> &Vloc, const Basis &bs );
   void ExtendedHubbardInteraction( const std::vector<Tnum> &Wloc, const std::vector<Basis> &bs);
   void HubbardInteraction( const std::vector<Tnum> &Uloc, const std::vector<Basis> &bs );
   void NNHopping( const size_t species_id, const std::vector< Node<Tnum>* > &lt, const Basis &bs );
 
-  inline arma::SpMat<Tnum> GetHoppingHamiltonian(const size_t species_id){
-    if( species_id == 0 ) return H_Jup;
-    else if( species_id == 1 ) return H_Jdn;
-  };
+  std::vector<arma::SpMat<Tnum> > NNHoppingOp( const size_t species_id, const Basis &bs )const;//* PBC assumed
 };
 
 #endif	/* end of include guard: __FERMI_HUBBARD_HPP__ */

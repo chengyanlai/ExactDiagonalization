@@ -165,6 +165,42 @@ DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Ba
   return CM;
 }
 
+std::vector<DTM> BOWCorrelation( const std::vector<Basis> &Bases, const DTV &Vec, FHM<DT> &Ham0 ){
+  size_t L = Bases.at(0).GetL();
+  std::vector<DTM> out;
+  DTM UpUp(Bases.at(0).GetL(), Bases.at(1).GetL(), arma::fill::zeros );
+  DTM UpDn(Bases.at(0).GetL(), Bases.at(1).GetL(), arma::fill::zeros );
+  DTM DnUp(Bases.at(0).GetL(), Bases.at(1).GetL(), arma::fill::zeros );
+  DTM DnDn(Bases.at(0).GetL(), Bases.at(1).GetL(), arma::fill::zeros );
+  std::vector<arma::SpMat<DT> > OBOW0 = Ham0.NNHoppingOp(0, Bases.at(0));
+  std::vector<arma::SpMat<DT> > OBOW1 = Ham0.NNHoppingOp(1, Bases.at(1));
+  for ( int iL = 0; iL < L; iL++ ){
+    arma::SpMat<DT> Op1Up = OBOW0.at(iL);
+    arma::SpMat<DT> Op1Dn = OBOW1.at(iL);
+    for ( int jL = iL; jL < L; jL++ ){
+      arma::SpMat<DT> Op2Up = OBOW0.at(jL);
+      arma::SpMat<DT> Op2Dn = OBOW1.at(jL);
+
+      DTV tmp = Op1Up * ( Op2Up * Vec );
+      UpUp(iL, jL) = arma::cdot(Vec, tmp);
+
+      tmp = Op1Up * ( Op2Dn * Vec );
+      UpDn(iL, jL) = arma::cdot(Vec, tmp);
+
+      tmp = Op1Dn * ( Op2Up * Vec );
+      DnUp(iL, jL) = arma::cdot(Vec, tmp);
+
+      tmp = Op1Dn * ( Op2Dn * Vec );
+      DnDn(iL, jL) = arma::cdot(Vec, tmp);
+    }
+  }
+  out.push_back( UpUp );
+  out.push_back( UpDn );
+  out.push_back( DnUp );
+  out.push_back( DnDn );
+  return out;
+}
+
 std::vector<RealVectorType> Ni( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
   std::vector<RealVectorType> out;
   DTV tmp1(Bases.at(0).GetL(), arma::fill::zeros);//(Bases.at(0).GetL(), 0.0e0);
@@ -234,7 +270,7 @@ void SpectralPeaks( const double EG, const ComplexVectorType AS, const RealVecto
 
 void Equilibrium(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "FHM.1d.eqm", std::ios::app);
+  LogOut.open(prefix + "FHMEqm.log", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -315,6 +351,9 @@ void Equilibrium(const std::string prefix){
   LogOut << " N_i - " << std::endl;
   RealVectorType Niall = Nfi.at(0) + Nfi.at(1);
   LogOut << Niall << std::endl;
+  RealMatrixType NdnNup = NiNj( Bases, Vec, Ham0, 1, 0 );
+  LogOut << " Correlation NdnNup" << std::endl;
+  LogOut << NdnNup << std::endl;
   RealMatrixType NupNdn = NiNj( Bases, Vec, Ham0, 0, 1 );
   LogOut << " Correlation NupNdn" << std::endl;
   LogOut << NupNdn << std::endl;
@@ -335,6 +374,7 @@ void Equilibrium(const std::string prefix){
   file->SaveNumber("Obs", "NupT", NupT);
   file->SaveVector("Obs", "Ndn", Nfi.at(1));
   file->SaveNumber("Obs", "NdnT", NdnT);
+  file->SaveMatrix("Obs", "NdnNup", NdnNup);
   file->SaveMatrix("Obs", "NupNdn", NupNdn);
   file->SaveMatrix("Obs", "NupNup", NupNup);
   file->SaveMatrix("Obs", "NdnNdn", NdnNdn);
@@ -346,7 +386,7 @@ void Equilibrium(const std::string prefix){
 
 void Spectral(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "Spectral.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "SpectralD.log", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -480,7 +520,7 @@ void Spectral(const std::string prefix){
 
 void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const int SaveWFEvery = 1000000 ){
   std::ofstream LogOut;
-  LogOut.open(prefix + "Pump.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "Pump.log", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -602,7 +642,7 @@ void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const i
 
 void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const int SaveWFEvery = 1000000 ){
   std::ofstream LogOut;
-  LogOut.open(prefix + "State.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "QuenchState.log", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -946,6 +986,7 @@ void CalculateObs(const std::string prefix, const int Every){
     RealMatrixType NdnNdn = NiNj( EqmBases, Vec, EqmHam, 1, 1 );
     ComplexMatrixType CMUp = SingleParticleDensityMatrix( 0, EqmBases, Vec, EqmHam );
     ComplexMatrixType CMDn = SingleParticleDensityMatrix( 1, EqmBases, Vec, EqmHam );
+    std::vector<ComplexMatrixType> BOW = BOWCorrelation( EqmBases, Vec, EqmHam );
     HDF5IO* file2 = new HDF5IO(prefix + "PumpObs.h5");
     gname = "obs-";
     gname.append( std::to_string((unsigned long long)cnt ));
@@ -955,6 +996,10 @@ void CalculateObs(const std::string prefix, const int Every){
     file2->SaveMatrix(gname, "NdnNup", NdnNup);
     file2->SaveMatrix(gname, "NupNup", NupNup);
     file2->SaveMatrix(gname, "NdnNdn", NdnNdn);
+    file2->SaveMatrix(gname, "HopUpUp", BOW.at(0));
+    file2->SaveMatrix(gname, "HopUpDn", BOW.at(1));
+    file2->SaveMatrix(gname, "HopDnUp", BOW.at(2));
+    file2->SaveMatrix(gname, "HopDnDn", BOW.at(3));
     file2->SaveMatrix(gname, "CMUp", CMUp);
     file2->SaveMatrix(gname, "CMDn", CMDn);
     delete file2;
@@ -1091,46 +1136,6 @@ int main(int argc, char *argv[]){
     CalculateAt("", 40);
   }else if ( std::atoi(argv[1]) == 6 ) {
     CalculateObs("", 20);
-  }else if ( std::atoi(argv[1]) == 10 ){
-    Equilibrium("");
-    PumpDynamics("");
-  }else if ( std::atoi(argv[1]) == 20 ){
-    Equilibrium("");
-    SpectralDynamics("");
-  }else if ( std::atoi(argv[1]) == 21 ){
-    PumpDynamics("");
-    SpectralDynamics("");
-  }else if ( std::atoi(argv[1]) == 210 ){
-    Equilibrium("");
-    PumpDynamics("");
-    SpectralDynamics("");
-  }else if ( std::atoi(argv[1]) == 321 ){
-    PumpDynamics("");
-    #pragma omp parallel sections // starts a new team
-    {
-      #pragma omp section
-      {
-        StateDynamics("");
-      }
-      #pragma omp section
-      {
-        SpectralDynamics("");
-      }
-    }
-  }else if ( std::atoi(argv[1]) == 3210 ){
-    Equilibrium("");
-    PumpDynamics("", 20, 20);
-    #pragma omp parallel sections // starts a new team
-    {
-      #pragma omp section
-      {
-        StateDynamics("", 40, 40);
-      }
-      #pragma omp section
-      {
-        SpectralDynamics("", 40, 40);
-      }
-    }
   }
   return 0;
 }
