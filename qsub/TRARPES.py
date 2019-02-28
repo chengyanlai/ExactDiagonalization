@@ -47,11 +47,11 @@ else:
 APPs = []
 if A0:
   # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 2"))
-  # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3"))
-  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
+  # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
   # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 1"))
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 6"))
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 3"))
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 7"))
 else:
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 20"))
 APPs.append("/bin/touch DONE")
