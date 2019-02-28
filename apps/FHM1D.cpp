@@ -114,7 +114,7 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       Vout(nid) = FermionSignUp * Vin(oid);
     }
   }
-  return arma::normalise(Vout);
+  return Vout;//arma::normalise(Vout);
 }
 
 DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
@@ -288,7 +288,7 @@ void Equilibrium(const std::string prefix){
     Jin = std::vector<RealType>(L, 1.0);// PBC
     Uin = std::vector<RealType>(L, 6.0);
     Vin = std::vector<RealType>(L, 0.0);
-    Win = std::vector<RealType>(L, 3.0);
+    Win = std::vector<RealType>(L, 0.0);
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
   LogOut << "Build Lattice - " << std::endl;
@@ -386,7 +386,7 @@ void Equilibrium(const std::string prefix){
 
 void Spectral(const std::string prefix){
   std::ofstream LogOut;
-  LogOut.open(prefix + "SpectralD.log", std::ios::app);
+  LogOut.open(prefix + "Spectral.log", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -408,7 +408,7 @@ void Spectral(const std::string prefix){
     Jeqm = std::vector<RealType>(L, 1.0);// OBC
     Ueqm = std::vector<RealType>(L, 6.0);
     Veqm = std::vector<RealType>(L, 0.0);
-    Weqm = std::vector<RealType>(L, 3.0);
+    Weqm = std::vector<RealType>(L, 0.0);
     Uch = std::vector<RealType>(L, 0.0);
     Vch = std::vector<RealType>(L, 0.0);
     CoreHole = L / 2;
@@ -499,23 +499,31 @@ void Spectral(const std::string prefix){
   LogOut << VecInput.n_rows << " DONE!" << std::endl;
   LogOut << "Operate on Wave function on site @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
   ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+  VecInit = arma::normalise(VecInit);
   LogOut << ", DONE!" << std::endl;
 
-
   LogOut << "Get spectrum ... " << std::flush;
-  size_t MaxNumPeak;
-  MaxNumPeak = 40;
+  const size_t MaxNumPeak = 40;
   std::vector<double> PeakLocations, PeakWeights;
   DTM Vecs(VecInit.n_rows, MaxNumPeak);
   RealVectorType Vals;
   CoreHoleHam.SpectralH(Vals, Vecs, VecInit, MaxNumPeak);
-  SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
-  LogOut << " Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::flush;
-  LogOut << " DONE!" << std::endl;
-  HDF5IO* file1 = new HDF5IO("Spectral.h5");
-  file1->SaveStdVector("Iw", "ei", PeakLocations);
-  file1->SaveStdVector("Iw", "wi", PeakWeights);
-  delete file1;
+  for ( int iL = 0; iL < L; iL++ ){
+    ComplexVectorType KetState = Operate( VecInput, iL, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+    SpectralPeaks( ValInput(0), KetState, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
+    LogOut << " Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::flush;
+    LogOut << " DONE!" << std::endl;
+    HDF5IO* file1 = new HDF5IO("Spectral.h5");
+    std::string gname = "C";
+    gname.append( std::to_string((unsigned long long)iL ));
+    gname.append( "-C" );
+    gname.append( std::to_string((unsigned long long)CoreHole ));
+    gname.append( "-" );
+    gname.append( std::to_string((unsigned long long)Type) );
+    file1->SaveStdVector(gname, "ei", PeakLocations);
+    file1->SaveStdVector(gname, "wi", PeakWeights);
+    delete file1;
+  }
 }
 
 void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const int SaveWFEvery = 1000000 ){
@@ -769,7 +777,7 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
 
 void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, const int SaveWFEvery = 1000000 ){
   std::ofstream LogOut;
-  LogOut.open(prefix + "XAS.fhm.1d", std::ios::app);
+  LogOut.open(prefix + "SpectralD.log", std::ios::app);
   int L;
   int OBC;
   int N1, N2;
@@ -883,10 +891,11 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   // Create Core Hole on wf
   LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
   ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
-  ComplexVectorType VecXAS = VecInit;
+  ComplexVectorType VecXAS = arma::normalise(VecInit);
   HDF5IO* file2 = new HDF5IO("SpectralDWF.h5");
   std::string gname = "WF-0";
   file2->SaveVector(gname, "Vec", VecXAS);
+  file2->SaveNumber(gname, "Norm", arma::norm(VecInit));
   delete file2;
   LogOut << ", DONE!" << std::endl;
 
