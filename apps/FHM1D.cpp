@@ -177,20 +177,28 @@ std::vector<DTM> BOWCorrelation( const std::vector<Basis> &Bases, const DTV &Vec
   for ( int iL = 0; iL < L; iL++ ){
     arma::SpMat<DT> Op1Up = OBOW0.at(iL);
     arma::SpMat<DT> Op1Dn = OBOW1.at(iL);
+    std::cout << arma::approx_equal(Op1Up, Op1Up.t(), "absdiff", 1.0e-5) << std::endl;
+    std::cout << arma::approx_equal(Op1Dn, Op1Dn.t(), "absdiff", 1.0e-5) << std::endl;
     for ( int jL = iL; jL < L; jL++ ){
       arma::SpMat<DT> Op2Up = OBOW0.at(jL);
       arma::SpMat<DT> Op2Dn = OBOW1.at(jL);
+    std::cout << arma::approx_equal(Op2Up, Op2Up.t(), "absdiff", 1.0e-5) << std::endl;
+    std::cout << arma::approx_equal(Op2Dn, Op2Dn.t(), "absdiff", 1.0e-5) << std::endl;
 
-      DTV tmp = Op1Up * ( Op2Up * Vec );
+      // DTV tmp = Op1Up * ( Op2Up * Vec );
+      DTV tmp = ( Op2Up * Vec );
       UpUp(iL, jL) = arma::cdot(Vec, tmp);
 
-      tmp = Op1Up * ( Op2Dn * Vec );
+      // tmp = Op1Up * ( Op2Dn * Vec );
+      tmp = ( Op2Dn * Vec );
       UpDn(iL, jL) = arma::cdot(Vec, tmp);
 
-      tmp = Op1Dn * ( Op2Up * Vec );
+      // tmp = Op1Dn * ( Op2Up * Vec );
+      tmp = ( Op2Up * Vec );
       DnUp(iL, jL) = arma::cdot(Vec, tmp);
 
-      tmp = Op1Dn * ( Op2Dn * Vec );
+      // tmp = Op1Dn * ( Op2Dn * Vec );
+      tmp = ( Op2Dn * Vec );
       DnDn(iL, jL) = arma::cdot(Vec, tmp);
     }
   }
@@ -370,6 +378,7 @@ void Equilibrium(const std::string prefix){
   LogOut << CMUp << std::endl;
   DTM CMDn = SingleParticleDensityMatrix( 1, Bases, Vec, Ham0 );
   LogOut << CMDn << std::endl;
+  std::vector<ComplexMatrixType> BOW = BOWCorrelation( Bases, Vec, Ham0 );
   file->SaveVector("Obs", "Nup", Nfi.at(0));
   file->SaveNumber("Obs", "NupT", NupT);
   file->SaveVector("Obs", "Ndn", Nfi.at(1));
@@ -380,6 +389,10 @@ void Equilibrium(const std::string prefix){
   file->SaveMatrix("Obs", "NdnNdn", NdnNdn);
   file->SaveMatrix("Obs", "CMUp", CMUp);
   file->SaveMatrix("Obs", "CMDn", CMDn);
+  file->SaveMatrix("Obs", "HopUpUp", BOW.at(0));
+  file->SaveMatrix("Obs", "HopUpDn", BOW.at(1));
+  file->SaveMatrix("Obs", "HopDnUp", BOW.at(2));
+  file->SaveMatrix("Obs", "HopDnDn", BOW.at(3));
   delete file;
   LogOut.close();
 }

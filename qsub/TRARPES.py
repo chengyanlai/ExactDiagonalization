@@ -14,13 +14,15 @@ L = 12
 OBC = 0# 1:True
 N1 = 6
 N2 = N1
-Uinits = [3,6,9]
-Winit = 3
+# Uinits = [3,6,9]
+# Winit = 3
+Uinits = [10]
+Winit = 7
 
 # Pumping parameters
 A0 = 0.4
 Tau = 0.5
-Omega = 6
+Omega = 10
 Td = 2
 Phi = 0
 
@@ -61,10 +63,12 @@ if OBC:
 else:
   Prefix1 = "-".join(["trArpesP", "".join(["L", str(L)]), str(N1), str(N2)])
 
-for Uinit in Uinits:
-  Prefix2 = "".join(["Ui", str(Uinit)])
 
-  DataDir = os.path.join(ExecDir, "ED", Prefix1, Prefix2)
+Prefix2 = "".join(["Wi", str(Winit)])
+for Uinit in Uinits:
+  Prefix3 = "".join(["Ui", str(Uinit)])
+
+  DataDir = os.path.join(ExecDir, "ED", Prefix1, Prefix2, Prefix3)
 
   for OpSite in OpSites:
     if A0:
@@ -75,7 +79,7 @@ for Uinit in Uinits:
     workdir = os.path.join(DataDir, Pump, OPSite)
     os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
 
-    JobName =  "-".join([Prefix2, OPSite, Pump ])
+    JobName =  "-".join([Prefix2, Prefix3, OPSite, Pump ])
     f = h5py.File(os.path.join(workdir, 'conf.h5'), 'w')
     para = f.create_group("Parameters")
     dset = para.create_dataset("L", data=L)

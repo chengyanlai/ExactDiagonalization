@@ -252,12 +252,12 @@ void FHM<Tnum>::ExtendedFermiHubbardModel( const std::vector<Basis>& bs, const s
 template<typename Tnum>
 std::vector<arma::SpMat<Tnum> > FHM<Tnum>::NNHoppingOp( const size_t spin1, const Basis &bs )const{
   std::vector<arma::SpMat<Tnum>> out;
-  std::vector<std::tuple<int, int, Tnum> > MatElemts;
   size_t L = bs.GetL();
   int spin2 = (spin1 == 0)?  1 : 0;
   size_t bid = 0, pid = 0;//l and p's index
   for ( int site_i = 0; site_i < L; site_i++ ){
     int site_j = (site_i == L -1)? 0 : site_i + 1;//* PBC assumed
+    std::vector<std::tuple<int, int, Tnum> > MatElemts;
     MatElemts.clear();
     for ( int b : bs.FStates ){
       /* see if hopping exist */
