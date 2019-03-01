@@ -1111,7 +1111,7 @@ void CalculateObs2(const std::string prefix, const int Every){
   LogOut.close();
 }
 
-void CalculateAt(const std::string prefix, const int Every){
+void CalculateAt(const std::string prefix, const int Every, const int From = 0){
   std::ofstream LogOut;
   LogOut.open(prefix + "At.log", std::ios::app);
   int L;
@@ -1184,7 +1184,7 @@ void CalculateAt(const std::string prefix, const int Every){
   FHM<ComplexType> CoreHoleHam( CoreHoleBases );
   LogOut << " (only for determine index) DONE!" << std::endl;
 
-  for ( int cntL = 0; cntL < L; cntL++ ){
+  for ( int cntL = From; cntL < L; cntL++ ){
     ComplexVectorType BraState, KetState, OpKetState;
     std::vector<ComplexType> At;
     At.clear();
@@ -1234,7 +1234,8 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 4 ){
     Spectral("");
   }else if ( std::atoi(argv[1]) == 5 ) {
-    CalculateAt("", 20);
+    int From = std::atoi(argv[2]);
+    CalculateAt("", 20, From);
   }else if ( std::atoi(argv[1]) == 6 ) {
     CalculateObs("", 20);
   }else if ( std::atoi(argv[1]) == 7 ) {
