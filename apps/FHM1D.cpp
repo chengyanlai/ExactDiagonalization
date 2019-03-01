@@ -177,28 +177,20 @@ std::vector<DTM> BOWCorrelation( const std::vector<Basis> &Bases, const DTV &Vec
   for ( int iL = 0; iL < L; iL++ ){
     arma::SpMat<DT> Op1Up = OBOW0.at(iL);
     arma::SpMat<DT> Op1Dn = OBOW1.at(iL);
-    std::cout << arma::approx_equal(Op1Up, Op1Up.t(), "absdiff", 1.0e-5) << std::endl;
-    std::cout << arma::approx_equal(Op1Dn, Op1Dn.t(), "absdiff", 1.0e-5) << std::endl;
     for ( int jL = iL; jL < L; jL++ ){
       arma::SpMat<DT> Op2Up = OBOW0.at(jL);
       arma::SpMat<DT> Op2Dn = OBOW1.at(jL);
-    std::cout << arma::approx_equal(Op2Up, Op2Up.t(), "absdiff", 1.0e-5) << std::endl;
-    std::cout << arma::approx_equal(Op2Dn, Op2Dn.t(), "absdiff", 1.0e-5) << std::endl;
 
-      // DTV tmp = Op1Up * ( Op2Up * Vec );
-      DTV tmp = ( Op2Up * Vec );
+      DTV tmp = Op1Up * ( Op2Up * Vec );
       UpUp(iL, jL) = arma::cdot(Vec, tmp);
 
-      // tmp = Op1Up * ( Op2Dn * Vec );
-      tmp = ( Op2Dn * Vec );
+      tmp = Op1Up * ( Op2Dn * Vec );
       UpDn(iL, jL) = arma::cdot(Vec, tmp);
 
-      // tmp = Op1Dn * ( Op2Up * Vec );
-      tmp = ( Op2Up * Vec );
+      tmp = Op1Dn * ( Op2Up * Vec );
       DnUp(iL, jL) = arma::cdot(Vec, tmp);
 
-      // tmp = Op1Dn * ( Op2Dn * Vec );
-      tmp = ( Op2Dn * Vec );
+      tmp = Op1Dn * ( Op2Dn * Vec );
       DnDn(iL, jL) = arma::cdot(Vec, tmp);
     }
   }
