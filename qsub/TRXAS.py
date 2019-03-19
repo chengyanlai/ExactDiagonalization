@@ -120,4 +120,4 @@ for Uinit in Us:
     elif Cluster == "Merced":
       sg.GenerateScript("TORQUE", Filename, JobName, APPs, workdir, Nodes=1, NumCore=2, WallTime='336:00:00', Partition='', ProjectName='', MPI=0, PPN=1)
     elif Cluster == "LANL":
-      sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='w18_xasrixs')
+      sg.GenerateScript("SLURM", Filename, JobName, APPs, workdir, Nodes=1, NumCore=16, WallTime='16:00:00', Partition='standard', ProjectName='s17_cint')
