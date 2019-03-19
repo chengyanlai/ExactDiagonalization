@@ -9,10 +9,16 @@ from Clusters import *
 
 dt = 0.005
 L = 3
-Nh = 30 * L
+Nh = 35 * L
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 
-Omega, Lambda, Alpha = 0.4, 1.0, 2.0
+# Omega, Lambda, Alpha = 0.9, 0.8, 2.0
+# Omega, Lambda, Alpha = 0.5, 0.4, 4.0
+# Omega, Lambda, Alpha = 0.5, 0.2, 8.0
+Omega, Lambda, Alpha = 0.5, 0.2, 7.50
+#Omega, Lambda, Alpha = 0.5, 0.3, 5.0
+#Omega, Lambda, Alpha = 0.5, 0.4, 3.750
+#Omega, Lambda, Alpha = 0.5, 0.5, 3.0
 TSteps = np.int(200 * 6.5 * 10 / Omega)# Roughly 10 Phonon Period as 6.5 > 2 * pi
 Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]), str(Alpha) ])
 
