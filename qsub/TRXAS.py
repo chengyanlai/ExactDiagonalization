@@ -7,20 +7,38 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
-L = 14
-OBC = 1# 1:True
-N1 = 6
+L = 16
+OBC = 0# 1:True
+N1 = 4
 N2 = N1
-Us = [1,2,3,4,5]
+Us = [0,]#[1,2,3,4,5]
 
 # XAS Parameters
 CHloc = np.int(L / 2)
-UVls = [(0., -3.)]
-Tsteps = 3400
+# UVls = [(0., -3.)]
+UVls = [
+        #! SIAM from Fermi sea state
+        (1.0, -9.0),
+        (2.0, -6.0),
+        (2.0, -8.0),
+        (2.0,-10.0),
+        (3.0,-11.0),
+        (4.0, -6.0),
+        (4.0, -8.0),
+        (4.0,-10.0),
+        (4.0,-12.0),
+        (5.0,-13.0),
+        (6.0, -6.0),
+        (6.0, -8.0),
+        (6.0,-10.0),
+        (6.0,-12.0),
+        (6.0,-14.0),
+      ]
+Tsteps = 8000
 dt = 0.005
 
 # For pumping pulse
-A0 = 0.5
+A0 = 0
 Tau = 2
 W0 = 3
 
@@ -39,8 +57,12 @@ else:
   At = np.array([])
 
 APPs = []
-if A0: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 210"))
-else: APPs.append(os.path.join(SrcDir, "build", "fhm.1d 20"))
+if A0:
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
+else:
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 4"))
+  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 2"))
 APPs.append("/bin/touch DONE")
 
 if OBC:
@@ -74,6 +96,8 @@ for Uinit in Us:
     dset = para.create_dataset("U", data=Uls)
     Vls = np.zeros(L, dtype=np.float64)
     dset = para.create_dataset("V", data=Vls)
+    Wls = np.zeros(L, dtype=np.float64)
+    dset = para.create_dataset("W", data=Wls)
     # Pump
     dset = para.create_dataset("At", data=At)
     dset = para.create_dataset("TStepsA", data=At.shape[0])

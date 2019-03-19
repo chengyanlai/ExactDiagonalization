@@ -1210,7 +1210,7 @@ void CalculateAt(const std::string prefix, const int Every, const int From = 0){
 }
 
 
-void CalculateAt2(const std::string prefix, const int Every, const int From = 0){
+void CalculateAtEqm(const std::string prefix, const int Every, const int From = 0){
   std::ofstream LogOut;
   LogOut.open(prefix + "At.log", std::ios::app);
   int L;
@@ -1341,7 +1341,7 @@ int main(int argc, char *argv[]){
     CalculateObs2("", 20);
   }else if ( std::atoi(argv[1]) == 8 ) {
     int From = std::atoi(argv[2]);
-    CalculateAt2("", 20, From);
+    CalculateAtEqm("", 20, From);
   }
   return 0;
 }
