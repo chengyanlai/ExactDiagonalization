@@ -133,7 +133,7 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
       RealType Npf = state.at(Floc);
       if ( tg > -1.0e-5 ){
         size_t rid = bs.GetIndexFromTag(tg);
-        if ( state == bs.BStates.at(cid) ){
+        if ( state == bs.BStates.at(rid) ){
           size_t ridx = this->DetermineTotalIndex( vec<size_t>(Floc, rid) );
           size_t cidx = this->DetermineTotalIndex( vec<size_t>(Floc, cid) );
           MatElemts.push_back( std::make_tuple(ridx, cidx, -1.0e0 * G * sqrt(Npf) ) );
@@ -145,7 +145,7 @@ void Holstein<Tnum>::FermionPhononR( const int& RPoints, const RealType& G, cons
         tg = bs.DestroyPhonon(state, Floc);
         if ( tg > -1.0e-5 ){
           size_t rid = bs.GetIndexFromTag(tg);
-          if ( state == bs.BStates.at(cid) ) {
+          if ( state == bs.BStates.at(rid) ) {
             size_t ridx = this->DetermineTotalIndex( vec<size_t>(Floc, rid) );
             size_t cidx = this->DetermineTotalIndex( vec<size_t>(Floc, cid) );
             MatElemts.push_back( std::make_tuple(ridx, cidx, -1.0e0 * G * sqrt(Npi) ) );
