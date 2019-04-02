@@ -237,7 +237,7 @@ ComplexVectorType CoherentState( std::ofstream& LogOut, const std::vector<Comple
       ME.at(i, i+1) = -1.0;
     }
   }
-  LogOut << ME << std::endl;
+  // LogOut << ME << std::endl;
   PrintVector(LogOut, Eis);
   RealVectorType eigval;
   RealMatrixType eigvec;

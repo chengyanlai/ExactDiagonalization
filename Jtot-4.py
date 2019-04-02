@@ -15,7 +15,14 @@ def main(filename, prefix):
     Jf2 = []
     Jf3 = []
     Jf4 = []
-    AvP = []
+    Np1 = []
+    Np2 = []
+    Np3 = []
+    Np4 = []
+    Xp1 = []
+    Xp2 = []
+    Xp3 = []
+    Xp4 = []
     cnt = 0
     gname = "Obs-" + str(cnt)
     e = gname in f.keys()
@@ -31,7 +38,16 @@ def main(filename, prefix):
         Jf3.append( Fmn[2,3].imag )
         Jf4.append( Fmn[3,0].imag )
         Pm = f[gname]["Phonon"]["Elem"]["real"][:]
-        AvP.append( np.average(Pm) )
+        Pm = f[gname]["Phonon"]["Elem"]["real"][:]
+        Np1.append( Pm[0] )
+        Np2.append( Pm[1] )
+        Np3.append( Pm[2] )
+        Np4.append( Pm[3] )
+        Xm = f[gname]["Ei"][:]
+        Xp1.append( Xm[0] )
+        Xp2.append( Xm[1] )
+        Xp3.append( Xm[2] )
+        Xp4.append( Xm[3] )
         cnt += 20
         gname = "Obs-" + str(cnt)
         e = gname in f.keys()
@@ -43,8 +59,15 @@ def main(filename, prefix):
     Jf2 = np.array( Jf2 )
     Jf3 = np.array( Jf3 )
     Jf4 = np.array( Jf4 )
-    AvP = np.array( AvP )
-    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Nf4, Jf1, Jf2, Jf3, Jf4, AvP]).T )
+    Np1 = np.array( Np1 )
+    Np2 = np.array( Np2 )
+    Np3 = np.array( Np3 )
+    Np4 = np.array( Np4 )
+    Xp1 = np.array( Xp1 )
+    Xp2 = np.array( Xp2 )
+    Xp3 = np.array( Xp3 )
+    Xp4 = np.array( Xp4 )
+    np.savetxt(prefix + ".txt", np.vstack([Nf1, Nf2, Nf3, Nf4, Jf1, Jf2, Jf3, Jf4, Np1, Np2, Np3, Np4, Xp1, Xp2, Xp3, Xp4]).T )
     f.close()
 
 if __name__ == '__main__':

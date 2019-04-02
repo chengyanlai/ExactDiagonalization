@@ -17,7 +17,7 @@ from Clusters import *
 t23 = 1.0
 Vin = 0.0
 
-SearchJ = 2
+SearchJ = 0
 
 if SearchJ:
   t13List = np.linspace(0.7, 1.0, 13)# For searching
@@ -27,20 +27,22 @@ if SearchJ:
 else:
   # remember to set FIXJ to 0 in main program
   cntGStart = 0
-  t13List = np.array([0.6, 0.8, 1.0, 1.2, 1.4])
-  Uin = [0.0, 0.1, 1.0, 5.0]
-  GammaList = np.logspace(-2.0, 2.5, num=251)
+  t13List = np.linspace(0.1, 1.9, 19)
+  Uin = np.linspace(1, 6, 11)
+  GammaList = np.logspace(0, 1.2, num=20)
+  TargetJ = 0.0# Not used
 
 
 # NOTE: Dynamics parameters
 dt = 0.005
 
-for U, TargetJ in UinTj:
+# for U, TargetJ in UinTj:
+for U in Uin:
   for t13 in t13List:
     if SearchJ:
       DataDir = os.path.join( ExecDir, "ED", "TQDM", "SearchJ" + str(SearchJ), "".join(["U", str(U), "-t", str(t13)]) )
     else:
-      DataDir = os.path.join( ExecDir, "ED", "TQDM", "".join(["U", str(U), "-t", str(t13)]) )
+      DataDir = os.path.join( ExecDir, "ED", "TQDM", "".join(["U", str(U), "-t", str(np.round(t13,2))]) )
     cntG = cntGStart
     for GammaL in GammaList:
       GammaR = GammaL
@@ -49,11 +51,11 @@ for U, TargetJ in UinTj:
       elif GammaL > 400.: dt = 0.0005
       elif GammaL > 200.: dt = 0.001
       if SearchJ:
-        JobName =  "".join(["U", str(U), "-t", str(t13), "SJ", str(SearchJ)])
+        JobName =  "".join(["U", str(U), "-t", str(np.round(t13,2)), "SJ", str(SearchJ)])
         workdir = DataDir
       else:
-        JobName =  "".join(["G", str(cntG),])
-        workdir = os.path.join(DataDir, JobName)
+        JobName =  "".join(["U", str(U), "-t", str(np.round(t13,2)), "-G", str(cntG),])
+        workdir = os.path.join(DataDir, "G"+str(cntG))
 
       os.makedirs(workdir, exist_ok=True)  # Python >= 3.2
 
