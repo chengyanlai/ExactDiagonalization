@@ -60,7 +60,7 @@ APPs = []
 if A0:
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
 else:
-  APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
+  # APPs.append(os.path.join(SrcDir, "build", "fhm.1d 0"))
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 4"))
   APPs.append(os.path.join(SrcDir, "build", "fhm.1d 2"))
 APPs.append("/bin/touch DONE")
