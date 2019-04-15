@@ -69,4 +69,4 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
     for i in range(args["from"], args["to"], 1):
         prefix = "S"+str(i).zfill(4)
-        main(args["L"], args["input"], args["output"], prefix)
+        main(args["length"], args["input"], args["output"], prefix)

@@ -27,12 +27,12 @@
 //? cSpell:words eigenstate phonon Diagonalize
 
 const int WithoutK0Phonon = 1;
-int L = 4;
-int N = 6 * L;
+int L = 2;
+int N = 300;
 const RealType Jin = 1.0;
-RealType Win = 0.80;
-RealType Gin = 0.80;
-int Arpack = 1;
+RealType Win = 0.40;
+RealType Gin = 0.40;
+int Arpack = 0;
 
 std::vector<std::string> GetPrefix(const std::string FileName){
   std::ifstream file(FileName);
@@ -176,7 +176,10 @@ void Equilibrium(const std::string prefix, int NumPeaks){
   Kn.push_back(L/2);
   assert( Kn.size() == L );
   LogOut << Kn.size() << " k-points DONE!" << std::endl;
-
+  HDF5IO* file = new HDF5IO(prefix + filename + ".h5");
+  file->SaveNumber("Parameters", "Omega", Win);
+  file->SaveNumber("Parameters", "Lambda", Gin);
+  delete file;
   std::map<int, std::vector<Basis> > BasisSets;
   for ( size_t k = 0; k < Kn.size(); k++ ){
     bool FullSpectrum = false;
