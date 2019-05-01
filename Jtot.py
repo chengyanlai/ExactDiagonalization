@@ -4,7 +4,7 @@ import h5py
 import os
 import argparse
 
-def main(L, InputFile, OutputFile, Prefix):
+def main(L, InputFile, OutputFile, Prefix, Every):
     f = h5py.File(os.path.join(Prefix, InputFile), "r")
     Nf = {}
     Jf = {}
@@ -31,7 +31,7 @@ def main(L, InputFile, OutputFile, Prefix):
                 Jf[str(i)].append( Fmn[i,0].imag )
             else:
                 Jf[str(i)].append( Fmn[i,i+1].imag )
-        cnt += 20
+        cnt += Every
         gname = "Obs-" + str(cnt)
         e = gname in f.keys()
     for i in range(L):
@@ -66,6 +66,7 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', default='Jtot', help='Filename Prefix.')
     parser.add_argument('--from', type=int, default=0, help='subfolder sequence.')
     parser.add_argument('--to', type=int, default=1000, help='subfolder sequence.')
+    parser.add_argument('--every', type=int, default=20, help='subfolder sequence.')
     args = vars(parser.parse_args())
     for i in range(args["from"], args["to"], 1):
         prefix = "S"+str(i).zfill(4)
