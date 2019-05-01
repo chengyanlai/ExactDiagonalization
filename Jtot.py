@@ -37,6 +37,8 @@ def main(L, InputFile, OutputFile, Prefix, Every):
     for i in range(L):
         try:
             out = np.vstack( [out, np.array(Nf[str(i)])] )
+        except UnboundLocalError:
+            out = np.array(Nf[str(i)])
         except:
             raise
     for i in range(L):
@@ -61,7 +63,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog="TrJm", usage='%(prog)s [options] -f file',
                                      description="Chenyen's personal command to make life easier.",
                                      epilog="All's well that ends well.")
-    parser.add_argument('-l', '--length', default=3, help='L.')
+    parser.add_argument('-l', '--length', type=int, default=3, help='L.')
     parser.add_argument('-i', '--input', default='QuenchState-Z-0.h5', help='Filename.')
     parser.add_argument('-o', '--output', default='Jtot', help='Filename Prefix.')
     parser.add_argument('--from', type=int, default=0, help='subfolder sequence.')
