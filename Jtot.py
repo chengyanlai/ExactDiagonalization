@@ -68,8 +68,8 @@ if __name__ == '__main__':
     parser.add_argument('-o', '--output', default='Jtot', help='Filename Prefix.')
     parser.add_argument('--from', type=int, default=0, help='subfolder sequence.')
     parser.add_argument('--to', type=int, default=1000, help='subfolder sequence.')
-    parser.add_argument('--every', type=int, default=20, help='subfolder sequence.')
+    parser.add_argument('--every', type=int, default=20, help='load every.')
     args = vars(parser.parse_args())
     for i in range(args["from"], args["to"], 1):
         prefix = "S"+str(i).zfill(4)
-        main(args["length"], args["input"], args["output"], prefix)
+        main(args["length"], args["input"], args["output"], prefix, args["every"])
