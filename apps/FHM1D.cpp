@@ -282,13 +282,17 @@ void Equilibrium(const std::string prefix){
     LoadEqmParameters( "conf.h5", L, OBC, N1, N2, Jin, Uin, Vin, Win);
   }catch(H5::FileIException){
     L = 12;
-    OBC = 0;
+    OBC = 1;
     N1 = 6;
     N2 = 6;
-    Jin = std::vector<RealType>(L, 1.0);// PBC
-    Uin = std::vector<RealType>(L, 6.0);
+    // Jin = std::vector<RealType>(L, 1.0);// PBC
+    Jin = std::vector<RealType>(L-1, 1.0);// OBC
+    Uin = std::vector<RealType>(L, 0.0);
     Vin = std::vector<RealType>(L, 0.0);
     Win = std::vector<RealType>(L, 0.0);
+    Jin.at(0) = 0.8;//! BFK
+    Uin.at(0) = 6.0;//! BFK
+    Vin.at(0) =-3.0;//! BFK
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
   LogOut << "Build Lattice - " << std::endl;
@@ -407,16 +411,20 @@ void Spectral(const std::string prefix){
     LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
   }catch(H5::FileIException){
     L = 12;
-    OBC = 0;
+    OBC = 1;
     N1 = 6;
     N2 = 6;
-    Jeqm = std::vector<RealType>(L, 1.0);// OBC
-    Ueqm = std::vector<RealType>(L, 6.0);
+    // Jin = std::vector<RealType>(L, 1.0);// PBC
+    Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
+    Ueqm = std::vector<RealType>(L, 0.0);
     Veqm = std::vector<RealType>(L, 0.0);
     Weqm = std::vector<RealType>(L, 0.0);
-    Uch = std::vector<RealType>(L, 0.0);
-    Vch = std::vector<RealType>(L, 0.0);
-    CoreHole = L / 2;
+    Jeqm.at(0) = 0.8;//! BFK
+    Ueqm.at(0) = 6.0;//! BFK
+    Veqm.at(0) =-3.0;//! BFK
+    Uch = Ueqm;//std::vector<RealType>(L, 0.0);
+    Vch = Veqm;//std::vector<RealType>(L, 0.0);
+    CoreHole = 0;//L / 2;
     // Vch.at(CoreHole) = -5.0;
     Species = 0;
     Type = 1;
