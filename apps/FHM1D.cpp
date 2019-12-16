@@ -79,15 +79,19 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);// Same as below
       for ( int i = CoreHole+1; i < OldBases.at(0).GetL(); i++ ) NCross += btest(OldFupState, i);
       if ( NCross % 2 == 1 ) FermionSignUp = -1.0e0;
-    }else if ( Species == 0 && Type == -1 && btest(OldFupState, CoreHole) ){// c_up
+    }else if ( Species == 0 && Type == 2 && btest(OldFupState, CoreHole) ){// c_up
       int NewFupState = ibclr(OldFupState, CoreHole);
       NewFupIdx = NewFupTag.at(NewFupState);// Find their indices
       OldFupIdx = OldFupTag.at(OldFupState);// Find their indices
+      int NCross = 0;
+      // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFupState, i);// Same as below
+      for ( int i = CoreHole+1; i < OldBases.at(0).GetL(); i++ ) NCross += btest(OldFupState, i);
+      if ( NCross % 2 == 1 ) FermionSignUp = -1.0e0;
     }else{
       continue;// next OldFupState
     }
     for ( auto OldFdnState : OldFdn ){
-      // RealType FermionSignDn = 1.0;
+      RealType FermionSignDn = 1.0e0;
       if ( Species == 0 ){
         NewFdnIdx = NewFdnTag.at(OldFdnState);// Find their indices
         OldFdnIdx = OldFdnTag.at(OldFdnState);// Find their indices
@@ -95,10 +99,18 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
         int NewFdnState = ibset(OldFdnState, CoreHole);
         NewFdnIdx = NewFdnTag.at(NewFdnState);// Find their indices
         OldFdnIdx = OldFdnTag.at(OldFdnState);// Find their indices
-      }else if ( Species == 1 && Type == -1 && btest(OldFdnState, CoreHole) ){// c_down
+        int NCross = 0;
+        // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFdnState, i);// Same as below
+        for ( int i = CoreHole+1; i < OldBases.at(0).GetL(); i++ ) NCross += btest(OldFdnState, i);
+        if ( NCross % 2 == 1 ) FermionSignDn = -1.0e0;
+      }else if ( Species == 1 && Type == 2 && btest(OldFdnState, CoreHole) ){// c_down
         int NewFdnState = ibclr(OldFdnState, CoreHole);
         NewFdnIdx = NewFdnTag.at(NewFdnState);// Find their indices
         OldFdnIdx = OldFdnTag.at(OldFdnState);// Find their indices
+        int NCross = 0;
+        // for ( int i = 0; i < CoreHole; i++ ) NCross += btest(OldFdnState, i);// Same as below
+        for ( int i = CoreHole+1; i < OldBases.at(0).GetL(); i++ ) NCross += btest(OldFdnState, i);
+        if ( NCross % 2 == 1 ) FermionSignDn = -1.0e0;
       }else{
         continue;// next OldFdnState
       }
@@ -111,12 +123,13 @@ ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, con
       NewIdx.push_back(NewFdnIdx);
       size_t oid = OldHam.DetermineTotalIndex( OldIdx );
       size_t nid = NewHam.DetermineTotalIndex( NewIdx );
-      Vout(nid) = FermionSignUp * Vin(oid);
+      Vout(nid) = FermionSignUp * FermionSignDn * Vin(oid);
     }
   }
   return Vout;//arma::normalise(Vout);
 }
 
+//! Be careful about the state you are getting, there might be a minus sign due to the state we defined.
 DTM SingleParticleDensityMatrix( const int species, const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonian<DT> &Ham0 ){
   size_t L = Bases.at(species).GetL();
   DTM CM(L, L, arma::fill::zeros);
@@ -287,12 +300,12 @@ void Equilibrium(const std::string prefix){
     N2 = 6;
     // Jin = std::vector<RealType>(L, 1.0);// PBC
     Jin = std::vector<RealType>(L-1, 1.0);// OBC
-    Uin = std::vector<RealType>(L, 0.0);
+    Uin = std::vector<RealType>(L, 4.0);
     Vin = std::vector<RealType>(L, 0.0);
     Win = std::vector<RealType>(L, 0.0);
-    Jin.at(0) = 0.8;//! BFK
-    Uin.at(0) = 6.0;//! BFK
-    Vin.at(0) =-3.0;//! BFK
+    // Jin.at(0) = 0.8;//! BFK
+    // Uin.at(0) = 6.0;//! BFK
+    // Vin.at(0) =-3.0;//! BFK
   }
   HDF5IO *file = new HDF5IO("FHMChainData.h5");
   LogOut << "Build Lattice - " << std::endl;
@@ -416,18 +429,19 @@ void Spectral(const std::string prefix){
     N2 = 6;
     // Jin = std::vector<RealType>(L, 1.0);// PBC
     Jeqm = std::vector<RealType>(L-1, 1.0);// OBC
-    Ueqm = std::vector<RealType>(L, 0.0);
+    Ueqm = std::vector<RealType>(L, 4.0);
     Veqm = std::vector<RealType>(L, 0.0);
     Weqm = std::vector<RealType>(L, 0.0);
-    Jeqm.at(0) = 0.8;//! BFK
-    Ueqm.at(0) = 6.0;//! BFK
-    Veqm.at(0) =-3.0;//! BFK
+    // Jeqm.at(0) = 0.8;//! BFK
+    // Ueqm.at(0) = 6.0;//! BFK
+    // Veqm.at(0) =-3.0;//! BFK
     Uch = Ueqm;//std::vector<RealType>(L, 0.0);
     Vch = Veqm;//std::vector<RealType>(L, 0.0);
     CoreHole = 0;//L / 2;
     // Vch.at(CoreHole) = -5.0;
     Species = 0;
     Type = 1;
+    LogOut << "Using default\n";
   }
   //* Eqm or Pump
   LogOut << "Build Eqm/Pump Basis - " << std::flush;
@@ -460,12 +474,12 @@ void Spectral(const std::string prefix){
   int N1CH, N2CH;
   if ( Species == 0 ){
     if ( Type == 1 ) N1CH = N1 + 1;
-    else if ( Type == -1 ) N1CH = N1 - 1;
+    else if ( Type == 2 ) N1CH = N1 - 1;
     N2CH = N2;
   }else if ( Species == 1 ){
     N1CH = N1;
     if ( Type == 1 ) N2CH = N2 + 1;
-    else if ( Type == -1 ) N2CH = N2 - 1;
+    else if ( Type == 2 ) N2CH = N2 - 1;
   }
   Basis F1CH(L, N1CH, true);
   F1CH.Fermion();
@@ -510,31 +524,31 @@ void Spectral(const std::string prefix){
     }
   }
   LogOut << VecInput.n_rows << " DONE!" << std::endl;
-  LogOut << "Operate on Wave function on site @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
-  ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
-  VecInit = arma::normalise(VecInit);
-  LogOut << ", DONE!" << std::endl;
-
-  LogOut << "Get spectrum ... " << std::flush;
-  const size_t MaxNumPeak = 40;
-  std::vector<double> PeakLocations, PeakWeights;
-  DTM Vecs(VecInit.n_rows, MaxNumPeak);
-  RealVectorType Vals;
-  CoreHoleHam.SpectralH(Vals, Vecs, VecInit, MaxNumPeak);
-  for ( int iL = 0; iL < L; iL++ ){
-    ComplexVectorType KetState = Operate( VecInput, iL, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
-    SpectralPeaks( ValInput(0), KetState, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
+  for ( int OpType = 1; OpType < 3; OpType++ ){
+    LogOut << "Operate on Wave function on site @ " << CoreHole << ", on species - " << Species << ", type - " << OpType << std::flush;
+    ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, OpType, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+    double VecNorm = arma::norm(VecInit);
+    VecInit = arma::normalise(VecInit);
+    LogOut << ", DONE!" << std::endl;
+    LogOut << "Get spectrum ... " << std::endl;
+    const size_t MaxNumPeak = 40;
+    std::vector<double> PeakLocations, PeakWeights;
+    DTM Vecs(VecInit.n_rows, MaxNumPeak);
+    RealVectorType Vals;
+    CoreHoleHam.SpectralH(Vals, Vecs, VecInit, MaxNumPeak);
+    SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
     LogOut << " Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::flush;
     LogOut << " DONE!" << std::endl;
     HDF5IO* file1 = new HDF5IO("Spectral.h5");
     std::string gname = "C";
-    gname.append( std::to_string((unsigned long long)iL ));
+    gname.append( std::to_string((unsigned long long)CoreHole ));
     gname.append( "-C" );
     gname.append( std::to_string((unsigned long long)CoreHole ));
     gname.append( "-" );
-    gname.append( std::to_string((unsigned long long)Type) );
+    gname.append( std::to_string((unsigned long long)OpType) );
     file1->SaveStdVector(gname, "ei", PeakLocations);
     file1->SaveStdVector(gname, "wi", PeakWeights);
+    file1->SaveNumber(gname, "norm", VecNorm);
     delete file1;
   }
 }
@@ -854,12 +868,12 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   int N1CH, N2CH;
   if ( Species == 0 ){
     if ( Type == 1 ) N1CH = N1 + 1;
-    else if ( Type == -1 ) N1CH = N1 - 1;
+    else if ( Type == 2 ) N1CH = N1 - 1;
     N2CH = N2;
   }else if ( Species == 1 ){
     N1CH = N1;
     if ( Type == 1 ) N2CH = N2 + 1;
-    else if ( Type == -1 ) N2CH = N2 - 1;
+    else if ( Type == 2 ) N2CH = N2 - 1;
   }
   Basis F1CH(L, N1CH, true);
   F1CH.Fermion();
@@ -1165,12 +1179,12 @@ void CalculateAt(const std::string prefix, const int Every, const int From = 0){
   int N1CH, N2CH;
   if ( Species == 0 ){
     if ( Type == 1 ) N1CH = N1 + 1;
-    else if ( Type == -1 ) N1CH = N1 - 1;
+    else if ( Type == 2 ) N1CH = N1 - 1;
     N2CH = N2;
   }else if ( Species == 1 ){
     N1CH = N1;
     if ( Type == 1 ) N2CH = N2 + 1;
-    else if ( Type == -1 ) N2CH = N2 - 1;
+    else if ( Type == 2 ) N2CH = N2 - 1;
   }
   Basis F1CH(L, N1CH, true);
   F1CH.Fermion();
@@ -1272,12 +1286,12 @@ void CalculateAtEqm(const std::string prefix, const int Every, const int From = 
   int N1CH, N2CH;
   if ( Species == 0 ){
     if ( Type == 1 ) N1CH = N1 + 1;
-    else if ( Type == -1 ) N1CH = N1 - 1;
+    else if ( Type == 2 ) N1CH = N1 - 1;
     N2CH = N2;
   }else if ( Species == 1 ){
     N1CH = N1;
     if ( Type == 1 ) N2CH = N2 + 1;
-    else if ( Type == -1 ) N2CH = N2 - 1;
+    else if ( Type == 2 ) N2CH = N2 - 1;
   }
   Basis F1CH(L, N1CH, true);
   F1CH.Fermion();

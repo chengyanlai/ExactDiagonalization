@@ -7,11 +7,11 @@ import h5py
 import ScriptGenerator as sg
 from Clusters import *
 
-#L, Nh, dt = 2, 120, 0.005, 20
-#L, Nh, dt = 3, 90, 0.005, 20
+L, Nh, TSlice, MeasureEvery = 2, 120, 200, "20"
+# L, Nh, TSlice, MeasureEvery = 3, 90, 200, "20"
 #L, Nh, TSlice, MeasureEvery = 2,120, 200, "20"
 #L, Nh, TSlice, MeasureEvery = 3, 90, 200, "20"
-L, Nh, TSlice, MeasureEvery = 4, 80, 20, "2"
+#L, Nh, TSlice, MeasureEvery = 4, 80, 20, "2"
 dt = 1. / TSlice
 Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 
@@ -30,7 +30,8 @@ Prefix1 = "".join([ "L", str(L), "N", str(Nh) ])
 #Omega, Lambda, Alpha = 0.3, 0.4, 0
 #Omega, Lambda, Alpha = 0.3, 0.4, 3.750
 Omega, Lambda, Alpha = 0.4, 0.3, 0
-TSteps = np.int(TSlice * 6.3 * 10 / Omega)# Roughly 10 Phonon Period as 6.3 > 2 * pi
+NumberOfPhononPeriod = 20
+TSteps = np.int(TSlice * 6.3 * NumberOfPhononPeriod / Omega)# 6.3 > 2 * pi
 if Alpha > 0.0:
     Prefix2 = "-".join([ "".join(["W", str(Omega)]), "".join(["G", str(Lambda)]), str(Alpha) ])
 else:
@@ -46,7 +47,7 @@ if Alpha > 0.0:
     To = 1002
 else:
     From = 0
-    To = 1000
+    To = 10
 for cnt in range(From, To, 1):
     Prefix3 = "S"+str(cnt).zfill(4)
     workdir = os.path.join(DataDir, Prefix3)
@@ -66,7 +67,7 @@ for cnt in range(From, To, 1):
         AlphaReal = np.ones(L, dtype=np.float64) * Alpha
         AlphaPhase = np.linspace(0., 2.*np.pi, L, endpoint=0)
     else:
-        AlphaReal = np.random.normal(2.5, 0.5, L)
+        AlphaReal = np.random.normal(4.5, 0.5, L)
         AlphaPhase = np.random.uniform(0, 2*np.pi, L)
     dset = g.create_dataset("AlphaReal", data=AlphaReal)
     dset = g.create_dataset("AlphaPhase", data=AlphaPhase)

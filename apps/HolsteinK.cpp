@@ -31,7 +31,7 @@ int L = 2;
 int N = 300;
 const RealType Jin = 1.0;
 RealType Win = 0.40;
-RealType Gin = 0.40;
+RealType Gin = 0.30;
 int Arpack = 0;
 
 std::vector<std::string> GetPrefix(const std::string FileName){

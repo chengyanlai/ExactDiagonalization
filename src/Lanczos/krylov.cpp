@@ -114,9 +114,9 @@ void krylov(const arma::SpMat<Tnum> &A, const arma::Col<Tnum> &Vec, arma::Mat<Tn
     work -= alpha * Vm.col(cntK);
     beta = arma::norm(work);
     Alphas.push_back(alpha);
-    if( DEBUG > 4 ){
+    // if( DEBUG > 4 ){
       std::cout <<"@ " << cntK << " alpha is " << alpha << " beta is " << beta << std::endl;
-    }
+    // }
     if( beta > threshNorm ){
       if( cntK+1 < Kmax ) {
         Vm.col(cntK+1) = arma::normalise(work);
