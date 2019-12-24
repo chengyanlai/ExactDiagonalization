@@ -45,7 +45,7 @@ void LoadPumpParameters( const std::string filename, std::vector<RealType> &At, 
   file.LoadNumber("Parameters", "dtA", dt);
 }
 
-void LoadXASParameters( const std::string filename, std::vector<RealType> &Ufls, std::vector<RealType> &Vfls, int& TSteps, RealType& dt, int& CoreHole, int& Species, int& Type){
+void LoadXASParameters( const std::string filename, std::vector<RealType> &Ufls, std::vector<RealType> &Vfls, int& TSteps, RealType& dt, int& CoreHole, int& Species){
   HDF5IO file(filename);
   file.LoadStdVector("Parameters", "Uf", Ufls);
   file.LoadStdVector("Parameters", "Vf", Vfls);
@@ -53,7 +53,6 @@ void LoadXASParameters( const std::string filename, std::vector<RealType> &Ufls,
   file.LoadNumber("Parameters", "dtX", dt);
   file.LoadNumber("Parameters", "CoreHole", CoreHole);
   file.LoadNumber("Parameters", "Species", Species);
-  file.LoadNumber("Parameters", "Type", Type);
 }
 
 ComplexVectorType Operate( const ComplexVectorType& Vin, const int CoreHole, const int Species, const int Type, const std::vector<Basis>& OldBases, const std::vector<Basis>& NewBases, const Hamiltonian<ComplexType>& OldHam, const Hamiltonian<ComplexType>& NewHam  ){
@@ -268,14 +267,14 @@ RealMatrixType NiNj( const std::vector<Basis> &Bases, const DTV &Vec, Hamiltonia
 }
 
 void SpectralPeaks( const double EG, const ComplexVectorType AS, const RealVectorType &EigVal, const ComplexMatrixType &EigVec,
-  std::vector<double> &PeakLocation, std::vector<double> &PeakWeight, const int MaxNumPeak){
+  std::vector<double> &PeakLocation, std::vector<ComplexType> &PeakWeight, const int MaxNumPeak){
   PeakLocation.clear();
   PeakWeight.clear();
   for ( size_t i = 0; i < EigVec.n_cols; i++){
     PeakLocation.push_back(EigVal(i) - EG);
     ComplexVectorType An = EigVec.col(i);
     ComplexType val = arma::cdot(An, AS);
-    PeakWeight.push_back( RealPart(Conjg(val) * val) );
+    PeakWeight.push_back( val );
     if ( i > MaxNumPeak ) break;
   }
   assert( PeakLocation.size() == PeakWeight.size() );
@@ -406,7 +405,7 @@ void Equilibrium(const std::string prefix){
   LogOut.close();
 }
 
-void Spectral(const std::string prefix){
+void Spectral(const std::string prefix, const int Type){
   std::ofstream LogOut;
   LogOut.open(prefix + "Spectral.log", std::ios::app);
   int L;
@@ -415,13 +414,13 @@ void Spectral(const std::string prefix){
   std::vector<RealType> Jeqm, Ueqm, Veqm, Weqm, Uch, Vch;
   int TSteps;
   RealType dt;
-  int CoreHole, Species, Type;
+  int CoreHole, Species;
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
-    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species);
   }catch(H5::FileIException){
     L = 12;
     OBC = 1;
@@ -440,7 +439,6 @@ void Spectral(const std::string prefix){
     CoreHole = 0;//L / 2;
     // Vch.at(CoreHole) = -5.0;
     Species = 0;
-    Type = 1;
     LogOut << "Using default\n";
   }
   //* Eqm or Pump
@@ -524,33 +522,33 @@ void Spectral(const std::string prefix){
     }
   }
   LogOut << VecInput.n_rows << " DONE!" << std::endl;
-  for ( int OpType = 1; OpType < 3; OpType++ ){
-    LogOut << "Operate on Wave function on site @ " << CoreHole << ", on species - " << Species << ", type - " << OpType << std::flush;
-    ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, OpType, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
-    double VecNorm = arma::norm(VecInit);
-    VecInit = arma::normalise(VecInit);
-    LogOut << ", DONE!" << std::endl;
-    LogOut << "Get spectrum ... " << std::endl;
-    const size_t MaxNumPeak = 40;
-    std::vector<double> PeakLocations, PeakWeights;
-    DTM Vecs(VecInit.n_rows, MaxNumPeak);
-    RealVectorType Vals;
-    CoreHoleHam.SpectralH(Vals, Vecs, VecInit, MaxNumPeak);
-    SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
-    LogOut << " Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), 0.0e0) << std::flush;
-    LogOut << " DONE!" << std::endl;
-    HDF5IO* file1 = new HDF5IO("Spectral.h5");
-    std::string gname = "C";
-    gname.append( std::to_string((unsigned long long)CoreHole ));
-    gname.append( "-C" );
-    gname.append( std::to_string((unsigned long long)CoreHole ));
-    gname.append( "-" );
-    gname.append( std::to_string((unsigned long long)OpType) );
-    file1->SaveStdVector(gname, "ei", PeakLocations);
-    file1->SaveStdVector(gname, "wi", PeakWeights);
-    file1->SaveNumber(gname, "norm", VecNorm);
-    delete file1;
-  }
+
+  LogOut << "Operate on Wave function on site @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
+  ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
+  double VecNorm = arma::norm(VecInit);
+  VecInit = arma::normalise(VecInit);
+  LogOut << ", DONE!" << std::endl;
+  LogOut << "Get spectrum ... " << std::endl;
+  const size_t MaxNumPeak = 40;
+  std::vector<double> PeakLocations;
+  std::vector<ComplexType> PeakWeights;
+  DTM Vecs(VecInit.n_rows, MaxNumPeak);
+  RealVectorType Vals;
+  CoreHoleHam.SpectralH(Vals, Vecs, VecInit, MaxNumPeak);
+  SpectralPeaks( ValInput(0), VecInit, Vals, Vecs, PeakLocations, PeakWeights, MaxNumPeak);
+  LogOut << "Total Weights = " << std::accumulate(PeakWeights.begin(), PeakWeights.end(), (ComplexType)(0.0e0) ) << std::flush;
+  LogOut << " DONE!" << std::endl;
+  HDF5IO* file1 = new HDF5IO("Spectral.h5");
+  std::string gname = "C";
+  gname.append( std::to_string((unsigned long long)CoreHole ));
+  gname.append( "-C" );
+  gname.append( std::to_string((unsigned long long)CoreHole ));
+  gname.append( "-" );
+  gname.append( std::to_string((unsigned long long)Type) );
+  file1->SaveStdVector(gname, "ei", PeakLocations);
+  file1->SaveStdVector(gname, "wi", PeakWeights);
+  file1->SaveNumber(gname, "norm", VecNorm);
+  delete file1;
 }
 
 void PumpDynamics(const std::string prefix, const int MeasureEvery = 10, const int SaveWFEvery = 1000000 ){
@@ -692,8 +690,8 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
     // std::vector<RealType> At;
     // LoadPumpParameters( "conf.h5", At, TSteps, dt);
     std::vector<RealType> Uch, Vch;
-    int CoreHole, Species, Type;
-    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+    int CoreHole, Species;
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species);
   }catch(H5::FileIException){
     L = 14;
     OBC = 1;
@@ -802,7 +800,7 @@ void StateDynamics(const std::string prefix, const int MeasureEvery = 50, const 
   LogOut.close();
 }
 
-void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, const int SaveWFEvery = 1000000 ){
+void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, const int SaveWFEvery = 1000000, const int Type = 1){
   std::ofstream LogOut;
   LogOut.open(prefix + "SpectralD.log", std::ios::app);
   int L;
@@ -811,13 +809,13 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   std::vector<RealType> Jeqm, Ueqm, Veqm, Weqm, Uch, Vch;
   int TSteps;
   RealType dt;
-  int CoreHole, Species, Type;
+  int CoreHole, Species;
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
-    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species);
   }catch(H5::FileIException){
     L = 12;
     OBC = 0;
@@ -834,7 +832,6 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
     TSteps = 3000;
     dt = 0.005;
     Species = 0;
-    Type = 1;
   }
   /* Eqm or Pump */
   LogOut << "Build Eqm/Pump Basis - " << std::flush;
@@ -919,7 +916,10 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   LogOut << "Operate on Wave function with core hole @ " << CoreHole << ", on species - " << Species << ", type - " << Type << std::flush;
   ComplexVectorType VecInit = Operate( VecInput, CoreHole, Species, Type, EqmBases, CoreHoleBases, EqmHam, CoreHoleHam );
   ComplexVectorType VecXAS = arma::normalise(VecInit);
-  HDF5IO* file2 = new HDF5IO("SpectralDWF.h5");
+  std::string WFFname = "SpectralDWF";
+  WFFname.append( std::to_string((unsigned long long)Type) );
+  WFFname.append( ".h5" );
+  HDF5IO* file2 = new HDF5IO(WFFname);
   std::string gname = "WF-0";
   file2->SaveVector(gname, "Vec", VecXAS);
   file2->SaveNumber(gname, "Norm", arma::norm(VecInit));
@@ -927,8 +927,11 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
   LogOut << ", DONE!" << std::endl;
 
   ComplexType Prefactor = ComplexType(0.0, -1.0e0*dt);/* NOTE: hbar = 1 */
-  HDF5IO* file1 = new HDF5IO("SpectralD.h5");
-  gname = "Obs-0/";
+  std::string AtFname = "SpectralD";
+  AtFname.append( std::to_string((unsigned long long)Type) );
+  AtFname.append( ".h5" );
+  HDF5IO* file1 = new HDF5IO(AtFname);
+  gname = "Obs-0";
   ComplexType Lecho = arma::cdot(VecInit, VecXAS);
   std::vector<RealVectorType> Nfi = Ni( CoreHoleBases, VecXAS, CoreHoleHam );
   file1->SaveNumber(gname, "Lecho", Lecho);
@@ -941,8 +944,8 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
     CoreHoleHam.expH(Prefactor, VecXAS);
     VecXAS = arma::normalise(VecXAS);/* NOTE: Does not change much. */
     if ( cntT % MeasureEvery == 0 ){
-      file1 = new HDF5IO("SpectralD.h5");
-      std::string gname = "Obs-";
+      file1 = new HDF5IO(AtFname);
+      gname = "Obs-";
       gname.append( std::to_string((unsigned long long)cntT ));
       gname.append("/");
       ComplexType Lecho = arma::cdot(VecInit, VecXAS);
@@ -953,7 +956,7 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
       delete file1;
     }
     if ( cntT % SaveWFEvery == 0 ){
-      file2 = new HDF5IO("SpectralDWF.h5");
+      file2 = new HDF5IO(WFFname);
       gname = "WF-";
       gname.append( std::to_string((unsigned long long)cntT ));
       gname.append("/");
@@ -961,7 +964,7 @@ void SpectralDynamics(const std::string prefix, const int MeasureEvery = 2, cons
       delete file2;
     }
   }
-  file2 = new HDF5IO("SpectralDWF.h5");
+  file2 = new HDF5IO(WFFname);
   gname = "WF";
   file2->SaveVector(gname, "Vec", VecXAS);
   delete file2;
@@ -1061,8 +1064,8 @@ void CalculateObs2(const std::string prefix, const int Every){
     H5::H5File::isHdf5(prefix + "conf.h5");
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
     std::vector<RealType> Uch, Vch;
-    int CoreHole, Species, Type;
-    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+    int CoreHole, Species;
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species);
   }catch(H5::FileIException){
     L = 12;
     OBC = 0;
@@ -1125,7 +1128,7 @@ void CalculateObs2(const std::string prefix, const int Every){
   LogOut.close();
 }
 
-void CalculateAt(const std::string prefix, const int Every, const int From = 0){
+void CalculateAt(const std::string prefix, const int Every, const int From = 0, const int Type = 1){
   std::ofstream LogOut;
   LogOut.open(prefix + "At.log", std::ios::app);
   int L;
@@ -1134,13 +1137,13 @@ void CalculateAt(const std::string prefix, const int Every, const int From = 0){
   std::vector<RealType> Jeqm, Ueqm, Veqm, Weqm, Uch, Vch;
   int TSteps;
   RealType dt;
-  int CoreHole, Species, Type;
+  int CoreHole, Species;
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
-    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species);
   }catch(H5::FileIException){
     L = 12;
     OBC = 0;
@@ -1157,7 +1160,6 @@ void CalculateAt(const std::string prefix, const int Every, const int From = 0){
     TSteps = 3000;
     dt = 0.005;
     Species = 0;
-    Type = 1;
   }
   LogOut << "Build Eqm/Pump Basis - " << std::flush;
   Basis F1EQM(L, N1, true);
@@ -1232,7 +1234,7 @@ void CalculateAt(const std::string prefix, const int Every, const int From = 0){
 }
 
 
-void CalculateAtEqm(const std::string prefix, const int Every, const int From = 0){
+void CalculateAtEqm(const std::string prefix, const int Every, const int From = 0, const int Type = 1){
   std::ofstream LogOut;
   LogOut.open(prefix + "At.log", std::ios::app);
   int L;
@@ -1241,13 +1243,13 @@ void CalculateAtEqm(const std::string prefix, const int Every, const int From = 
   std::vector<RealType> Jeqm, Ueqm, Veqm, Weqm, Uch, Vch;
   int TSteps;
   RealType dt;
-  int CoreHole, Species, Type;
+  int CoreHole, Species;
   try{
     /* Load parameters from file */
     H5::Exception::dontPrint();
     H5::H5File::isHdf5(prefix + "conf.h5");
     LoadEqmParameters( prefix + "conf.h5", L, OBC, N1, N2, Jeqm, Ueqm, Veqm, Weqm);
-    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species, Type);
+    LoadXASParameters( prefix + "conf.h5", Uch, Vch, TSteps, dt, CoreHole, Species);
   }catch(H5::FileIException){
     L = 12;
     OBC = 0;
@@ -1264,7 +1266,6 @@ void CalculateAtEqm(const std::string prefix, const int Every, const int From = 
     TSteps = 3000;
     dt = 0.005;
     Species = 0;
-    Type = 1;
   }
   LogOut << "Build Eqm/Pump Basis - " << std::flush;
   Basis F1EQM(L, N1, true);
@@ -1349,21 +1350,25 @@ int main(int argc, char *argv[]){
   }else if ( std::atoi(argv[1]) == 1 ){
     PumpDynamics("", 20, 20);
   }else if ( std::atoi(argv[1]) == 2 ){
-    SpectralDynamics("", 20, 20);
+    int OpType = std::atoi(argv[2]);
+    SpectralDynamics("", 20, 20, OpType);
   }else if ( std::atoi(argv[1]) == 3 ){
     StateDynamics("", 20, 20);
   }else if ( std::atoi(argv[1]) == 4 ){
-    Spectral("");
+    int OpType = std::atoi(argv[2]);
+    Spectral("", OpType);
   }else if ( std::atoi(argv[1]) == 5 ) {
     int From = std::atoi(argv[2]);
-    CalculateAt("", 20, From);
+    int OpType = std::atoi(argv[3]);
+    CalculateAt("", 20, From, OpType);
   }else if ( std::atoi(argv[1]) == 6 ) {
     CalculateObs("", 20);
   }else if ( std::atoi(argv[1]) == 7 ) {
     CalculateObs2("", 20);
   }else if ( std::atoi(argv[1]) == 8 ) {
     int From = std::atoi(argv[2]);
-    CalculateAtEqm("", 20, From);
+    int OpType = std::atoi(argv[3]);
+    CalculateAtEqm("", 20, From, OpType);
   }
   return 0;
 }
